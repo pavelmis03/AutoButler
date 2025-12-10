@@ -1,0 +1,357 @@
+-- MySQL dump 10.13  Distrib 8.0.40, for macos14 (arm64)
+--
+-- Host: 127.0.0.1    Database: vkr
+-- ------------------------------------------------------
+-- Server version	9.1.0
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `HOTELS`
+--
+
+DROP TABLE IF EXISTS `HOTELS`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `HOTELS` (
+  `ID` int NOT NULL,
+  `NAME` varchar(150) NOT NULL,
+  `ID_KATEG` int DEFAULT NULL,
+  `PERIOD_DEP` int DEFAULT NULL,
+  `BREAKFAST_FROM` time DEFAULT NULL,
+  `BREAKFAST_TO` time DEFAULT NULL,
+  `LUNCH_FROM` time DEFAULT NULL,
+  `LUNCH_TO` time DEFAULT NULL,
+  `DINNER_FROM` time DEFAULT NULL,
+  `DINNER_TO` time DEFAULT NULL,
+  `CONTRACT_FROM` timestamp NULL DEFAULT NULL,
+  `CONTRACT_TO` timestamp NULL DEFAULT NULL,
+  `ANIMALS` smallint DEFAULT NULL,
+  `COMMENT` varchar(150) DEFAULT NULL,
+  `E_MAIL` varchar(100) DEFAULT NULL,
+  KEY `ID_KATEG` (`ID_KATEG`),
+  CONSTRAINT `hotels_ibfk_1` FOREIGN KEY (`ID_KATEG`) REFERENCES `HOTELS_KATEG` (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `HOTELS`
+--
+
+LOCK TABLES `HOTELS` WRITE;
+/*!40000 ALTER TABLE `HOTELS` DISABLE KEYS */;
+INSERT INTO `HOTELS` VALUES (79,'Холидей Экспресс Москва Аэропорт Шереметьево',8,120,'05:00:00','10:00:00','13:00:00','16:00:00','19:00:00','23:00:00','2021-12-31 21:00:00','1999-12-31 21:00:00',0,NULL,'1@hiex-svo.ru'),(71,'Holiday Inn Виноградово',9,180,'05:00:00','11:00:00','13:00:00','17:00:00','18:00:00','00:00:00','2021-12-31 21:00:00','2022-12-31 21:00:00',0,NULL,NULL),(72,'Edge Seligerskaya-Moscow',9,180,'05:00:00','11:00:00','13:00:00','17:00:00','18:00:00','00:00:00','2021-12-31 21:00:00','1999-12-31 21:00:00',0,NULL,NULL),(116,'Рига Ленд',8,240,'07:00:00','10:00:00','13:00:00','16:00:00','17:00:00','22:00:00','2024-08-21 21:00:00','1999-12-31 21:00:00',1,NULL,NULL),(25,'Новотель Аэропорт Шереметьево',9,120,'05:00:00','10:00:00','13:00:00','15:00:00','19:00:00','23:00:00','2021-12-31 21:00:00','1999-12-31 21:00:00',1,'Завтрак дольше на час по выходным и праздникам',NULL),(97,'Cosmos Selection Moscow Sheremetyevo Airport Hotel',14,120,'05:30:00','10:30:00','13:00:00','15:00:00','19:00:00','21:00:00','2021-12-31 21:00:00','2000-06-29 20:00:00',1,NULL,NULL),(98,'Cosmos Moscow Sheremetyevo Airport Hotel',9,120,'05:30:00','10:30:00','13:00:00','15:00:00','19:00:00','21:00:00','2021-12-31 21:00:00','2000-06-29 20:00:00',1,NULL,NULL),(99,'Sheraton SkyPoint Luxe',14,120,'06:30:00','10:30:00','13:00:00','15:00:00','18:00:00','21:00:00','2021-12-31 21:00:00','2000-06-29 20:00:00',1,'Завтрак с 06:30 по 11:00 по выходным и праздничным дням',NULL),(53,'Воздушный экспресс',7,120,'06:00:00','11:00:00','12:00:00','15:00:00','18:00:00','23:00:00','2023-12-31 21:00:00','2025-03-31 21:00:00',1,NULL,NULL),(54,'Sky Point',9,120,'05:00:00','10:00:00','12:00:00','15:00:00','18:00:00','22:00:00','2021-12-31 21:00:00','2000-06-29 20:00:00',1,NULL,NULL),(79,'Холидей Экспресс Москва Аэропорт Шереметьево',8,120,'05:00:00','10:00:00','13:00:00','16:00:00','19:00:00','23:00:00','2021-12-31 21:00:00','1999-12-31 21:00:00',0,NULL,'1@hiex-svo.ru'),(71,'Holiday Inn Виноградово',9,180,'05:00:00','11:00:00','13:00:00','17:00:00','18:00:00','00:00:00','2021-12-31 21:00:00','2022-12-31 21:00:00',0,NULL,NULL),(72,'Edge Seligerskaya-Moscow',9,180,'05:00:00','11:00:00','13:00:00','17:00:00','18:00:00','00:00:00','2021-12-31 21:00:00','1999-12-31 21:00:00',0,NULL,NULL),(116,'Рига Ленд',8,240,'07:00:00','10:00:00','13:00:00','16:00:00','17:00:00','22:00:00','2024-08-21 21:00:00','1999-12-31 21:00:00',1,NULL,NULL),(25,'Новотель Аэропорт Шереметьево',9,120,'05:00:00','10:00:00','13:00:00','15:00:00','19:00:00','23:00:00','2021-12-31 21:00:00','1999-12-31 21:00:00',1,'Завтрак дольше на час по выходным и праздникам',NULL),(97,'Cosmos Selection Moscow Sheremetyevo Airport Hotel',14,120,'05:30:00','10:30:00','13:00:00','15:00:00','19:00:00','21:00:00','2021-12-31 21:00:00','2000-06-29 20:00:00',1,NULL,NULL),(98,'Cosmos Moscow Sheremetyevo Airport Hotel',9,120,'05:30:00','10:30:00','13:00:00','15:00:00','19:00:00','21:00:00','2021-12-31 21:00:00','2000-06-29 20:00:00',1,NULL,NULL),(99,'Sheraton SkyPoint Luxe',14,120,'06:30:00','10:30:00','13:00:00','15:00:00','18:00:00','21:00:00','2021-12-31 21:00:00','2000-06-29 20:00:00',1,'Завтрак с 06:30 по 11:00 по выходным и праздничным дням',NULL),(53,'Воздушный экспресс',7,120,'06:00:00','11:00:00','12:00:00','15:00:00','18:00:00','23:00:00','2023-12-31 21:00:00','2025-03-31 21:00:00',1,NULL,NULL),(54,'Sky Point',9,120,'05:00:00','10:00:00','12:00:00','15:00:00','18:00:00','22:00:00','2021-12-31 21:00:00','2000-06-29 20:00:00',1,NULL,NULL),(79,'Холидей Экспресс Москва Аэропорт Шереметьево',8,120,'05:00:00','10:00:00','13:00:00','16:00:00','19:00:00','23:00:00','2021-12-31 21:00:00','1999-12-31 21:00:00',0,NULL,'1@hiex-svo.ru'),(71,'Holiday Inn Виноградово',9,180,'05:00:00','11:00:00','13:00:00','17:00:00','18:00:00','00:00:00','2021-12-31 21:00:00','2022-12-31 21:00:00',0,NULL,NULL),(72,'Edge Seligerskaya-Moscow',9,180,'05:00:00','11:00:00','13:00:00','17:00:00','18:00:00','00:00:00','2021-12-31 21:00:00','1999-12-31 21:00:00',0,NULL,NULL),(116,'Рига Ленд',8,240,'07:00:00','10:00:00','13:00:00','16:00:00','17:00:00','22:00:00','2024-08-21 21:00:00','1999-12-31 21:00:00',1,NULL,NULL),(25,'Новотель Аэропорт Шереметьево',9,120,'05:00:00','10:00:00','13:00:00','15:00:00','19:00:00','23:00:00','2021-12-31 21:00:00','1999-12-31 21:00:00',1,'Завтрак дольше на час по выходным и праздникам',NULL),(97,'Cosmos Selection Moscow Sheremetyevo Airport Hotel',14,120,'05:30:00','10:30:00','13:00:00','15:00:00','19:00:00','21:00:00','2021-12-31 21:00:00','2000-06-29 20:00:00',1,NULL,NULL),(98,'Cosmos Moscow Sheremetyevo Airport Hotel',9,120,'05:30:00','10:30:00','13:00:00','15:00:00','19:00:00','21:00:00','2021-12-31 21:00:00','2000-06-29 20:00:00',1,NULL,NULL),(99,'Sheraton SkyPoint Luxe',14,120,'06:30:00','10:30:00','13:00:00','15:00:00','18:00:00','21:00:00','2021-12-31 21:00:00','2000-06-29 20:00:00',1,'Завтрак с 06:30 по 11:00 по выходным и праздничным дням',NULL),(53,'Воздушный экспресс',7,120,'06:00:00','11:00:00','12:00:00','15:00:00','18:00:00','23:00:00','2023-12-31 21:00:00','2025-03-31 21:00:00',1,NULL,NULL),(54,'Sky Point',9,120,'05:00:00','10:00:00','12:00:00','15:00:00','18:00:00','22:00:00','2021-12-31 21:00:00','2000-06-29 20:00:00',1,NULL,NULL);
+/*!40000 ALTER TABLE `HOTELS` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `HOTELS_BILLING`
+--
+
+DROP TABLE IF EXISTS `HOTELS_BILLING`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `HOTELS_BILLING` (
+  `ID_ORDER` int NOT NULL,
+  `DATE_CREATE` timestamp NULL DEFAULT NULL,
+  `ID_EXECUTANT` int DEFAULT NULL,
+  `NUM_BILL` varchar(10) DEFAULT NULL,
+  `DATE_BILL` date DEFAULT NULL,
+  `NUM_SAP` int DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `HOTELS_BILLING`
+--
+
+LOCK TABLES `HOTELS_BILLING` WRITE;
+/*!40000 ALTER TABLE `HOTELS_BILLING` DISABLE KEYS */;
+INSERT INTO `HOTELS_BILLING` VALUES (97100,'2021-11-29 12:15:00',699,'3401','2021-10-05',51990795),(97101,'2021-11-29 12:15:00',699,'3401','2021-10-05',51990795),(97102,'2021-11-29 12:16:00',699,'3401','2021-10-05',51990795),(97103,'2021-11-29 12:44:00',699,'3401','2021-10-05',51990795),(97104,'2021-11-29 12:44:00',699,'3401','2021-10-05',51990795),(97105,'2021-12-08 15:29:00',561,'3401','2021-12-08',51990795),(97106,'2021-11-29 12:45:00',699,'3401','2021-10-05',51990795),(97107,'2021-11-29 12:46:00',699,'3401','2021-10-05',51990795),(97108,'2021-11-29 12:46:00',699,'3401','2021-10-05',51990795),(97109,'2021-12-08 15:41:00',561,'3401','2021-12-08',51990795),(97111,'2021-11-29 12:47:00',699,'3401','2021-10-05',51990795),(97112,'2021-11-29 12:48:00',699,'3401','2021-10-05',51990795),(97113,'2021-11-29 12:48:00',699,'3401','2021-10-05',51990795),(97114,'2021-11-29 12:48:00',699,'3401','2021-10-05',51990795),(97115,'2021-11-29 12:49:00',699,'3401','2021-10-05',51990795),(97116,'2021-11-29 12:49:00',699,'3401','2021-10-05',51990795),(97117,'2021-11-29 12:50:00',699,'3401','2021-10-05',51990795),(97118,'2021-11-29 12:50:00',699,'3401','2021-10-05',51990795),(97119,'2021-11-29 12:51:00',699,'3401','2021-10-05',51990795),(97120,'2021-11-29 12:51:00',699,'3401','2021-10-05',51990795);
+/*!40000 ALTER TABLE `HOTELS_BILLING` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `HOTELS_DELAYS`
+--
+
+DROP TABLE IF EXISTS `HOTELS_DELAYS`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `HOTELS_DELAYS` (
+  `ID` int NOT NULL AUTO_INCREMENT,
+  `ORDER_NUM` int DEFAULT NULL,
+  `DATE_ORDER` date DEFAULT NULL,
+  `PAX` int DEFAULT NULL,
+  `MEAL` varchar(100) DEFAULT NULL,
+  `TYPE_DELAYS` varchar(6) DEFAULT NULL,
+  `PRIM` text,
+  `MEAL_PR` smallint DEFAULT NULL,
+  `EXECUTANT` int DEFAULT NULL,
+  `COL_PIT` int DEFAULT NULL,
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=cp1251;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `HOTELS_DELAYS`
+--
+
+LOCK TABLES `HOTELS_DELAYS` WRITE;
+/*!40000 ALTER TABLE `HOTELS_DELAYS` DISABLE KEYS */;
+INSERT INTO `HOTELS_DELAYS` VALUES (1,111,'2016-11-20',2,'Обед + ужин','ОКППД','1',0,4,NULL),(2,333,'2016-11-20',1,'3-х разовое','ОКППД','1',0,3,NULL),(3,222,'2016-11-20',1,'Завтрак','ОКППД','1',0,1,NULL),(4,1,'2017-08-04',1,'Ужин','ООПК','1',0,1,NULL),(5,1,'2017-08-04',1,'Ужин','ООПК','1',0,1,NULL),(6,3,'2017-08-04',2,'3-х разовое','ООПК','1',0,6,NULL),(7,3,'2017-08-04',2,'Обед','ООПК','1',0,2,NULL),(8,1,'2017-08-04',1,'3-х разовое','ООПК','1',0,3,NULL),(9,3,'2017-08-04',2,'Обед','ООПК','1',0,2,NULL),(10,1,'2017-08-04',1,'Ужин','ООПК','1',0,1,NULL),(11,4,'2017-08-04',2,'3-х разовое','ООПК','1',0,6,NULL),(12,22082017,'2016-11-23',1,'3-х разовое','ООПК','1',0,3,NULL),(13,1,'2016-11-23',1,'3-х разовое','ООПК','1',0,3,NULL),(14,22082017,'2017-08-22',1,'Завтрак + обед','ООПК','1',0,2,NULL),(15,22082017,'2016-11-23',1,'Завтрак + обед','ООПК','1',0,2,NULL),(16,22082017,'2017-08-22',1,'Завтрак + обед','ООПК','1',0,2,NULL),(17,2208,'2017-08-22',1,'Завтрак + обед','ООПК','1',0,2,NULL),(18,2208,'2017-08-22',1,'Завтрак + обед','ООПК','1',0,2,NULL),(19,2208,'2016-11-22',1,'Ужин','ООПК','1',0,1,NULL),(20,22082017,'2016-11-22',1,'Ужин','ООПК','1',0,1,NULL);
+/*!40000 ALTER TABLE `HOTELS_DELAYS` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `HOTELS_HISTORY_ORDER`
+--
+
+DROP TABLE IF EXISTS `HOTELS_HISTORY_ORDER`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `HOTELS_HISTORY_ORDER` (
+  `ID` int NOT NULL AUTO_INCREMENT,
+  `NUM_ORDER` int NOT NULL,
+  `CHANGE_TYPE` varchar(10) DEFAULT NULL,
+  `CHANGE_NUMBER` int DEFAULT NULL,
+  `DATE_CREATE` datetime DEFAULT NULL,
+  `DATE_DEPARTURE` datetime DEFAULT NULL,
+  `ID_EXECUTANT` int DEFAULT NULL,
+  `ID_HOTELS` int DEFAULT NULL,
+  `CHECK_IN_DATE` datetime DEFAULT NULL,
+  `CHECK_OUT_DATE` datetime DEFAULT NULL,
+  `PAX` int DEFAULT NULL,
+  `ID_TYPE_ORDER` int DEFAULT NULL,
+  `BREAKFAST_COUNT` int DEFAULT NULL,
+  `LUNCH_COUNT` int DEFAULT NULL,
+  `DINNER_COUNT` int DEFAULT NULL,
+  `ID_REASON` int DEFAULT NULL,
+  `PROBLEM_FLIGHT_NAME` varchar(6) DEFAULT NULL,
+  `PROBLEM_FLIGHT_DATE` datetime DEFAULT NULL,
+  `PLAN_FLIGHT_NAME` varchar(6) DEFAULT NULL,
+  `PLAN_FLIGHT_DATE` datetime DEFAULT NULL,
+  `PRIM` text,
+  `ORDER_CANCEL` int DEFAULT NULL,
+  PRIMARY KEY (`ID`),
+  KEY `idx_num_order` (`NUM_ORDER`),
+  KEY `idx_date_create` (`DATE_CREATE`),
+  KEY `ID_TYPE_ORDER` (`ID_TYPE_ORDER`),
+  KEY `ID_REASON` (`ID_REASON`),
+  CONSTRAINT `hotels_history_order_ibfk_1` FOREIGN KEY (`ID_TYPE_ORDER`) REFERENCES `HOTELS_TYPE_ORDER` (`ID`),
+  CONSTRAINT `hotels_history_order_ibfk_2` FOREIGN KEY (`ID_REASON`) REFERENCES `HOTELS_REASONS` (`ID`)
+) ENGINE=InnoDB AUTO_INCREMENT=19077 DEFAULT CHARSET=cp1251;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `HOTELS_HISTORY_ORDER`
+--
+
+LOCK TABLES `HOTELS_HISTORY_ORDER` WRITE;
+/*!40000 ALTER TABLE `HOTELS_HISTORY_ORDER` DISABLE KEYS */;
+INSERT INTO `HOTELS_HISTORY_ORDER` VALUES (19076,102671,'Изменение',0,'2022-02-22 19:50:00','2022-02-23 08:05:00',1817,25,NULL,'2022-02-23 08:05:00',1,0,1,0,1,4,'SU1605','2022-02-22 17:40:00','SU6507','2022-02-23 10:35:00',NULL,NULL);
+/*!40000 ALTER TABLE `HOTELS_HISTORY_ORDER` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `HOTELS_HISTORY_PASS`
+--
+
+DROP TABLE IF EXISTS `HOTELS_HISTORY_PASS`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `HOTELS_HISTORY_PASS` (
+  `ID` int NOT NULL AUTO_INCREMENT,
+  `ID_HISTORY_ORDER` int DEFAULT NULL,
+  `FIO` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`ID`),
+  KEY `ID_HISTORY_ORDER` (`ID_HISTORY_ORDER`),
+  CONSTRAINT `hotels_history_pass_ibfk_1` FOREIGN KEY (`ID_HISTORY_ORDER`) REFERENCES `HOTELS_HISTORY_ORDER` (`ID`)
+) ENGINE=InnoDB AUTO_INCREMENT=107476 DEFAULT CHARSET=cp1251;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `HOTELS_HISTORY_PASS`
+--
+
+LOCK TABLES `HOTELS_HISTORY_PASS` WRITE;
+/*!40000 ALTER TABLE `HOTELS_HISTORY_PASS` DISABLE KEYS */;
+INSERT INTO `HOTELS_HISTORY_PASS` VALUES (107475,19065,'2. FEDORENKO IVAN VITALEVICH');
+/*!40000 ALTER TABLE `HOTELS_HISTORY_PASS` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `HOTELS_KATEG`
+--
+
+DROP TABLE IF EXISTS `HOTELS_KATEG`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `HOTELS_KATEG` (
+  `ID` int NOT NULL AUTO_INCREMENT,
+  `NAME` varchar(50) NOT NULL,
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `HOTELS_KATEG`
+--
+
+LOCK TABLES `HOTELS_KATEG` WRITE;
+/*!40000 ALTER TABLE `HOTELS_KATEG` DISABLE KEYS */;
+INSERT INTO `HOTELS_KATEG` VALUES (1,'Категория 1'),(2,'Категория 2'),(4,'Категория 3'),(7,'2*'),(8,'3*'),(9,'4*'),(10,'Дом отдыха'),(11,'Пансионат'),(14,'5*');
+/*!40000 ALTER TABLE `HOTELS_KATEG` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `HOTELS_ORDER`
+--
+
+DROP TABLE IF EXISTS `HOTELS_ORDER`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `HOTELS_ORDER` (
+  `ID` int NOT NULL AUTO_INCREMENT,
+  `NUM_ORDER` int NOT NULL,
+  `DATE_CREATE` datetime DEFAULT NULL,
+  `DATE_DEPARTURE` datetime DEFAULT NULL,
+  `ID_EXECUTANT` int DEFAULT NULL,
+  `EXECUTANT` varchar(255) DEFAULT NULL,
+  `ID_HOTELS` int DEFAULT NULL,
+  `CHECK_IN_DATE` datetime DEFAULT NULL,
+  `CHECK_OUT_DATE` datetime DEFAULT NULL,
+  `PAX` int DEFAULT NULL,
+  `ID_TYPE_ORDER` int DEFAULT NULL,
+  `BREAKFAST_COUNT` int DEFAULT NULL,
+  `LUNCH_COUNT` int DEFAULT NULL,
+  `DINNER_COUNT` int DEFAULT NULL,
+  `ID_REASON` int DEFAULT NULL,
+  `PROBLEM_FLIGHT_NAME` varchar(6) DEFAULT NULL,
+  `PROBLEM_FLIGHT_DATE` datetime DEFAULT NULL,
+  `PLAN_FLIGHT_NAME` varchar(6) DEFAULT NULL,
+  `PLAN_FLIGHT_DATE` datetime DEFAULT NULL,
+  `PRIM` text,
+  `ORDER_CANCEL` int DEFAULT NULL,
+  PRIMARY KEY (`ID`),
+  KEY `idx_num_order` (`NUM_ORDER`),
+  KEY `idx_date_create` (`DATE_CREATE`),
+  KEY `ID_TYPE_ORDER` (`ID_TYPE_ORDER`),
+  KEY `ID_REASON` (`ID_REASON`),
+  CONSTRAINT `hotels_order_ibfk_1` FOREIGN KEY (`ID_TYPE_ORDER`) REFERENCES `HOTELS_TYPE_ORDER` (`ID`),
+  CONSTRAINT `hotels_order_ibfk_2` FOREIGN KEY (`ID_REASON`) REFERENCES `HOTELS_REASONS` (`ID`)
+) ENGINE=InnoDB AUTO_INCREMENT=155634 DEFAULT CHARSET=cp1251;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `HOTELS_ORDER`
+--
+
+LOCK TABLES `HOTELS_ORDER` WRITE;
+/*!40000 ALTER TABLE `HOTELS_ORDER` DISABLE KEYS */;
+INSERT INTO `HOTELS_ORDER` VALUES (155625,155108,'2025-06-24 01:35:00',NULL,2078,'Долгова Юлия Сергеевна',25,'2025-06-24 01:30:00','2025-06-24 11:35:00',2,0,2,0,0,4,'SU1129','2025-06-24 00:30:00','SU1384','2025-06-24 13:35:00',NULL,NULL),(155628,155111,'2025-06-24 01:42:00',NULL,2078,'Долгова Юлия Сергеевна',25,'2025-06-24 01:30:00','2025-06-24 11:35:00',4,0,4,0,0,4,'SU1129','2025-06-24 00:30:00','SU1384','2025-06-24 13:35:00',NULL,NULL),(155633,155116,'2025-06-24 08:27:00',NULL,2047,'Демьянова Полина Григорьевна',25,'2025-06-24 08:25:00','2025-06-24 15:00:00',1,0,1,1,0,4,'SU1549','2025-06-24 07:25:00','SU6375','2025-06-24 17:00:00',NULL,NULL);
+/*!40000 ALTER TABLE `HOTELS_ORDER` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `HOTELS_PASS`
+--
+
+DROP TABLE IF EXISTS `HOTELS_PASS`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `HOTELS_PASS` (
+  `ID` int NOT NULL AUTO_INCREMENT,
+  `ID_ORDER` int DEFAULT NULL,
+  `FIO` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`ID`),
+  KEY `ID_ORDER` (`ID_ORDER`),
+  CONSTRAINT `hotels_pass_ibfk_1` FOREIGN KEY (`ID_ORDER`) REFERENCES `HOTELS_ORDER` (`ID`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=cp1251;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `HOTELS_PASS`
+--
+
+LOCK TABLES `HOTELS_PASS` WRITE;
+/*!40000 ALTER TABLE `HOTELS_PASS` DISABLE KEYS */;
+INSERT INTO `HOTELS_PASS` VALUES (8,10,'BUKHANOVA INNA MRS');
+/*!40000 ALTER TABLE `HOTELS_PASS` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `HOTELS_REASONS`
+--
+
+DROP TABLE IF EXISTS `HOTELS_REASONS`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `HOTELS_REASONS` (
+  `ID` int NOT NULL AUTO_INCREMENT,
+  `NAME` varchar(100) NOT NULL,
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=cp1251;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `HOTELS_REASONS`
+--
+
+LOCK TABLES `HOTELS_REASONS` WRITE;
+/*!40000 ALTER TABLE `HOTELS_REASONS` DISABLE KEYS */;
+INSERT INTO `HOTELS_REASONS` VALUES (4,'Потеря стыковки'),(5,'Задержка'),(6,'Отмена'),(9,'Документы'),(11,'НПМ'),(12,'Распоряжение СЗН ООПП ДНОП'),(13,'Гарантийное письмо'),(14,'Потеря багажа'),(15,'Задержка выдачи багажа'),(16,'Мед. справка'),(17,'BOB'),(18,'Замена выхода на посадку'),(19,'Поздняя выдача багажа'),(21,'Изменение времени вылета рейса');
+/*!40000 ALTER TABLE `HOTELS_REASONS` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `HOTELS_TYPE_ORDER`
+--
+
+DROP TABLE IF EXISTS `HOTELS_TYPE_ORDER`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `HOTELS_TYPE_ORDER` (
+  `ID` int NOT NULL AUTO_INCREMENT,
+  `NAME` varchar(15) NOT NULL,
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=cp1251;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `HOTELS_TYPE_ORDER`
+--
+
+LOCK TABLES `HOTELS_TYPE_ORDER` WRITE;
+/*!40000 ALTER TABLE `HOTELS_TYPE_ORDER` DISABLE KEYS */;
+INSERT INTO `HOTELS_TYPE_ORDER` VALUES (0,'Визовая'),(1,'Безвизовая'),(2,'Визовая'),(3,'Безвизовая');
+/*!40000 ALTER TABLE `HOTELS_TYPE_ORDER` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Dumping events for database 'vkr'
+--
+
+--
+-- Dumping routines for database 'vkr'
+--
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2025-11-21 17:38:46
