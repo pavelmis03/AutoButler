@@ -15,7 +15,7 @@ def main():
         database='db',
     )
     # функция создания стартового окна
-    createFormAuth(db)
+    createStartForm(db)
     # завершаем подключение к БД
     db.close()
 

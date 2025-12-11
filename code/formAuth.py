@@ -17,13 +17,15 @@ import shutil
 # библиотека для работы с изображениями
 from PIL import ImageTk, Image  # pip install pillow
 
-# подключаем файл с функциями обработки данных
+# подключаем файл с функциями обработки данных, получаемых от форм
 from funcs import *
+# функции для работы с формами
 from funcsForm import *
+# константы
 import consts
 
 # создание стартовой формы
-def createFormAuth(db):
+def createStartForm(db):
     # создаем окно формы
     root = createWindow("Добро пожаловать!", 500, 250, icon="../static/icons/main.ico")
 
@@ -75,7 +77,7 @@ def createSignInForm(db, root):
     root.destroy()
 
     # создаем окно формы
-    root = createWindow("Форма авторизации", 500, 300, icon="../static/icons/main.ico")
+    root = createWindow("Форма авторизации", 500, 350, icon="../static/icons/main.ico")
 
     # создаем рамку для полей ввода
     frInput = Frame(borderwidth=1, relief=SOLID, padx=8, pady=10)
@@ -99,13 +101,22 @@ def createSignInForm(db, root):
     etrPwd = Entry(frInput, show="*")
     etrPwd.pack()
 
+    lblRole = Label(frInput, font=consts.FNTLBLH2, text="Выберите роль для входа")
+    lblRole.pack(pady=[20, 10])
+
+    # выпадающий список ролей для входа
+    cbxRole = ttk.Combobox(frInput, width=35, values=["Выберите роль:", "Начальник отдела обслуживания", "Менеджер по размещению", "Аналитик", "Администратор"], state="readonly")
+    # устанавливаем значение по умолчанию
+    cbxRole.current(0)
+    cbxRole.pack(padx=6, pady=6)
+
     # поле для вывода сообщения об ошибке
-    lblErr = Label(frInput, font=consts.FNTLBLS, foreground="red", text="")
+    lblErr = Label(frInput, font=consts.FNTLBLERR, foreground="red", text="")
     lblErr.pack()
 
     # кнопка для авторизации
     # функция обработки нажатия на кнопку
-    clickFunc = lambda event: checkSignInData(event, db, etrLogin.get(), etrPwd.get(), lblErr, etrPwd, root)
+    clickFunc = lambda event: checkSignInData(event, db, etrLogin.get(), etrPwd.get(), cbxRole.get(), lblErr, etrPwd, root)
     btnSignIn = Button(frInput, font=consts.FNTBTN, text="Авторизоваться")
     btnSignIn.pack()
     # привязываем событие нажатия на кнопку

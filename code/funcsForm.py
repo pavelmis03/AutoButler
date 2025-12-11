@@ -7,9 +7,12 @@ from tkinter import font
 # бибиблиотека для работы с ini файлами
 import configparser
 
-# подключаем файл с функциями обработки данных
+# подключаем файл с функциями обработки данных, получаемых от форм
 from funcs import *
-from consts import *
+# константы
+import consts
+# основные формы
+from formMain import *
 
 # библиотека для работы с изображениями
 from PIL import ImageTk, Image  # pip install pillow
@@ -20,7 +23,7 @@ def createWindow(caption, w=500, h=500, marginx=400, marginy=200, resizable=Fals
     root = Tk()
 
     # настраиваем шрифты
-    setFonts()
+    consts.setFonts()
 
     # заголовок окна
     root.title(caption)
