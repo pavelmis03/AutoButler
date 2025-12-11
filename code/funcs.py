@@ -5,7 +5,45 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # основные формы
+from formAuth import *
+# основные формы
 from formMain import *
+# формы для админа
+from formAdmin import *
+# формы для аналитика
+from formAnalyst import *
+# формы для оператора
+from formOperator import *
+# формы для менеджера
+from formManager import *
+
+# функция определения вызываемого окна в зависимости от роли
+def chooseNextForm(db, df):
+    # упрощаем датафрейм до обычного словаря с нужными полями
+    userData = {
+        "login": df["login"][0],
+        "pwd": df["pwd"][0],
+        "role": df["role"][0],
+        "email": df["email"][0],
+        "phone": df["phone"][0],
+        "name": df["name"][0],
+        "surname": df["surname"][0],
+        "patr": df["patr"][0],
+        "descr": df["descr"][0],
+    }
+    # меняем роли на более удобные названия и вызываем функции стартовых окон
+    if (userData["role"] == consts.ROLELIST[0][0]):
+        userData["role"] = consts.ROLELIST[1][0]   # "admin"
+        createAdminMainForm(db, userData)
+    elif (userData["role"] == consts.ROLELIST[0][1]):
+        userData["role"] = consts.ROLELIST[1][1]   # "analyst"
+        createAnalystMainForm(db, userData)
+    elif (userData["role"] == consts.ROLELIST[0][2]):
+        userData["role"] = consts.ROLELIST[1][2]   # "operator"
+        createOperatorMainForm(db, userData)
+    elif (userData["role"] == consts.ROLELIST[0][3]):
+        userData["role"] = consts.ROLELIST[1][3]   # "manager"
+        createManagerMainForm(db, userData)
 
 # функция проверки логина и пароля при входе
 def checkSignInData(event, db, login, pwd, role, lblErr, etrPwd, root):
@@ -14,6 +52,11 @@ def checkSignInData(event, db, login, pwd, role, lblErr, etrPwd, root):
             users.user_login AS login,
             users.user_pass AS pwd,
             users.user_role AS role,
+            users.user_email AS email,
+            users.user_phone AS phone,
+            users.user_name AS name,
+            users.user_surname AS surname,
+            users.user_patronymic AS patr,
             users.user_description AS descr
             FROM db.users
     '''
@@ -21,13 +64,6 @@ def checkSignInData(event, db, login, pwd, role, lblErr, etrPwd, root):
     df = pd.read_sql(qr, con=db)
     # фильтруем данные таблицы users для поиска соответствий введенным данным
     filterData = df.query(f"login == '{ login }' and pwd == '{ pwd }' and role == '{ role }'", inplace=False)
-    # заглушка
-    # filterData = ["Иван Васильевич",
-    #               [["Reno Logan", "01.05.2025", "Андрей", "Шиномонтаж; Полировка дисков"],
-    #                ["Reno Logan", "22.06.2025", "Андрей", "Плановое ТО"],
-    #                ["Audi A7", "06.07.2025", "Сергей", "Сход-развал"]
-    #                ],
-    #               [["Reno Logan", 4, 2011, 192392, "Ирина Евгеньевна"], ["Audi A7", 2, 2018, 67821, "Иван Васильевич"]]]
 
     # если ничего не найдено - данные для авторизации неверны
     if (filterData.empty):
@@ -43,5 +79,13 @@ def checkSignInData(event, db, login, pwd, role, lblErr, etrPwd, root):
         return
     # удаляем старое окно
     root.destroy()
-    # создаем форму главного экрана
-    createMainForm(db, filterData)
+
+    # функция определения вызываемого окна в зависимости от роли
+    chooseNextForm(db, filterData)
+
+# функция выхода из программы
+def logOut(db, root):
+    # удаляем старое окно
+    root.destroy()
+    # создаем форму для работы с БД
+    createSignInForm(db)

@@ -89,6 +89,8 @@ def createSignInForm(db, root):
 
     # текстовое поле логина
     etrLogin = Entry(frInput)
+    # устанавливаем фокус на окно логина
+    etrLogin.focus_set()
     etrLogin.pack()
     # устанавливаем фокус на окно логина
     etrLogin.focus_set()
@@ -105,7 +107,7 @@ def createSignInForm(db, root):
     lblRole.pack(pady=[20, 10])
 
     # выпадающий список ролей для входа
-    cbxRole = ttk.Combobox(frInput, width=35, values=["Выберите роль:", "Начальник отдела обслуживания", "Менеджер по размещению", "Аналитик", "Администратор"], state="readonly")
+    cbxRole = ttk.Combobox(frInput, width=35, values=["Выберите роль:", *consts.ROLELIST[0]], state="readonly")
     # устанавливаем значение по умолчанию
     cbxRole.current(0)
     cbxRole.pack(padx=6, pady=6)
