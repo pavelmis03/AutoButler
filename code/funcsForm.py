@@ -2,11 +2,14 @@
 from tkinter import *
 # дополнительные виджеты
 from tkinter import ttk
+# шрифты
+from tkinter import font
 # бибиблиотека для работы с ini файлами
 import configparser
 
 # подключаем файл с функциями обработки данных
 from funcs import *
+from consts import *
 
 # библиотека для работы с изображениями
 from PIL import ImageTk, Image  # pip install pillow
@@ -15,6 +18,10 @@ from PIL import ImageTk, Image  # pip install pillow
 def createWindow(caption, w=500, h=500, marginx=400, marginy=200, resizable=False, icon=None):
     # создаем основное окно
     root = Tk()
+
+    # настраиваем шрифты
+    setFonts()
+
     # заголовок окна
     root.title(caption)
     # настройки размеров и позиционирования окна
