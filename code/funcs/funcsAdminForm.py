@@ -29,9 +29,50 @@ from funcs.funcsForm import *
 # константы
 import consts
 
-# добавление нового пользователя
-def addNewUserData(db, root):
+# поиск пользователя
+def findUser(db, etrName, etrSurname, etrPatr, etrPhone, etrEmail, etrLogin):
     pass
+
+# функция изменения режима работы с пользователями: добавление, удаление, редактирование
+def changeWorkMode(workMode, btnAddUser, btnChangeUser, btnDelUser):
+    if (workMode.get() == "addUser"):
+        btnAddUser.state = "enabled"
+        btnChangeUser.state = "disabled"
+        btnDelUser.state = "disabled"
+        btnFindUser.state = "disabled"
+
+    if (workMode.get() == "changeUser"):
+        btnAddUser.state = "disabled"
+        btnChangeUser.state = "enabled"
+        btnDelUser.state = "disabled"
+        btnFindUser.state = "enabled"
+
+    if (workMode.get() == "delUser"):
+        btnAddUser.state = "disabled"
+        btnChangeUser.state = "disabled"
+        btnDelUser.state = "enabled"
+        btnFindUser.state = "enabled"
+
+
+# добавление нового пользователя
+def addNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, etrEmail, tbComm, etrLogin, etrPass):
+    qr = f'''INSERT INTO db.users 
+            (user_name, user_surname, user_patronymic, user_description, user_email, user_phone, user_login, user_pass, user_role) 
+            VALUES ('{ etrName }', '{ etrSurname }', '{ etrPatr }', '{ tbComm }', '{ etrEmail }', '{ etrPhone }', '{ etrLogin }', '{ etrPass }', '{ cbxRole }');
+            '''
+    try:
+        # создаем объект курсора для выбора нужной строки
+        cur = db.cursor()
+        # выполняем query-запрос
+        cur.execute(qr)
+        # сохраняем изменения в БД
+        db.commit()
+        showinfo(title="Добавление пользователя", message="Пользователь успешно добавлен!")
+    except Exception as e:
+        showerror(title="Добавление пользователя",
+                  message="Произошла непредвиденная ошибка при добавлении пользователя, попробуйте еще раз")
+    except:
+        showerror(title="Добавление пользователя", message="Произошла непредвиденная ошибка при добавлении пользователя, попробуйте еще раз")
 
 # проверка телефона
 def checkPhone(etrPhone):
@@ -159,5 +200,5 @@ def checkNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, 
         for i in range(min(5, len(err))):
             showerror(title="Данные заполнены неверно!", message=err[i])
     else:
-        addNewUserData()
+        addNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, etrEmail, tbComm, etrLogin, etrPass)
 

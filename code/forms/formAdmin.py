@@ -155,20 +155,44 @@ def createAndminUserManageForm(db, usrData):
 
     # проверка правильности заполнения данных
     clickFunc = lambda: checkNewUserData(db, root, etrName.get(), etrSurname.get(), etrPatr.get(),
-                                         cbxRole.get(), etrPhone.get(), etrEmail.get(), tbComm.get("1.0", "end"), etrLogin.get(),
-                                         etrPass.get())
+                                         cbxRole.get(), etrPhone.get(), etrEmail.get(), tbComm.get("1.0", "end"),
+                                         etrLogin.get(), etrPass.get())
     # добавить пользователя (сначала вызывается функция проверки правильности заполнения данных)
     btnAddUser = Button(frAddUser, font=consts.FNTBTNMINI, text="Добавить\nпользователя", command=clickFunc, padx=5, pady=5)
-    btnAddUser.grid(row=4, column=2, rowspan=2, padx=15, pady=[5, 5], sticky=W)
+    btnAddUser.grid(row=6, column=2, rowspan=2, padx=15, pady=[5, 5], sticky=W)
 
-    # добавить пользователя (сначала вызывается функция проверки правильности заполнения данных)
-    btnChangeUser = Button(frAddUser, font=consts.FNTBTNMINI, text="Изменить\nпользователя", command=clickFunc, padx=5, pady=5)
-    btnChangeUser.grid(row=6, column=2, rowspan=2, padx=15, pady=[5, 5], sticky=W)
+    # изменить пользователя (сначала вызывается функция проверки правильности заполнения данных)
+    btnChangeUser = Button(frAddUser, font=consts.FNTBTNMINI, text="Изменить\nпользователя", command=clickFunc, padx=5, pady=5, state="disabled")
+    btnChangeUser.grid(row=6, column=3, rowspan=2, padx=15, pady=[5, 5], sticky=W)
 
-    # # для вывода сообщений об ошибке
-    # lblErr = Label(frAddUser, font=consts.FNTLBLS, text="Пароль:")
-    # # устанавливаем позицию компонента в сетке
-    # lblErr.grid(row=2, column=2, padx=15, pady=10, sticky=W)
+    # удалить пользователя
+    btnDelUser = Button(frAddUser, font=consts.FNTBTNMINI, text="Удалить\nпользователя", command=clickFunc, padx=5,
+                           pady=5, state="disabled")
+    btnDelUser.grid(row=6, column=4, rowspan=2, padx=15, pady=[5, 5], sticky=W)
+    # поиск пользователя
+    clickFunc = lambda: findUser(db, etrName.get(), etrSurname.get(), etrPatr.get(), etrPhone.get(),
+                                         etrEmail.get(), etrLogin.get())
+    # найти пользователя
+    btnFindUser = Button(frAddUser, font=consts.FNTBTNMINI, text="Найти\nпользователя", command=clickFunc, padx=5,
+                        pady=5, state="disabled")
+    btnFindUser.grid(row=6, column=5, rowspan=2, padx=15, pady=[5, 5], sticky=W)
+
+    # группа для radioBtns
+    workMode = StringVar(value="addUser")
+    # изменение режима работы с добавление на редактирование и наоборот
+    clickFunc = lambda: changeWorkMode(workMode, btnAddUser, btnChangeUser, btnDelUser, btnFindUser)
+    # кнопка для выбора режима добавления пользователя
+    radioAddUser = Radiobutton(frAddUser, font=consts.FNTBTNMINI, text="Добавление\nпользователя", command=clickFunc, padx=5,
+                           pady=5, value="addUser", variable=workMode)
+    radioAddUser.grid(row=0, column=3, rowspan=1, padx=15, pady=[5, 5], sticky=W)
+    # кнопка для выбора режима редактирования пользователя
+    radioChangeUser = Radiobutton(frAddUser, font=consts.FNTBTNMINI, text="Редактирование\nпользователя", command=clickFunc,
+                               padx=5, pady=5, value="changeUser", variable=workMode)
+    radioChangeUser.grid(row=0, column=4, rowspan=1, padx=15, pady=[5, 5], sticky=W)
+    # кнопка для выбора режима удаления пользователя
+    radioDelUser = Radiobutton(frAddUser, font=consts.FNTBTNMINI, text="Удаление\nпользователя",
+                                  command=clickFunc, padx=5, pady=5, value="delUser", variable=workMode)
+    radioDelUser.grid(row=0, column=5, rowspan=1, padx=15, pady=[5, 5], sticky=W)
 
     # добавляем таблицу на форму
     frAddUser.pack(anchor=NW, fill=BOTH, padx=15, pady=[0, 10])
