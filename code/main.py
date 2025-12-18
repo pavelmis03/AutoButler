@@ -3,7 +3,7 @@ import pymysql as sql
 import pandas as pd
 
 # подключаем файлы с функциями создания форм
-from formAuth import *
+from forms.formAuth import *
 
 def main():
     # подключение к базе данных

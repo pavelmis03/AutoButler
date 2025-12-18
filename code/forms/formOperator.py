@@ -4,6 +4,8 @@ from tkinter import *
 from tkinter import ttk
 # шрифты
 from tkinter import font
+# сообщения
+from tkinter.messagebox import showerror, showwarning, showinfo
 # бибиблиотека для работы с ini файлами
 import configparser
 
@@ -17,20 +19,14 @@ import shutil
 # библиотека для работы с изображениями
 from PIL import ImageTk, Image  # pip install pillow
 
-# формы для админа
-from formAdmin import *
-
 # подключаем файл с функциями обработки данных, получаемых от форм
-from funcs import *
+from funcs.funcsAuth import *
 # функции для работы с формами
-from funcsForm import *
+from funcs.funcsForm import *
 # константы
 import consts
 
-def addNewUserData():
+
+# создаем форму для работы механика
+def createOperatorMainForm(db, usrData):
     pass
-
-def checkNewUserData():
-    if (True):
-        addNewUserData()
-

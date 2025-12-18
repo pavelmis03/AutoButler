@@ -4,15 +4,17 @@ from tkinter import *
 from tkinter import ttk
 # шрифты
 from tkinter import font
+# сообщения
+from tkinter.messagebox import showerror, showwarning, showinfo
 # бибиблиотека для работы с ini файлами
 import configparser
 
 # подключаем файл с функциями обработки данных, получаемых от форм
-from funcs import *
+from funcs.funcsAuth import *
 # константы
 import consts
 # основные формы
-from formMain import *
+from forms.formMain import *
 
 # библиотека для работы с изображениями
 from PIL import ImageTk, Image  # pip install pillow

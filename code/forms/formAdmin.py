@@ -4,6 +4,8 @@ from tkinter import *
 from tkinter import ttk
 # шрифты
 from tkinter import font
+# сообщения
+from tkinter.messagebox import showerror, showwarning, showinfo
 # бибиблиотека для работы с ini файлами
 import configparser
 
@@ -18,10 +20,11 @@ import shutil
 from PIL import ImageTk, Image  # pip install pillow
 
 # подключаем файл с функциями обработки данных, получаемых от форм
-from funcs import *
-# import funcs
+from funcs.funcsAuth import *
+# подключаем файл с функциями обработки данных, получаемых от форм админа
+from funcs.funcsAdminForm import *
 # функции для работы с формами
-from funcsForm import *
+from funcs.funcsForm import *
 # константы
 import consts
 
@@ -41,7 +44,7 @@ def createAndminUserManageForm(db, usrData):
     lblMain = Label(frMain, font=consts.FNTLBLH1, text="УЧЕТНЫЕ ЗАПИСИ")
     lblMain.pack(pady=30)
 
-    # -------------БЛОК добавление пользователя-------------
+    # -------------БЛОК добавления и изменения пользователя-------------
 
     # создаем рамку для выбора таблицы
     frAddUser = LabelFrame(frMain, font=consts.FNTLBLH2, text="Добавление пользователя", borderwidth=1, relief=SOLID)
@@ -99,7 +102,7 @@ def createAndminUserManageForm(db, usrData):
     # текстовое поле телефон
     etrPhone = Entry(frAddUser, font=consts.FNTLBLS, width=25)
     # значение по умолчанию для поля ввода
-    etrPhone.insert(0, "")
+    etrPhone.insert(0, "79991112233")
     etrPhone.grid(row=1, column=1, padx=15, pady=[0, 10], sticky=W)
 
     # Почта
@@ -109,7 +112,7 @@ def createAndminUserManageForm(db, usrData):
     # текстовое поле почта
     etrEmail = Entry(frAddUser, font=consts.FNTLBLS, width=25)
     # значение по умолчанию для поля ввода
-    etrEmail.insert(0, "")
+    etrEmail.insert(0, "post@gmail.com")
     etrEmail.grid(row=3, column=1, padx=15, pady=[0, 10], sticky=W)
 
     # Комментарий
@@ -119,6 +122,14 @@ def createAndminUserManageForm(db, usrData):
     # текстовое поле для комментария
     tbComm = Text(frAddUser, width=25, height=5, wrap="word")
     tbComm.grid(row=5, column=1, rowspan=3, padx=15, pady=[0, 10], sticky=W)
+    # скроллбары для текстбокса, привязываем их к виду в текстбоксе
+    # ys = ttk.Scrollbar(orient="vertical", command=tbComm.yview)
+    # ys.grid(row=5, column=2, sticky=NS)
+    # xs = ttk.Scrollbar(orient="horizontal", command=tbComm.xview)
+    # xs.grid(row=6, column=1, sticky=EW)
+    # # устанавливаем созданные скроллбары текстовому полю
+    # tbComm["yscrollcommand"] = ys.set
+    # tbComm["xscrollcommand"] = xs.set
 
     # -----------column_3-------
     # логин
@@ -142,22 +153,25 @@ def createAndminUserManageForm(db, usrData):
     etrPass.insert(0, "")
     etrPass.grid(row=3, column=2, padx=15, pady=[0, 10], sticky=W)
 
-    # проверка правильности заплонения данных
-    clickFunc = lambda: checkNewUserData(db, root, frAddUser)
+    # проверка правильности заполнения данных
+    clickFunc = lambda: checkNewUserData(db, root, etrName.get(), etrSurname.get(), etrPatr.get(),
+                                         cbxRole.get(), etrPhone.get(), etrEmail.get(), tbComm.get("1.0", "end"), etrLogin.get(),
+                                         etrPass.get())
     # добавить пользователя (сначала вызывается функция проверки правильности заполнения данных)
     btnAddUser = Button(frAddUser, font=consts.FNTBTNMINI, text="Добавить\nпользователя", command=clickFunc, padx=5, pady=5)
-    # третья строка, второй столбец
     btnAddUser.grid(row=4, column=2, rowspan=2, padx=15, pady=[5, 5], sticky=W)
+
+    # добавить пользователя (сначала вызывается функция проверки правильности заполнения данных)
+    btnChangeUser = Button(frAddUser, font=consts.FNTBTNMINI, text="Изменить\nпользователя", command=clickFunc, padx=5, pady=5)
+    btnChangeUser.grid(row=6, column=2, rowspan=2, padx=15, pady=[5, 5], sticky=W)
+
+    # # для вывода сообщений об ошибке
+    # lblErr = Label(frAddUser, font=consts.FNTLBLS, text="Пароль:")
+    # # устанавливаем позицию компонента в сетке
+    # lblErr.grid(row=2, column=2, padx=15, pady=10, sticky=W)
 
     # добавляем таблицу на форму
     frAddUser.pack(anchor=NW, fill=BOTH, padx=15, pady=[0, 10])
-
-    # -------------БЛОК изменение пользователя-------------
-
-    frChangeUser = LabelFrame(frMain, font=consts.FNTLBLH2, text="Изменение пользователя", borderwidth=1, relief=SOLID)
-
-    # добавляем таблицу на форму
-    frChangeUser.pack(anchor=NW, fill=BOTH, padx=15, pady=10)
 
     # -------------БЛОК удаление пользователя-------------
 

@@ -5,17 +5,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # основные формы
-from formAuth import *
+from forms.formAuth import *
 # основные формы
-from formMain import *
+from forms.formMain import *
 # формы для админа
-from formAdmin import *
+from forms.formAdmin import *
 # формы для аналитика
-from formAnalyst import *
+from forms.formAnalyst import *
 # формы для оператора
-from formOperator import *
+from forms.formOperator import *
 # формы для менеджера
-from formManager import *
+from forms.formManager import *
 
 # функция определения вызываемого окна в зависимости от роли
 def chooseNextForm(db, df):
