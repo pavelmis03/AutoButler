@@ -19,43 +19,127 @@ import shutil
 # библиотека для работы с изображениями
 from PIL import ImageTk, Image  # pip install pillow
 
-# формы для админа
-from forms.formAdmin import *
-
-# подключаем файл с функциями обработки данных, получаемых от форм
-from funcs.funcsAuth import *
 # функции для работы с формами
 from funcs.funcsForm import *
 # константы
 import consts
 
-# поиск пользователя
-def findUser(db, etrName, etrSurname, etrPatr, etrPhone, etrEmail, etrLogin):
-    pass
+# изменение пользователя
+def changeUser(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, etrEmail, tbComm, etrLogin, etrPass, userData, findData, cbxFindUserRes):
+    # сначала проверяем правильность заполнения данных
+    flag = checkNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, etrEmail, tbComm, etrLogin, etrPass, False)
+    # если мы успешно добавили нового пользователя, нужно удалить старого
+    if (flag):
+        flag = delUser(db, userData, findData, cbxFindUserRes, False)
+        # если успешно удалили
+        if (flag):
+            showinfo(title="Изменение пользователя", message="Пользователь был успешно изменен!")
+            return True
+        else:
+            showerror(title="Изменение пользователя",
+                      message="Произошла ошибка (delOldUser) при изменении пользователя, скорее всего, вы не выбрали пользователя для изменения, попробуйте еще раз")
+    else:
+        showerror(title="Удаление пользователя",
+                  message="Произошла ошибка (addNewUser) при изменении пользователя, попробуйте еще раз")
+
+    return False
+
+# удалить пользователя, если выбран
+def delUser(db, userData, findData, cbxFindUserRes, message=True):
+    # если пользователи были ныйдены и выбраны
+    if (userData != "Нет совпадений"):
+        # разбираем строку на имя, фамилию и логин name surname (login)
+        name, surname, login = userData.split()
+        # убираем скобки
+        login = login[1:-1]
+        qr = f'''DELETE FROM users
+                WHERE user_name = '{name}' AND user_surname = '{surname}' AND user_login = '{login}';
+              '''
+        try:
+            # создаем объект курсора для выбора нужной строки
+            cur = db.cursor()
+            # выполняем query-запрос
+            cur.execute(qr)
+            # сохраняем изменения в БД
+            db.commit()
+            if (message):
+                showinfo(title="Удаление пользователя", message="Пользователь успешно удален!")
+
+            # вызываем снова функцию поиска, чтобы обновить список пользователей, доступных для удаления
+            findUser(db, findData, cbxFindUserRes)
+
+            return True
+        except Exception as e:
+            if (message):
+                showerror(title="Удаление пользователя",
+                      message="Произошла непредвиденная ошибка при удалении пользователя, попробуйте еще раз")
+        # except:
+        #     if (message):
+        #         showerror(title="Удаление пользователя",
+        #               message="Произошла непредвиденная ошибка при удалении пользователя, попробуйте еще раз")
+    else:
+        if (message):
+            showinfo(title="Удаление пользователя", message="Найдите и выберите пользователя для удаления")
+    return False
+
+# поиск пользователя по фрагменту данных
+def findUser(db, findData, cbxFindUserRes):
+    # запрос на получение данных о пользователях из БД
+    qr = '''SELECT
+                users.user_role AS role, 
+                users.user_login AS login,
+                users.user_email AS email,
+                users.user_phone AS phone,
+                users.user_name AS name,
+                users.user_surname AS surname,
+                users.user_patronymic AS patr
+                FROM db.users
+        '''
+    # чтение данных из БД с помощью query запроса
+    df = pd.read_sql(qr, con=db)
+    # фильтруем данные таблицы users для поиска соответствий введенным данным
+    filterData = df.query(f"login == '{findData}' or phone == '{findData}' or surname == '{findData}'", inplace=False)
+
+    # если ничего не найдено - сообщаем об этом
+    if (filterData.empty):
+        showinfo(title="Поиск пользователя", message="Пользователь с такими данными не найден")
+        # и очищаем данные выпадающего списка
+        cbxFindUserRes["values"] = ["Нет совпадений"]
+        cbxFindUserRes.current(0)
+    else:
+        arr = []
+        # проходим по найденным пользователям
+        for i in range(len(filterData)):
+            # добавляем в выпадающий список
+            str = filterData.iloc[i]["name"] + " " + filterData.iloc[i]["surname"] + " (" + filterData.iloc[i]["login"] + ")"
+            arr.append(str)
+        cbxFindUserRes["values"] = arr[:]
+        cbxFindUserRes.current(0)
+
 
 # функция изменения режима работы с пользователями: добавление, удаление, редактирование
-def changeWorkMode(workMode, btnAddUser, btnChangeUser, btnDelUser):
+def changeWorkMode(workMode, btnAddUser, btnChangeUser, btnDelUser, btnFindUser):
     if (workMode.get() == "addUser"):
-        btnAddUser.state = "enabled"
-        btnChangeUser.state = "disabled"
-        btnDelUser.state = "disabled"
-        btnFindUser.state = "disabled"
+        btnAddUser["state"] = "normal"
+        btnChangeUser["state"] = "disabled"
+        btnDelUser["state"] = "disabled"
+        btnFindUser["state"] = "disabled"
 
     if (workMode.get() == "changeUser"):
-        btnAddUser.state = "disabled"
-        btnChangeUser.state = "enabled"
-        btnDelUser.state = "disabled"
-        btnFindUser.state = "enabled"
+        btnAddUser["state"] = "disabled"
+        btnChangeUser["state"] = "normal"
+        btnDelUser["state"] = "disabled"
+        btnFindUser["state"] = "normal"
 
     if (workMode.get() == "delUser"):
-        btnAddUser.state = "disabled"
-        btnChangeUser.state = "disabled"
-        btnDelUser.state = "enabled"
-        btnFindUser.state = "enabled"
+        btnAddUser["state"] = "disabled"
+        btnChangeUser["state"] = "disabled"
+        btnDelUser["state"] = "normal"
+        btnFindUser["state"] = "normal"
 
 
 # добавление нового пользователя
-def addNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, etrEmail, tbComm, etrLogin, etrPass):
+def addNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, etrEmail, tbComm, etrLogin, etrPass, message=True):
     qr = f'''INSERT INTO db.users 
             (user_name, user_surname, user_patronymic, user_description, user_email, user_phone, user_login, user_pass, user_role) 
             VALUES ('{ etrName }', '{ etrSurname }', '{ etrPatr }', '{ tbComm }', '{ etrEmail }', '{ etrPhone }', '{ etrLogin }', '{ etrPass }', '{ cbxRole }');
@@ -67,12 +151,19 @@ def addNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, et
         cur.execute(qr)
         # сохраняем изменения в БД
         db.commit()
-        showinfo(title="Добавление пользователя", message="Пользователь успешно добавлен!")
+        if (message):
+            showinfo(title="Добавление пользователя", message="Пользователь успешно добавлен!")
+
+        return True
     except Exception as e:
-        showerror(title="Добавление пользователя",
+        if (message):
+            showerror(title="Добавление пользователя",
                   message="Произошла непредвиденная ошибка при добавлении пользователя, попробуйте еще раз")
     except:
-        showerror(title="Добавление пользователя", message="Произошла непредвиденная ошибка при добавлении пользователя, попробуйте еще раз")
+        if (message):
+            showerror(title="Добавление пользователя", message="Произошла непредвиденная ошибка при добавлении пользователя, попробуйте еще раз")
+
+    return False
 
 # проверка телефона
 def checkPhone(etrPhone):
@@ -160,7 +251,7 @@ def checkLogin(db, etrLogin):
 
     return err
 
-def checkNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, etrEmail, tbComm, etrLogin, etrPass):
+def checkNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, etrEmail, tbComm, etrLogin, etrPass, message=True):
     # список ошибок, допущенных при заполнении формы
     err = []
     # проверяем заполнение основных полей
@@ -185,11 +276,12 @@ def checkNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, 
         # добавляем их к основному списку ошибок
         err = err + tmpErr
     # проверяем логин
-    tmpErr = checkLogin(db, etrLogin)
-    # если ошибки в логине есть
-    if (len(tmpErr) != 0):
-        # добавляем их к основному списку ошибок
-        err = err + tmpErr
+    if (message):   # не проверяем, если это изменение пользователя
+        tmpErr = checkLogin(db, etrLogin)
+        # если ошибки в логине есть
+        if (len(tmpErr) != 0):
+            # добавляем их к основному списку ошибок
+            err = err + tmpErr
 
     if (etrPass == ""):
         err.append("Заполните поле 'Пароль'")
@@ -199,6 +291,85 @@ def checkNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, 
         # выводим не больше 5 ошибок
         for i in range(min(5, len(err))):
             showerror(title="Данные заполнены неверно!", message=err[i])
+        # сообщаем, что данные заполнены неверно
+        return False
     else:
-        addNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, etrEmail, tbComm, etrLogin, etrPass)
+        addNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, etrEmail, tbComm, etrLogin, etrPass, message)
+        # сообщаем, что операция успешна
+        return True
 
+
+# загружает список логов из БД
+def loadLogList():
+    # запрос на получение данных о системе
+    qr = '''SELECT system_log.id_log AS id,
+                    system_log.action_caption AS caption,
+                    system_log.action_type AS type,
+                    system_log.action_status AS status,
+                    system_log.description AS descr,
+                    system_log.date_time AS date_time
+                    FROM db.system_log
+            '''
+
+    # пробуем прочитать данные
+    try:
+        # чтение данных из БД с помощью query запроса
+        df = pd.read_sql(qr, con=db)
+        # фильтруем данные таблицы users для поиска соответствий введенным данным
+        # filterData = df.query(f"login == '{login}' and pwd == '{pwd}' and role == '{role}'", inplace=False)
+
+        # список логов
+        # заголовки таблицы
+        # cols = list(df.columns)
+        # logList = df.to_dict()
+
+    except Exception as e:
+        showinfo(title="Загрузка логов",
+                 message="При выгрузке логов из БД произошла непредвиденная ошибка! Проверьте БД и попробйте снова.")
+
+# заполнение таблицы данными на форме управления системой из БД
+def insertDataToTable(table, df):
+    # загружаем список логов для построения таблицы
+    df = loadLodList()
+
+    # добавляем данные в таблицу из dataFrame
+    for index, row in df.iterrows():
+        # разбираем дату и время на отдельные составляющие
+        tstr = row[-1].strftime("%Y-%m-%d %H:%M:%S")
+        date = tstr.split()[0]
+        time = tstr.split()[1][:-3]
+        table.insert("", END, values=tuple([*row[:-1], date, time]))
+
+# очистка всех логов в БД
+def clearLogList(db, table):
+    # запрос на удаление всех записей
+    qr = f'''DELETE FROM system_log
+                    WHERE system_log.id_log != 0;
+                  '''
+    ans = showwarning(title="Очистка логов", message="Вы действительно хотите удалить ВСЕ записи логов?")
+    if ans:
+        try:
+            # создаем объект курсора для выбора нужной строки
+            cur = db.cursor()
+            # выполняем query-запрос
+            cur.execute(qr)
+            # сохраняем изменения в БД
+            db.commit()
+            showinfo(title="Очистка логов", message="Очистка логов прошла успешно!")
+
+            # обновляем данные в таблице
+            insertDataToTable(logList, df)
+
+            return True
+        except Exception as e:
+            if (message):
+                showerror(title="Удаление пользователя",
+                          message="Произошла непредвиденная ошибка при удалении пользователя, попробуйте еще раз")
+
+# удаление записи лога
+def delRecord(db, selectRow):
+    pass
+
+# создание отчета по логам от до даты и времени
+def createReport(db, etrDateFrom, dateUntil, timeFrom, timeUntil):
+    pass

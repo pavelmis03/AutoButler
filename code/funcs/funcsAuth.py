@@ -5,45 +5,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # основные формы
-from forms.formAuth import *
-# основные формы
 from forms.formMain import *
+# формы авторизации
+import forms.formAuth as fAuth
 # формы для админа
-from forms.formAdmin import *
+from forms.formAdmin import createAdminMainForm
 # формы для аналитика
-from forms.formAnalyst import *
+from forms.formAnalyst import createAnalystMainForm
 # формы для оператора
-from forms.formOperator import *
+from forms.formOperator import createOperatorMainForm
 # формы для менеджера
-from forms.formManager import *
-
-# функция определения вызываемого окна в зависимости от роли
-def chooseNextForm(db, df):
-    # упрощаем датафрейм до обычного словаря с нужными полями
-    userData = {
-        "login": df["login"][0],
-        "pwd": df["pwd"][0],
-        "role": df["role"][0],
-        "email": df["email"][0],
-        "phone": df["phone"][0],
-        "name": df["name"][0],
-        "surname": df["surname"][0],
-        "patr": df["patr"][0],
-        "descr": df["descr"][0],
-    }
-    # меняем роли на более удобные названия и вызываем функции стартовых окон
-    if (userData["role"] == consts.ROLELIST[0][0]):
-        userData["role"] = consts.ROLELIST[1][0]   # "admin"
-        createAdminMainForm(db, userData)
-    elif (userData["role"] == consts.ROLELIST[0][1]):
-        userData["role"] = consts.ROLELIST[1][1]   # "analyst"
-        createAnalystMainForm(db, userData)
-    elif (userData["role"] == consts.ROLELIST[0][2]):
-        userData["role"] = consts.ROLELIST[1][2]   # "operator"
-        createOperatorMainForm(db, userData)
-    elif (userData["role"] == consts.ROLELIST[0][3]):
-        userData["role"] = consts.ROLELIST[1][3]   # "manager"
-        createManagerMainForm(db, userData)
+from forms.formManager import createManagerMainForm
 
 # функция проверки логина и пароля при входе
 def checkSignInData(event, db, login, pwd, role, lblErr, etrPwd, root):
@@ -77,15 +49,39 @@ def checkSignInData(event, db, login, pwd, role, lblErr, etrPwd, root):
         etrPwd.delete(0, END)
         # выходим из функции
         return
-    # удаляем старое окно
-    root.destroy()
 
     # функция определения вызываемого окна в зависимости от роли
-    chooseNextForm(db, filterData)
+    chooseNextForm(db, filterData, root)
 
 # функция выхода из программы
 def logOut(db, root):
-    # удаляем старое окно
-    root.destroy()
     # создаем форму для работы с БД
-    createSignInForm(db)
+    fAuth.createSignInForm(db, root)
+
+# функция определения вызываемого окна в зависимости от роли
+def chooseNextForm(db, df, root):
+    # упрощаем датафрейм до обычного словаря с нужными полями
+    userData = {
+        "login": df["login"][0],
+        "pwd": df["pwd"][0],
+        "role": df["role"][0],
+        "email": df["email"][0],
+        "phone": df["phone"][0],
+        "name": df["name"][0],
+        "surname": df["surname"][0],
+        "patr": df["patr"][0],
+        "descr": df["descr"][0],
+    }
+    # меняем роли на более удобные названия и вызываем функции стартовых окон
+    if (userData["role"] == consts.ROLELIST[0][0]):
+        userData["role"] = consts.ROLELIST[1][0]   # "admin"
+        createAdminMainForm(db, root, userData)
+    elif (userData["role"] == consts.ROLELIST[0][1]):
+        userData["role"] = consts.ROLELIST[1][1]   # "analyst"
+        createAnalystMainForm(db, root, userData)
+    elif (userData["role"] == consts.ROLELIST[0][2]):
+        userData["role"] = consts.ROLELIST[1][2]   # "operator"
+        createOperatorMainForm(db, root, userData)
+    elif (userData["role"] == consts.ROLELIST[0][3]):
+        userData["role"] = consts.ROLELIST[1][3]   # "manager"
+        createManagerMainForm(db, root, userData)

@@ -20,17 +20,20 @@ import shutil
 from PIL import ImageTk, Image  # pip install pillow
 
 # подключаем файл с функциями обработки данных, получаемых от форм
-from funcs.funcsAuth import *
+import funcs.funcsAuth as fAuth
 # подключаем файл с функциями обработки данных, получаемых от форм админа
 from funcs.funcsAdminForm import *
 # функции для работы с формами
-from funcs.funcsForm import *
+from funcs.funcsForm import createGrid, createWindow
 # константы
 import consts
 
 # создаем форму для работы Админа - окно вывода ошибок
 # userData = {"login", "pwd", "role", "email", "phone", "name", "surname", "patr", "descr"}
-def createAndminUserManageForm(db, usrData):
+def createAndminUserManageForm(db, root, usrData):
+    # удаляем предыдущее окно
+    root.destroy()
+
     # ширина и высота окна
     w = 970
     h = 750
@@ -153,6 +156,30 @@ def createAndminUserManageForm(db, usrData):
     etrPass.insert(0, "")
     etrPass.grid(row=3, column=2, padx=15, pady=[0, 10], sticky=W)
 
+    # -----------column_4-------
+
+    # поиск пользователя
+    lblFindUser = Label(frAddUser, font=consts.FNTLBLS, justify="left", text="Введите фамилию, или логин,\nили телефон пользователя\nдля поиска: ")
+    # устанавливаем позицию компонента в сетке
+    lblFindUser.grid(row=1, column=3, columnspan=2, padx=15, pady=10, sticky=W)
+    # текстовое поле пароль
+    etrFindUser = Entry(frAddUser, font=consts.FNTLBLS)
+    # значение по умолчанию для поля ввода
+    etrFindUser.insert(0, "")
+    etrFindUser.grid(row=2, column=3, columnspan=2, padx=15, pady=[0, 10], sticky=W)
+
+    # найденные варианты
+    lblFindUserRes = Label(frAddUser, font=consts.FNTLBLS, text="Найденные пользователи: ")
+    # устанавливаем позицию компонента в сетке
+    lblFindUserRes.grid(row=3, column=3, columnspan=2, padx=15, pady=10, sticky=W)
+    # выпадающий список ролей для входа
+    cbxFindUserRes = ttk.Combobox(frAddUser, values=["Нет совпадений"], state="readonly")
+    # устанавливаем значение по умолчанию
+    cbxFindUserRes.current(0)
+    # устанавливаем позицию компонента в сетке
+    cbxFindUserRes.grid(row=4, column=3, columnspan=2, padx=15, pady=[0, 10], sticky=W)
+
+
     # проверка правильности заполнения данных
     clickFunc = lambda: checkNewUserData(db, root, etrName.get(), etrSurname.get(), etrPatr.get(),
                                          cbxRole.get(), etrPhone.get(), etrEmail.get(), tbComm.get("1.0", "end"),
@@ -161,17 +188,22 @@ def createAndminUserManageForm(db, usrData):
     btnAddUser = Button(frAddUser, font=consts.FNTBTNMINI, text="Добавить\nпользователя", command=clickFunc, padx=5, pady=5)
     btnAddUser.grid(row=6, column=2, rowspan=2, padx=15, pady=[5, 5], sticky=W)
 
+    # изменение пользователя
+    clickFunc = lambda: changeUser(db, root, etrName.get(), etrSurname.get(), etrPatr.get(),
+                                         cbxRole.get(), etrPhone.get(), etrEmail.get(), tbComm.get("1.0", "end"),
+                                         etrLogin.get(), etrPass.get(), cbxFindUserRes.get(), etrFindUser.get(), cbxFindUserRes)
     # изменить пользователя (сначала вызывается функция проверки правильности заполнения данных)
     btnChangeUser = Button(frAddUser, font=consts.FNTBTNMINI, text="Изменить\nпользователя", command=clickFunc, padx=5, pady=5, state="disabled")
     btnChangeUser.grid(row=6, column=3, rowspan=2, padx=15, pady=[5, 5], sticky=W)
 
+    # удаление пользователя
+    clickFunc = lambda: delUser(db, cbxFindUserRes.get(), etrFindUser.get(), cbxFindUserRes)
     # удалить пользователя
     btnDelUser = Button(frAddUser, font=consts.FNTBTNMINI, text="Удалить\nпользователя", command=clickFunc, padx=5,
                            pady=5, state="disabled")
     btnDelUser.grid(row=6, column=4, rowspan=2, padx=15, pady=[5, 5], sticky=W)
     # поиск пользователя
-    clickFunc = lambda: findUser(db, etrName.get(), etrSurname.get(), etrPatr.get(), etrPhone.get(),
-                                         etrEmail.get(), etrLogin.get())
+    clickFunc = lambda: findUser(db, etrFindUser.get(), cbxFindUserRes)
     # найти пользователя
     btnFindUser = Button(frAddUser, font=consts.FNTBTNMINI, text="Найти\nпользователя", command=clickFunc, padx=5,
                         pady=5, state="disabled")
@@ -194,25 +226,206 @@ def createAndminUserManageForm(db, usrData):
                                   command=clickFunc, padx=5, pady=5, value="delUser", variable=workMode)
     radioDelUser.grid(row=0, column=5, rowspan=1, padx=15, pady=[5, 5], sticky=W)
 
-    # добавляем таблицу на форму
+    # добавляем раздел на форму
     frAddUser.pack(anchor=NW, fill=BOTH, padx=15, pady=[0, 10])
 
-    # -------------БЛОК удаление пользователя-------------
-
-    frDelUser = LabelFrame(frMain, font=consts.FNTLBLH2, text="Удаление пользователя", borderwidth=1, relief=SOLID)
-
-
-    # добавляем таблицу на форму
-    frDelUser.pack(anchor=NW, fill=BOTH, padx=15, pady=10)
-
-    # выход из пользователя
-    btnLogOut = Button(frMain, font=consts.FNTBTN, text="Сменить пользователя", padx=5, pady=5, command=lambda: logOut(db, root))
-    btnLogOut.pack(anchor=S, padx=10, pady=[8, 20])
+    # выход в предыдущее меню
+    clickFunc = lambda: createAdminMainForm(db, root, usrData)
+    # кнопка ,,назад,, (выйти в предыдущее меню)
+    btnBack = Button(frMain, font=consts.FNTLBLH2, text="Назад", command=clickFunc, padx=5, pady=5)
+    btnBack.pack(fill=BOTH, padx=30, pady=5, ipadx=10, ipady=10)
 
     frMain.pack(fill=BOTH, padx=5, pady=5, ipadx=10, ipady=10)
 
     root.mainloop()
 
+# создаем форму для работы Админа - окно вывода ошибок
+# userData = {"login", "pwd", "role", "email", "phone", "name", "surname", "patr", "descr"}
+def createAndminSystemManageForm(db, root, usrData):
+    # удаляем предыдущее окно
+    root.destroy()
+
+    # ширина и высота окна
+    w = 1270
+    h = 750
+    # если дошло до этого места, значит, есть пользователь с введенными данными - создаем новое окно
+    root = createWindow(f"Добро пожаловать, {usrData['name']}. Ваша роль: {usrData['role']}", w=w, h=h, marginx=250,
+                        marginy=10)
+
+    # создаем основную рамку
+    frMain = Frame(borderwidth=1, relief=SOLID)
+
+    # основной заголовок
+    lblMain = Label(frMain, font=consts.FNTLBLH1, text="УПРАВЛЕНИЕ СИСТЕМОЙ")
+    lblMain.pack(pady=30)
+
+    # -------------БЛОК таблицы-------------
+
+    # создаем рамку таблицы логов
+    lFRegList = LabelFrame(frMain, font=consts.FNTLBLH2, text="Список логов", borderwidth=1, relief=SOLID)
+
+    # строим таблицу по полученным данным
+    logList = ttk.Treeview(lFRegList, columns=[], show="headings", height=8)
+
+    # создаем полосы прокрутки для таблицы
+    scrlV = ttk.Scrollbar(lFRegList, orient="vertical", command=logList.yview)
+    scrlV.pack(side=RIGHT, fill=Y)
+    scrlH = ttk.Scrollbar(lFRegList, orient="horizontal", command=logList.xview)
+    scrlH.pack(side=BOTTOM, fill=X)
+    # привязка полос прокрутки к таблице
+    logList["yscrollcommand"] = scrlV.set
+    logList["xscrollcommand"] = scrlH.set
+
+    # очищаем таблицу перед наполнением
+    for col in logList['columns']:
+        logList.heading(col, text='')
+    logList.delete(*logList.get_children())
+
+    # список колонок будущей таблицы
+    cols = ["№", "Название", "Тип записи", "Статус", "Описание", "Дата записи", "Время записи"]
+    # строим таблицу по полученным данным
+    logList["columns"] = cols
+    # определяем заголовки для столбцов
+    i = 1
+    for col in cols:
+        logList.heading(col, text=col, anchor=CENTER)
+        # выравнивание по центру для данных в ячейках
+        logList.column(f"#{i}", anchor=CENTER)
+        i += 1
+
+    # наполняем таблицу данными
+    insertDataToTable(logList)
+
+    # добавляем, растягивая по ширине элементы и заполняя контэйнер
+    logList.pack(fill=BOTH, expand=1, padx=5, pady=[5, 10])
+    # добавляем таблицу на форму
+    lFRegList.pack(anchor=NW, fill=BOTH, expand=True, padx=10, pady=10)
+
+    # -------------БЛОК кнопок управления-------------
+
+    # создаем рамку для кнопок
+    frManageBtns = LabelFrame(frMain, font=consts.FNTLBLH2, text="Рабочие окна", borderwidth=1, relief=SOLID)
+
+    # сетка компонентов 6x5
+    createGrid(frManageBtns, 15, 5, 1, 1)
+
+    # очистить журнал
+    clickFunc = lambda: clearLogList(db, logList)
+    btnCleareLogList = Button(frManageBtns, font=consts.FNTBTN, text="Очистить журнал", command=clickFunc, padx=10, pady=10)
+    btnCleareLogList.grid(row=0, column=0, columnspan=2, padx=10, pady=[10, 10], ipadx=10)
+
+    # удалить запись
+    clickFunc = lambda: delRecord(db, logList.selection())
+    btnDelRecord = Button(frManageBtns, font=consts.FNTBTN, text="Удалить запись", command=clickFunc, padx=10, pady=10)
+    btnDelRecord.grid(row=0, column=2, columnspan=2, padx=10, pady=[10, 10], ipadx=20)
+
+    # дата от
+    lblDateFrom = Label(frManageBtns, font=consts.FNTLBLS, text="Дата до:")
+    lblDateFrom.grid(row=1, column=2, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+
+    # текстовое поле дата ОТ
+    etrDateFrom = Entry(frManageBtns, font=consts.FNTLBLS)
+    # значение по умолчанию для поля ввода
+    etrDateFrom.insert(0, "YYYY-MM-DD")
+    etrDateFrom.grid(row=2, column=2, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+
+    # дата до
+    lblDateUntil = Label(frManageBtns, font=consts.FNTLBLS, text="Дата до:")
+    lblDateUntil.grid(row=3, column=2, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+
+    # текстовое поле дата ДО
+    etrDateUntil = Entry(frManageBtns, font=consts.FNTLBLS)
+    # значение по умолчанию для поля ввода
+    etrDateUntil.insert(0, "YYYY-MM-DD")
+    etrDateUntil.grid(row=4, column=2, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+
+    # время от
+    lblTimeFrom = Label(frManageBtns, font=consts.FNTLBLS, text="Время от:")
+    lblTimeFrom.grid(row=1, column=3, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+
+    # текстовое поле время ОТ
+    etrTimeFrom = Entry(frManageBtns, font=consts.FNTLBLS)
+    # значение по умолчанию для поля ввода
+    etrTimeFrom.insert(0, "00:01")
+    etrTimeFrom.grid(row=2, column=3, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+
+    # время до
+    lblTimeUntil = Label(frManageBtns, font=consts.FNTLBLS, text="Время до:")
+    lblTimeUntil.grid(row=3, column=3, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+
+    # текстовое поле время ДО
+    etrTimeUntil = Entry(frManageBtns, font=consts.FNTLBLS)
+    # значение по умолчанию для поля ввода
+    etrTimeUntil.insert(0, "23:59")
+    etrTimeUntil.grid(row=4, column=3, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+
+    # сформировать отчет
+    clickFunc = lambda: createReport(db, etrDateFrom.get(), lblDateUntil.get(), etrTimeFrom.get(), lblTimeUntil.get())
+    btnCreateReport = Button(frManageBtns, font=consts.FNTBTN, text="Сформировать отчет", command=clickFunc, padx=10, pady=10)
+    btnCreateReport.grid(row=1, column=0, columnspan=2, rowspan=2, padx=15, pady=[35, 10])
+
+    frManageBtns.pack(fill=BOTH, padx=10, pady=5, ipadx=3)
+
+    # выход в предыдущее меню
+    clickFunc = lambda: createAdminMainForm(db, root, usrData)
+    # кнопка ,,назад,, (выйти в предыдущее меню)
+    btnBack = Button(frMain, font=consts.FNTLBLH2, text="Назад", command=clickFunc, padx=5, pady=5)
+    btnBack.pack(fill=BOTH, padx=30, pady=5, ipadx=10, ipady=10)
+
+
+    frMain.pack(fill=BOTH, padx=10, pady=5, ipadx=10, ipady=10)
+
+    root.mainloop()
+
 # создаем форму для работы Админа - основное окно
-def createAdminMainForm(db, usrData):
-    createAndminUserManageForm(db, usrData)
+def createAdminMainForm(db, root, usrData):
+    # удаляем предыдущее окно
+    root.destroy()
+
+    # ширина и высота окна
+    w = 570
+    h = 520
+    # если дошло до этого места, значит, есть пользователь с введенными данными - создаем новое окно
+    root = createWindow(f"Добро пожаловать, {usrData['name']}. Ваша роль: {usrData['role']}", w=w, h=h, marginx=250,
+                        marginy=10)
+
+    # создаем основную рамку
+    frMain = Frame(borderwidth=1, relief=SOLID)
+
+    # основной заголовок
+    lblMain = Label(frMain, font=consts.FNTLBLH1, text="АДМИНИСТРИРОВАНИЕ")
+    lblMain.pack(pady=30)
+
+    # создаем рамку для кнопок
+    frBtns = LabelFrame(frMain, font=consts.FNTLBLH2, text="Рабочие окна", borderwidth=1, relief=SOLID)
+
+    # сетка компонентов 3x3
+    createGrid(frBtns, 3, 9, 1, 1)
+
+    # -------------БЛОК выбора окна-------------
+
+    # управление пользователями
+    clickFunc = lambda: createAndminUserManageForm(db, root, usrData)
+    # управление пользователями
+    btnUserManageForm = Button(frBtns, font=consts.FNTBTN, text="Управление учетными\nзаписями пользователей", command=clickFunc, padx=10, pady=10)
+    btnUserManageForm.grid(row=1, column=1, rowspan=2, padx=15, pady=[35, 10])
+
+    # настройка системы
+    clickFunc = lambda: createAndminSystemManageForm(db, root, usrData)
+    # настройка системы
+    btnSystemManageForm = Button(frBtns, font=consts.FNTBTN, text="Настройки системы", command=clickFunc, padx=20, pady=20)
+    btnSystemManageForm.grid(row=4, column=1, rowspan=2, padx=15, pady=[10, 10])
+
+    # выход из пользователя
+    btnLogOut = Button(frBtns, font=consts.FNTBTN, text="Сменить пользователя", padx=17, pady=20,
+                       command=lambda: fAuth.logOut(db, root))
+    btnLogOut.grid(row=7, column=1, rowspan=2, padx=15, pady=[10, 35])
+
+    # добавляем раздел на форму
+    frBtns.pack(anchor=NW, fill=BOTH, padx=15, pady=[0, 10])
+
+    frMain.pack(fill=BOTH, padx=5, pady=5, ipadx=10, ipady=10)
+
+    root.mainloop()
+
+

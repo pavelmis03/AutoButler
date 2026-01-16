@@ -9,8 +9,6 @@ from tkinter.messagebox import showerror, showwarning, showinfo
 # бибиблиотека для работы с ini файлами
 import configparser
 
-# подключаем файл с функциями обработки данных, получаемых от форм
-from funcs.funcsAuth import *
 # константы
 import consts
 # основные формы
