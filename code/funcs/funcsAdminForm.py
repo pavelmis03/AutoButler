@@ -5,7 +5,7 @@ from tkinter import ttk
 # шрифты
 from tkinter import font
 # сообщения
-from tkinter.messagebox import showerror, showwarning, showinfo
+from tkinter.messagebox import showerror, showwarning, showinfo, askyesno, askokcancel, askretrycancel
 # бибиблиотека для работы с ini файлами
 import configparser
 
@@ -15,6 +15,11 @@ import pandas as pd
 # модули для работы с операционной системой
 import os
 import shutil
+from datetime import datetime
+
+# библиотеки для создания отчетов
+from docxtpl import DocxTemplate
+import cryptography
 
 # библиотека для работы с изображениями
 from PIL import ImageTk, Image  # pip install pillow
@@ -300,14 +305,15 @@ def checkNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, 
 
 
 # загружает список логов из БД
-def loadLogList():
+def loadLogList(db):
     # запрос на получение данных о системе
     qr = '''SELECT system_log.id_log AS id,
                     system_log.action_caption AS caption,
                     system_log.action_type AS type,
                     system_log.action_status AS status,
                     system_log.description AS descr,
-                    system_log.date_time AS date_time
+                    system_log.action_date AS date,
+                    system_log.action_time AS time
                     FROM db.system_log
             '''
 
@@ -323,30 +329,40 @@ def loadLogList():
         # cols = list(df.columns)
         # logList = df.to_dict()
 
+        return df
+
     except Exception as e:
         showinfo(title="Загрузка логов",
-                 message="При выгрузке логов из БД произошла непредвиденная ошибка! Проверьте БД и попробйте снова.")
+                 message="При выгрузке логов из БД произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
+
+        return False
 
 # заполнение таблицы данными на форме управления системой из БД
-def insertDataToTable(table, df):
+def insertDataToTable(db, table):
     # загружаем список логов для построения таблицы
-    df = loadLodList()
+    df = loadLogList(db)
 
-    # добавляем данные в таблицу из dataFrame
-    for index, row in df.iterrows():
-        # разбираем дату и время на отдельные составляющие
-        tstr = row[-1].strftime("%Y-%m-%d %H:%M:%S")
-        date = tstr.split()[0]
-        time = tstr.split()[1][:-3]
-        table.insert("", END, values=tuple([*row[:-1], date, time]))
+    # очищаем таблицу
+    for item in table.get_children():
+        table.delete(item)
+
+    # если не был прочитан фрейм, не делаем разбор его строк
+    if (not df.empty):
+        # добавляем данные в таблицу из dataFrame
+        for index, row in df.iterrows():
+            # разбираем дату и время на отдельные составляющие
+            # tstr = row[-1].strftime("%Y-%m-%d %H:%M:%S")
+            # date = tstr.split()[0]
+            # time = tstr.split()[1][:-3]
+            # table.insert("", END, values=tuple([*row[:-1], date, time]))
+            # берем все строку, но время немного дообрабатываем
+            table.insert("", END, values=tuple([*row[:-1], str(row[-1]).split()[-1]]))
 
 # очистка всех логов в БД
 def clearLogList(db, table):
     # запрос на удаление всех записей
-    qr = f'''DELETE FROM system_log
-                    WHERE system_log.id_log != 0;
-                  '''
-    ans = showwarning(title="Очистка логов", message="Вы действительно хотите удалить ВСЕ записи логов?")
+    qr = f'''DELETE FROM system_log'''
+    ans = askyesno(title="Очистка логов", message="Вы действительно хотите удалить ВСЕ записи логов?")
     if ans:
         try:
             # создаем объект курсора для выбора нужной строки
@@ -358,18 +374,175 @@ def clearLogList(db, table):
             showinfo(title="Очистка логов", message="Очистка логов прошла успешно!")
 
             # обновляем данные в таблице
-            insertDataToTable(logList, df)
+            insertDataToTable(db, table)
 
             return True
         except Exception as e:
-            if (message):
-                showerror(title="Удаление пользователя",
-                          message="Произошла непредвиденная ошибка при удалении пользователя, попробуйте еще раз")
+            showerror(title="Удаление пользователя",
+                          message="Произошла непредвиденная ошибка при очистке логов, попробуйте еще раз")
 
 # удаление записи лога
-def delRecord(db, selectRow):
-    pass
+def delRecord(db, table):
+    # получаем список выделенных строк - берем первую из них
+    selectRow = table.selection()[0]
+    # получаем список элементов выделенной строки
+    item = table.item(selectRow)
+    # значения полей строки в виде массива
+    vals = item["values"]
+    # id записи лога
+    id_log = vals[0]
+
+    # запрос на удаление всех записей
+    qr = f'''DELETE FROM system_log
+                        WHERE system_log.id_log = { id_log };
+                      '''
+    try:
+        # создаем объект курсора для выбора нужной строки
+        cur = db.cursor()
+        # выполняем query-запрос
+        cur.execute(qr)
+        # сохраняем изменения в БД
+        db.commit()
+        showinfo(title="Удаление записи лога", message="Удаление записи лога прошло успешно!")
+
+        # обновляем данные в таблице
+        insertDataToTable(db, table)
+
+        return True
+    except Exception as e:
+        showerror(title="Удаление записи лога",
+                      message="Произошла непредвиденная ошибка при удалении записи лога, попробуйте еще раз")
 
 # создание отчета по логам от до даты и времени
-def createReport(db, etrDateFrom, dateUntil, timeFrom, timeUntil):
-    pass
+def createReport(db, dateFrom, dateUntil, timeFrom, timeUntil):
+    # запрос на получение данных о системе
+    qr = '''SELECT system_log.id_log AS id,
+                system_log.action_caption AS caption,
+                system_log.action_type AS type,
+                system_log.action_status AS status,
+                system_log.description AS descr,
+                system_log.action_date AS date,
+                system_log.action_time AS time
+                FROM db.system_log
+        '''
+
+    # дату и время выставляем по умолчанию
+    if ((dateFrom == "YYYY-MM-DD") or (dateFrom == "")):
+        dateFrom = "1900-01-01"
+    if ((dateUntil == "YYYY-MM-DD") or (dateUntil == "")):
+        dateUntil = "2100-12-31"
+    if (timeFrom == ""):
+        timeFrom = "00:00"
+    if (timeUntil == ""):
+        timeUntil = "23:59"
+
+    timeFrom += ":00"
+    timeUntil += ":00"
+    # собираем дату и время в единый параметр, добавляем секунды
+    # dateTimeFrom = dateFrom + " " + timeFrom + ":00"
+    # dateTimeUntil = dateUntil + " " + timeUntil + ":00"
+
+    # пробуем прочитать данные
+    try:
+        # чтение данных из БД с помощью query запроса
+        df = pd.read_sql(qr, con=db)
+
+        # сортируем df по дате и затем по времени
+        sorted_df = df.sort_values(by=["date", "time"])
+
+        filterData = []
+        # обходим DF, берем только подходящие по дате и времени строки
+        for index, row in df.iterrows():
+            if (str(row["date"]) >= dateFrom) and (str(row["date"]) <= dateUntil):
+                if (str(row["time"]).split()[-1] >= timeFrom) and (str(row["time"]).split()[-1] <= timeUntil):
+                    filterData.append(row)
+
+        # словарь, из которого данные выгружаются в отчет
+        # data = []
+        # '''
+        # # структура данных массива
+        # [
+        #     [id1, caption1, type1, status1, descr1, date1, time1],
+        #     [id2, caption2, type2, status2, descr2, date2, time2],
+        # ]
+        # '''
+
+        # # проходим по датафрейму с целью сформировать словарь логов
+        # for caption, value in range(filterData):
+        #     # проверяем, что данный ключ есть в словаре
+        #     el = df.iloc[i]
+        #     # разбираем дату и время на части
+        #     dt = el["date"]
+        #     tm = el["time"]
+        #     # добавляем в 5ый индекс - в массив логов
+        #     data.append([el["id"], el["caption"], el["type"], el["status"], el["descr"], dt, tm])
+
+        # создаем отчеты по полученным из БД данным
+        # если папка для отчетов уже есть, удаляем ее, чтобы создать новые отчеты
+        if (os.path.exists("logReports")):
+            shutil.rmtree("logReports")
+            # os.rmdir("logReports")
+        # создаем папку для отчетов
+        os.mkdir("logReports")
+
+        # создаем папку с указанием текущей даты и времени
+        folderName = datetime.now()
+        folderName = folderName.strftime("%d") + "." + folderName.strftime("%m") + "." + folderName.strftime("%Y") + "_" + folderName.strftime("%H") + "-" + folderName.strftime("%M")
+        # в названии папки указываем фамилию и дату
+        os.mkdir(f"logReports/report_{folderName}")
+        # загружаем шаблон отчета
+        doc = DocxTemplate("funcs/logReport.docx")
+
+        dateFrom = dateFrom.split("-")
+        dateUntil = dateUntil.split("-")
+        # словарь подстановки данных в шаблон
+        context = {
+            "reportDate": folderName,
+            "dateFrom": dateFrom[-1] + "." + dateFrom[-2] + "." + dateFrom[-3],
+            "timeFrom": timeFrom,
+            "dateUntil": dateUntil[-1] + "." + dateUntil[-2] + "." + dateUntil[-3],
+            "timeUntil": timeUntil,
+            "idLog": "",
+            "logCaption": "",
+            "logType": "",
+            "logStatus": "",
+            "logDescr": "",
+            "logDate": "",
+            "logTime": "",
+        }
+
+        # заполняем словарь данными из БД
+        # здесь row - строка вида [(column_caption, value), (..), ..]
+        for row in filterData:
+            context["idLog"] += str(row[0]) + "\n"
+            context["logCaption"] += row[1] + "\n"
+            context["logType"] += row[2] + "\n"
+            context["logStatus"] += str(row[3]) + "\n"
+            context["logDescr"] += row[4] + "\n"
+            context["logDate"] += row[5].strftime("%d") + "." + row[5].strftime("%m") + "." + row[5].strftime("%Y") + "\n"
+            context["logTime"] += str(row[6]).split()[-1] + "\n"
+
+        # загружаем данные из контекста в шаблон
+        doc.render(context)
+        # сохраняем отчет в конкретную папку
+        doc.save(f"logReports/report_{folderName}/отчет_по_логам.docx")
+        showinfo(title="Создание отчета", message="Отчет успешно сформирован!")
+
+    except Exception as e:
+        showinfo(title="Создание отчета",
+                 message="При создании отчета произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
+
+def checkDataReport(db, dateFrom, dateUntil, timeFrom, timeUntil):
+    # список ошибок
+    err = []
+
+    # если были обнаружены ошибки в заполнении формы
+    if (len(err) != 0):
+        # выводим не больше 5 ошибок
+        for i in range(min(5, len(err))):
+            showerror(title="Данные заполнены неверно!", message=err[i])
+        # сообщаем, что данные заполнены неверно
+        return False
+    else:
+        # создание отчета по логам от и до даты и времени
+        createReport(db, dateFrom, dateUntil, timeFrom, timeUntil)

@@ -294,7 +294,7 @@ def createAndminSystemManageForm(db, root, usrData):
         i += 1
 
     # наполняем таблицу данными
-    insertDataToTable(logList)
+    insertDataToTable(db, logList)
 
     # добавляем, растягивая по ширине элементы и заполняя контэйнер
     logList.pack(fill=BOTH, expand=1, padx=5, pady=[5, 10])
@@ -315,12 +315,12 @@ def createAndminSystemManageForm(db, root, usrData):
     btnCleareLogList.grid(row=0, column=0, columnspan=2, padx=10, pady=[10, 10], ipadx=10)
 
     # удалить запись
-    clickFunc = lambda: delRecord(db, logList.selection())
+    clickFunc = lambda: delRecord(db, logList)
     btnDelRecord = Button(frManageBtns, font=consts.FNTBTN, text="Удалить запись", command=clickFunc, padx=10, pady=10)
     btnDelRecord.grid(row=0, column=2, columnspan=2, padx=10, pady=[10, 10], ipadx=20)
 
     # дата от
-    lblDateFrom = Label(frManageBtns, font=consts.FNTLBLS, text="Дата до:")
+    lblDateFrom = Label(frManageBtns, font=consts.FNTLBLS, text="Дата от:")
     lblDateFrom.grid(row=1, column=2, columnspan=2, padx=10, pady=[0, 10], sticky=W)
 
     # текстовое поле дата ОТ
@@ -341,26 +341,26 @@ def createAndminSystemManageForm(db, root, usrData):
 
     # время от
     lblTimeFrom = Label(frManageBtns, font=consts.FNTLBLS, text="Время от:")
-    lblTimeFrom.grid(row=1, column=3, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+    lblTimeFrom.grid(row=1, column=4, columnspan=2, padx=10, pady=[0, 10], sticky=W)
 
     # текстовое поле время ОТ
     etrTimeFrom = Entry(frManageBtns, font=consts.FNTLBLS)
     # значение по умолчанию для поля ввода
     etrTimeFrom.insert(0, "00:01")
-    etrTimeFrom.grid(row=2, column=3, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+    etrTimeFrom.grid(row=2, column=4, columnspan=2, padx=10, pady=[0, 10], sticky=W)
 
     # время до
     lblTimeUntil = Label(frManageBtns, font=consts.FNTLBLS, text="Время до:")
-    lblTimeUntil.grid(row=3, column=3, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+    lblTimeUntil.grid(row=3, column=4, columnspan=2, padx=10, pady=[0, 10], sticky=W)
 
     # текстовое поле время ДО
     etrTimeUntil = Entry(frManageBtns, font=consts.FNTLBLS)
     # значение по умолчанию для поля ввода
     etrTimeUntil.insert(0, "23:59")
-    etrTimeUntil.grid(row=4, column=3, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+    etrTimeUntil.grid(row=4, column=4, columnspan=2, padx=10, pady=[0, 10], sticky=W)
 
     # сформировать отчет
-    clickFunc = lambda: createReport(db, etrDateFrom.get(), lblDateUntil.get(), etrTimeFrom.get(), lblTimeUntil.get())
+    clickFunc = lambda: checkDataReport(db, etrDateFrom.get(), etrDateUntil.get(), etrTimeFrom.get(), etrTimeUntil.get())
     btnCreateReport = Button(frManageBtns, font=consts.FNTBTN, text="Сформировать отчет", command=clickFunc, padx=10, pady=10)
     btnCreateReport.grid(row=1, column=0, columnspan=2, rowspan=2, padx=15, pady=[35, 10])
 

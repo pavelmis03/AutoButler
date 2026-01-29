@@ -8,3 +8,5 @@ ImageTk
 os-sys
 pytest-shutil
 configparser
+python-docx
+docxtpl
