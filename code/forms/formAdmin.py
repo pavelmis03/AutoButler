@@ -211,7 +211,7 @@ def createAndminUserManageForm(db, root, usrData):
 
     # группа для radioBtns
     workMode = StringVar(value="addUser")
-    # изменение режима работы с добавление на редактирование и наоборот
+    # изменение режима работы с добавлением на редактирование и наоборот
     clickFunc = lambda: changeWorkMode(workMode, btnAddUser, btnChangeUser, btnDelUser, btnFindUser)
     # кнопка для выбора режима добавления пользователя
     radioAddUser = Radiobutton(frAddUser, font=consts.FNTBTNMINI, text="Добавление\nпользователя", command=clickFunc, padx=5,
@@ -290,7 +290,7 @@ def createAndminSystemManageForm(db, root, usrData):
     for col in cols:
         logList.heading(col, text=col, anchor=CENTER)
         # выравнивание по центру для данных в ячейках
-        logList.column(f"#{i}", anchor=CENTER)
+        logList.column(f"#{i}", width=len(col) * 7, minwidth=40, anchor=CENTER, stretch=True)
         i += 1
 
     # наполняем таблицу данными

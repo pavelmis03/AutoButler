@@ -4,8 +4,9 @@ import pandas as pd
 # библиотека для построения графика
 import matplotlib.pyplot as plt
 
-# основные формы
-from forms.formMain import *
+# константы
+import consts
+
 # формы авторизации
 import forms.formAuth as fAuth
 # формы для админа

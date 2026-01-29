@@ -15,7 +15,12 @@ import pandas as pd
 # модули для работы с операционной системой
 import os
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta
+
+# библиотека для построения графика
+import matplotlib.pyplot as plt
+import pylab
+# import cryptography
 
 # библиотеки для создания отчетов
 from docxtpl import DocxTemplate
@@ -79,9 +84,99 @@ def getAirport(db, dest):
 
     return airport
 
-# функция изменения режима поиска данных по радио-кнопкам
-def changeWorkMode(workMode):
-    pass
+def createGraph(db, components, needSave):
+    # загружаем список полетов для построения таблицы
+    df = loadFlyList(db)
+
+    # получаем значения по ссылкам на компоненты и меняем дату и время, если они имеют значения по умолчанию
+    componentsVal = processComponents(components)
+    # отфильтрованные значения
+    # fData = filterData(df, componentsVal)
+    # разбираю по переменным ссылки на объекты
+    dateFrom, dateUntil, timeFrom, timeUntil, depDel, arrDel, company, status, airportDep, airportArr = componentsVal
+
+    # деления
+    names = []
+    # значения в этих делениях
+    # вылетевшие вовремя
+    valuesOnTime = []
+    # с опозданием
+    valuesDelay = []
+    # отмененные
+    valuesCansel = []
+
+    # начало и конец рассматриваемого промежутка
+    dtStart = datetime.strptime(dateFrom, "%Y-%m-%d")
+    dtEnd = datetime.strptime(dateUntil, "%Y-%m-%d")
+    # считаем, сколько дней в промежутке
+    delta = dtEnd - dtStart
+    daysStep = abs(round(delta.days / 30))
+
+    while (dtStart < dtEnd):
+        # добавляем дату - метка на оси X
+        names.append(str(dtStart).split()[0])
+
+        # конец очередного временного промежутка
+        dtTmpEnd = dtStart + timedelta(days=daysStep)
+
+        # настраиваем дату от
+        componentsVal[0] = str(dtStart).split()[0]
+        # настраиваем дату до
+        componentsVal[1] = str(dtTmpEnd).split()[0]
+        # настраиваем status рейсов
+        componentsVal[7] = "Прибыл по расписанию"
+        tData = filterData(df, componentsVal)
+        # количество рейсов, прибывших вовремя
+        valuesOnTime.append(len(tData))
+
+        # настраиваем status рейсов
+        componentsVal[7] = "Прибыл с задержкой"
+        tData = filterData(df, componentsVal)
+        # количество рейсов с задержкой
+        valuesDelay.append(len(tData))
+
+        # настраиваем status рейсов
+        componentsVal[7] = "Отменен"
+        tData = filterData(df, componentsVal)
+        # количество отмененных рейсов
+        valuesCansel.append(len(tData))
+        # прибавляем по n дней за раз
+        dtStart += timedelta(days=daysStep)
+
+    # настройка шрифта
+    plt.rcParams.update({'font.size': 10})
+    # настраиваем размеры окна
+    plt.figure(figsize=(10, 5))
+    # настраиваем заголовок графика
+    plt.title('Список полетов')
+    # настраиваем заголовки осей
+    plt.xlabel('Дата вылета')
+    plt.ylabel('Количество рейсов')
+    plt.plot(names, valuesOnTime, color="green")
+    plt.plot(names, valuesDelay, color="yellow")
+    plt.plot(names, valuesCansel, color="red")
+    # Поворачиваем подписи осей
+    plt.xticks(rotation=89)
+    plt.tight_layout()  # Автоматически регулирует размеры для избегания перекрытий
+
+    # если надо сохранить
+    if (needSave.get()):
+        if (not os.path.exists("flightsGraphReport")):
+            # shutil.rmtree("flightsGraphReport")
+            # создаем папку для графиков
+            os.mkdir("flightsGraphReport")
+        # создаем папку с указанием текущей даты и времени
+        folderName = datetime.now()
+        folderName = folderName.strftime("%d") + "." + folderName.strftime("%m") + "." + folderName.strftime(
+            "%Y") + "_" + folderName.strftime("%H") + "-" + folderName.strftime("%M")
+        # в названии папки указываем дату
+        os.mkdir(f"flightsGraphReport/report_{folderName}")
+        # сохранение графика в виде изображения
+        plt.savefig(f"flightsGraphReport/report_{folderName}/graph.jpg")
+        showinfo(title="Соханение графика", message="График успешно сохранен!")
+
+    # показываем график
+    plt.show()
 
 # функция сброса настроек формирования графика и отчета
 def resetSettings(dateFrom, dateUntil, timeFrom, timeUntil, workModeDep, workModeArr, cbxArr):
@@ -105,24 +200,23 @@ def resetSettings(dateFrom, dateUntil, timeFrom, timeUntil, workModeDep, workMod
     for i in range(len(cbxArr)):
         cbxArr[i].current(0)
 
-
 # загружает список рейсов из БД
 def loadFlyList(db):
     # запрос на получение данных о полетах
     qr = '''SELECT flights.ID AS id,
-                    flights.FLIGHT_NUMBER AS fly_num,
-                    flights.AIRLINE AS company,
-                    flights.DEP_AIRPORT AS dep_air,
-                    flights.ARR_AIRPORT AS arr_air,
-                    flights.SCHEDULED_DEP AS sch_dep,
-                    flights.SCHEDULED_ARR AS sch_arr,
-                    flights.ACTUAL_DEP AS act_dep,
-                    flights.ACTUAL_ARR AS act_arr,
-                    flights.STATUS AS status,
-                    flights.DELAY_MINUTES AS delay,
-                    flights.CANCELLATION_REASON AS reason
-            FROM db.flights
-         '''
+                flights.FLIGHT_NUMBER AS flyNum,
+                flights.AIRLINE AS company,
+                flights.DEP_AIRPORT AS airportDep,
+                flights.ARR_AIRPORT AS airportArr,
+                flights.SCHEDULED_DEP AS schDep,
+                flights.SCHEDULED_ARR AS schArr,
+                flights.ACTUAL_DEP AS actDep,
+                flights.ACTUAL_ARR AS actArr,
+                flights.STATUS AS status,
+                flights.DELAY_MINUTES AS delay,
+                flights.CANCELLATION_REASON AS reason
+        FROM db.flights
+        '''
 
     # пробуем прочитать данные
     try:
@@ -136,9 +230,11 @@ def loadFlyList(db):
         return False
 
 # заполнение таблицы данными на форме анализа рейсов из БД
-def insertDataToTable(db, table):
-    # загружаем список логов для построения таблицы
+def insertDataToTable(db, table, components):
+    # загружаем список полетов для построения таблицы
     df = loadFlyList(db)
+    # отфильтрованный список данных
+    fData = []
 
     # очищаем таблицу
     for item in table.get_children():
@@ -146,22 +242,93 @@ def insertDataToTable(db, table):
 
     # если не был прочитан фрейм, не делаем разбор его строк
     if (not df.empty):
-        # добавляем данные в таблицу из dataFrame
-        for index, row in df.iterrows():
+        # если это не первый запрос, когда нам нужны все данные,
+        # а запрос при изменении какого-либо параметра,
+        # фильтруем данные, которые попадут в таблицу
+        if (len(components) == 10):
+            # получаем значения по ссылкам на компоненты и меняем дату и время, если они имеют значения по умолчанию
+            componentsVal = processComponents(components)
+            fData = filterData(df, componentsVal)
+        else:
+            for index, row in df.iterrows():
+                fData.append(row)
+
+        # добавляем данные в таблицу из fData
+        for row in fData:
             # разбираем дату и время на отдельные составляющие
             table.insert("", END, values=tuple([*row]))
 
+# функция проверки рейса на опоздание по вылету и приземлению и на соответствие этого настройкам фильтрации
+# параметры: настройка (все, опаздывает, по расписанию); плановое время; фактическое время
+def checkDel(param, schTime, actTime):
+    # если все варианты (и опоздавшие, и вовремя прилетевшие) - отрезаем начало
+    if (param[:3] == "all"):
+        return True
+
+    # 2026-2-30 10:20:00
+    schDt = str(schTime).split()[0]
+    schTm = str(schTime).split()[1][:-3]
+
+    actDt = str(actTime).split()[0]
+    actTm = str(actTime).split()[1][:-3]
+
+    # если опаздывает
+    if ((actTm > schTm) or (actDt > schDt)):
+        # отрезаем конец
+        if (param[:-3] == "delay"):
+            return True
+    else: # если вовремя
+        # отрезаем конец
+        if (param[:-3] == "schedule"):
+            return True
+
+    return False
+
 # функция для фильтрации данных по параметрам
-def filterData(dateFrom, dateUntil, timeFrom, timeUntil, depDel, arrDel, company, status, airportDep, airportArr):
-    filterData = []
+def filterData(df, componentsVal):
 
-    # обходим DF, берем только подходящие по дате и времени строки
+    fData = []
+    # разбираю по переменным ссылки на объекты
+    dateFrom, dateUntil, timeFrom, timeUntil, depDel, arrDel, company, status, airportDep, airportArr = componentsVal
+
     for index, row in df.iterrows():
-        if (str(row["date"]) >= dateFrom) and (str(row["date"]) <= dateUntil):
-            if (str(row["time"]).split()[-1] >= timeFrom) and (str(row["time"]).split()[-1] <= timeUntil):
-                filterData.append(row)
+        # 2026-2-30 10:20:00
+        dt = str(row["schDep"]).split()[0]
+        tm = str(row["schDep"]).split()[1][:-3]
+        # обходим DF, берем только подходящие по дате и времени строки
+        if (dt >= dateFrom) and (dt <= dateUntil):
+            if (tm >= timeFrom) and (tm <= timeUntil):
+                # проверяем компанию, статус, аэропорты
+                if (((company == "Все компании") or (row["company"] == company)) and
+                    ((status == "Все варианты") or (row["status"] == status)) and
+                    ((airportDep == "Все аэропорты") or (row["airportDep"] == airportDep)) and
+                    ((airportArr == "Все аэропорты") or (row["airportArr"] == airportArr))):
+                        # проверяем, задерживается или по расписанию и соответствует ли это настройкам
+                        if (checkDel(depDel, row["schDep"], row["actDep"]) and checkDel(arrDel, row["schArr"], row["actArr"])):
+                            fData.append(row)
 
-    return filterData
+    return fData
+
+# проверка и изменение данных даты и времени, если у них остались значения по умолчанию
+def processComponents(components):
+    componentsVal = components[:]
+    # получаем данные по компонентам
+    for i in range(len(componentsVal)):
+        componentsVal[i] = componentsVal[i].get()
+
+    # дату и время выставляем по умолчанию
+    if ((componentsVal[0] == "YYYY-MM-DD") or (componentsVal[0] == "")):
+        componentsVal[0] = "2025-01-01"
+    if ((componentsVal[1] == "YYYY-MM-DD") or (componentsVal[1] == "")):
+        componentsVal[1] = "2026-12-31"
+    if (componentsVal[2] == ""):
+        componentsVal[2] = "00:00"
+    if (componentsVal[3] == ""):
+        componentsVal[3] = "23:59"
+    # прибавляю секунды ко времени
+    componentsVal[2] += ":00"
+    componentsVal[3] += ":00"
+    return componentsVal
 
 # проверяет правильность даты или времени, сохраненных в виде строки
 def checkDateTime(data, isTime, str):
@@ -171,7 +338,7 @@ def checkDateTime(data, isTime, str):
         # возвращаем ошибки
         # if len(data.split(':')) == 2:
         try:
-            datetime.datetime.strptime(data, '%Y.%m.%d')
+            datetime.strptime(data, '%H:%M:%S')
             return ""
         except Exception:
             return f"Неправильный формат времени в поле \"{str}\". Запишите в виде: HH:MM, например 09:12"
@@ -180,7 +347,7 @@ def checkDateTime(data, isTime, str):
     else: # проверяем дату
         # if len(data.split('-')) == 3:
         try:
-            datetime.datetime.strptime(data, '%Y-%m-%d')
+            datetime.strptime(data, '%Y-%m-%d')
             return ""
         except Exception:
             return f"Неправильный формат даты в поле \"{str}\". Запишите в виде: YYYY-MM-DD, например 2026-06-29"
@@ -192,25 +359,13 @@ def checkDataReport(dateFrom, dateUntil, timeFrom, timeUntil):
     # список ошибок
     err = []
 
-    # дату и время выставляем по умолчанию
-    if ((dateFrom == "YYYY-MM-DD") or (dateFrom == "")):
-        dateFrom = "1900-01-01"
-    if ((dateUntil == "YYYY-MM-DD") or (dateUntil == "")):
-        dateUntil = "2100-12-31"
-    if (timeFrom == ""):
-        timeFrom = "00:00"
-    if (timeUntil == ""):
-        timeUntil = "23:59"
-
-    timeFrom += ":00"
-    timeUntil += ":00"
-
     # проверяем поля даты и времени
     err.append(checkDateTime(dateFrom, False, "Дата от"))
     err.append(checkDateTime(dateUntil, False, "Дата до"))
     err.append(checkDateTime(timeFrom, True, "Время от"))
     err.append(checkDateTime(timeUntil, True, "Время до"))
 
+    flag = True
     # если были обнаружены ошибки в заполнении формы
     if (len(err) != 0):
         # выводим не больше 5 ошибок
@@ -218,58 +373,60 @@ def checkDataReport(dateFrom, dateUntil, timeFrom, timeUntil):
             # ошибки может и не быть
             if (err[i] != ""):
                 showerror(title="Данные заполнены неверно!", message=err[i])
-        # сообщаем, что данные заполнены неверно
-        return False
+                # сообщаем, что данные заполнены неверно
+                flag = False
 
-    return True
+    return flag
 
 # создание отчета по рейсам от и до даты и времени
-def createReport(db, dateFrom, dateUntil, timeFrom, timeUntil, depDel, arrDel, company, status, airportDep, airportArr):
+def createReport(db, components):
+    # получаем значения по ссылкам на компоненты и меняем дату и время, если они имеют значения по умолчанию
+    componentsVal = processComponents(components)
+
+    # разбираю по переменным ссылки на объекты
+    dateFrom, dateUntil, timeFrom, timeUntil, depDel, arrDel, company, status, airportDep, airportArr = componentsVal
+
     # проверяем, что все данные верны, если нет, выходим из функции
     if (not checkDataReport(dateFrom, dateUntil, timeFrom, timeUntil)):
         return False
 
-        # запрос на получение данных о полетах
-        qr = '''SELECT flights.ID AS id,
-                        flights.FLIGHT_NUMBER AS fly_num,
-                        flights.AIRLINE AS company,
-                        flights.DEP_AIRPORT AS dep_air,
-                        flights.ARR_AIRPORT AS arr_air,
-                        flights.SCHEDULED_DEP AS sch_dep,
-                        flights.SCHEDULED_ARR AS sch_arr,
-                        flights.ACTUAL_DEP AS act_dep,
-                        flights.ACTUAL_ARR AS act_arr,
-                        flights.STATUS AS status,
-                        flights.DELAY_MINUTES AS delay,
-                        flights.CANCELLATION_REASON AS reason
-                FROM db.flights
-             '''
+    # запрос на получение данных о полетах
+    qr = '''SELECT flights.ID AS id,
+                flights.FLIGHT_NUMBER AS flyNum,
+                flights.AIRLINE AS company,
+                flights.DEP_AIRPORT AS airportDep,
+                flights.ARR_AIRPORT AS airportArr,
+                flights.SCHEDULED_DEP AS schDep,
+                flights.SCHEDULED_ARR AS schArr,
+                flights.ACTUAL_DEP AS actDep,
+                flights.ACTUAL_ARR AS actArr,
+                flights.STATUS AS status,
+                flights.DELAY_MINUTES AS delay,
+                flights.CANCELLATION_REASON AS reason
+        FROM db.flights
+        '''
 
     # пробуем прочитать данные
     try:
         # чтение данных из БД с помощью query запроса
         df = pd.read_sql(qr, con=db)
 
-        # сортируем df по дате и затем по времени
-        # sorted_df = df.sort_values(by=["date", "time"])
+        # собираем обратно
+        # components = [dateFrom, dateUntil, timeFrom, timeUntil, depDel, arrDel, company, status, airportDep, airportArr]
+        fData = filterData(df, componentsVal)
 
-        fData = filterData(dateFrom, dateUntil, timeFrom, timeUntil, depDel, arrDel, company, status, airportDep, airportArr)
-
-        # создаем отчеты по полученным из БД данным
-        # если папка для отчетов уже есть, удаляем ее, чтобы создать новые отчеты
-        if (os.path.exists("logReports")):
-            shutil.rmtree("logReports")
-            # os.rmdir("logReports")
-        # создаем папку для отчетов
-        os.mkdir("logReports")
+        if (not os.path.exists("flightsMainReport")):
+            # shutil.rmtree("flightsMainReport")
+            # создаем папку для отчетов
+            os.mkdir("flightsMainReport")
 
         # создаем папку с указанием текущей даты и времени
         folderName = datetime.now()
         folderName = folderName.strftime("%d") + "." + folderName.strftime("%m") + "." + folderName.strftime("%Y") + "_" + folderName.strftime("%H") + "-" + folderName.strftime("%M")
         # в названии папки указываем фамилию и дату
-        os.mkdir(f"logReports/report_{folderName}")
+        os.mkdir(f"flightsMainReport/report_{folderName}")
         # загружаем шаблон отчета
-        doc = DocxTemplate("funcs/logReport.docx")
+        doc = DocxTemplate("funcs/flightsMainReport.docx")
 
         dateFrom = dateFrom.split("-")
         dateUntil = dateUntil.split("-")
@@ -280,30 +437,36 @@ def createReport(db, dateFrom, dateUntil, timeFrom, timeUntil, depDel, arrDel, c
             "timeFrom": timeFrom,
             "dateUntil": dateUntil[-1] + "." + dateUntil[-2] + "." + dateUntil[-3],
             "timeUntil": timeUntil,
-            "idLog": "",
-            "logCaption": "",
-            "logType": "",
-            "logStatus": "",
-            "logDescr": "",
-            "logDate": "",
-            "logTime": "",
+            "id": "",
+            "flyNum": "",
+            "company": "",
+            "airportDep": "",
+            "airportArr": "",
+            "dateTimeDep": "",
+            "dateTimeArr": "",
+            "status": "",
+            "delay": "",
+            "reason": "",
         }
 
         # заполняем словарь данными из БД
         # здесь row - строка вида [(column_caption, value), (..), ..]
         for row in fData:
-            context["idLog"] += str(row[0]) + "\n"
-            context["logCaption"] += row[1] + "\n"
-            context["logType"] += row[2] + "\n"
-            context["logStatus"] += str(row[3]) + "\n"
-            context["logDescr"] += row[4] + "\n"
-            context["logDate"] += row[5].strftime("%d") + "." + row[5].strftime("%m") + "." + row[5].strftime("%Y") + "\n"
-            context["logTime"] += str(row[6]).split()[-1] + "\n"
+            context["id"] += str(row[0]) + "\n\n"
+            context["flyNum"] += row[1] + "\n\n"
+            context["company"] += row[2] + "\n\n"
+            context["airportDep"] += row[3] + "\n\n"
+            context["airportArr"] += row[4] + "\n\n"
+            context["dateTimeDep"] += str(row[5]) + "/" + str(row[7]) + "\n"
+            context["dateTimeArr"] += str(row[6]) + "/" + str(row[8]) + "\n"
+            context["status"] += row[9] + "\n"
+            context["delay"] += str(row[10]) + "\n\n"
+            context["reason"] += str(row[11]) + "\n\n"
 
         # загружаем данные из контекста в шаблон
         doc.render(context)
         # сохраняем отчет в конкретную папку
-        doc.save(f"logReports/report_{folderName}/отчет_по_логам.docx")
+        doc.save(f"flightsMainReport/report_{folderName}/отчет_по_рейсам.docx")
         showinfo(title="Создание отчета", message="Отчет успешно сформирован!")
 
     except Exception as e:

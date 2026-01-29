@@ -10,3 +10,6 @@ pytest-shutil
 configparser
 python-docx
 docxtpl
+pylab-sdk
+matplotlib
+DateTime

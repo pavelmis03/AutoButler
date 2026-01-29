@@ -39,7 +39,7 @@ def createAnalystFlightsForm(db, root, usrData):
 
     # ширина и высота окна
     w = 1270
-    h = 1000
+    h = 800
     # если дошло до этого места, значит, есть пользователь с введенными данными - создаем новое окно
     root = createWindow(f"Добро пожаловать, {usrData['name']}. Ваша роль: {usrData['role']}", w=w, h=h, marginx=250,
                         marginy=10)
@@ -49,7 +49,7 @@ def createAnalystFlightsForm(db, root, usrData):
 
     # основной заголовок
     lblMain = Label(frMain, font=consts.FNTLBLH1, text="ДАННЫЕ ПО РЕЙСАМ")
-    lblMain.pack(pady=10)
+    lblMain.pack(pady=[30, 10])
 
     # -------------БЛОК таблицы-------------
 
@@ -57,12 +57,12 @@ def createAnalystFlightsForm(db, root, usrData):
     lfFlyList = LabelFrame(frMain, font=consts.FNTLBLH2, text="Список рейсов", borderwidth=1, relief=SOLID)
 
     # строим таблицу по полученным данным
-    flyList = ttk.Treeview(lfFlyList, columns=[], show="headings", height=8)
+    flyList = ttk.Treeview(lfFlyList, columns=[], show="headings", height=9)
 
     # создаем полосы прокрутки для таблицы
-    scrlV = ttk.Scrollbar(lfFlyList, orient="vertical", command=flyList.yview)
+    scrlV = Scrollbar(lfFlyList, orient="vertical", command=flyList.yview)
     scrlV.pack(side=RIGHT, fill=Y)
-    scrlH = ttk.Scrollbar(lfFlyList, orient="horizontal", command=flyList.xview)
+    scrlH = Scrollbar(lfFlyList, orient="horizontal", command=flyList.xview)
     scrlH.pack(side=BOTTOM, fill=X)
     # привязка полос прокрутки к таблице
     flyList["yscrollcommand"] = scrlV.set
@@ -74,7 +74,7 @@ def createAnalystFlightsForm(db, root, usrData):
     flyList.delete(*flyList.get_children())
 
     # список колонок будущей таблицы
-    cols = ["№", "Номер рейса", "Авиакомпания", "Аэропорт вылета", "Аэропорт прибытия", "Плановое время вылета", "Плановое время прибытия", "Фактическое время вылета", "Фактическое время прибытия", "Статус", "Минуты задержки", "Причина отмены"]
+    cols = ["№", "Номер рейса", "Авиакомпания", "Аэропорт вылета", "Аэропорт прибытия", "Плановое время вылета", "Плановое время прибытия", "Фактическое время вылета", "Фактическое время прибытия", "      Статус      ", "Минуты задержки", "Причина отмены"]
     # строим таблицу по полученным данным
     flyList["columns"] = cols
     # определяем заголовки для столбцов
@@ -82,75 +82,89 @@ def createAnalystFlightsForm(db, root, usrData):
     for col in cols:
         flyList.heading(col, text=col, anchor=CENTER)
         # выравнивание по центру для данных в ячейках
-        flyList.column(f"#{i}", anchor=CENTER)
+        flyList.column(f"#{i}", width=len(col) * 7, minwidth=40, anchor=CENTER, stretch=True)
         i += 1
 
     # наполняем таблицу данными
-    insertDataToTable(db, flyList)
+    insertDataToTable(db, flyList, [])
 
-    # добавляем, растягивая по ширине элементы и заполняя контэйнер
-    flyList.pack(fill=BOTH, expand=1, padx=5, pady=[5, 10])
+    # добавляем, растягивая по ширине элементы и заполняя контейнер
+    flyList.pack(fill=BOTH, expand=1, padx=5, pady=[10, 10])
     # добавляем таблицу на форму
-    lfFlyList.pack(anchor=NW, fill=BOTH, expand=True, padx=10, pady=5)
-
-    # -------------БЛОК построения графика-------------
-
-    # создаем рамку для графика
-    frGraph = LabelFrame(frMain, font=consts.FNTLBLH2, text="График", borderwidth=1, relief=SOLID)
-
-
-
-    frGraph.pack(fill=BOTH, padx=10, pady=5, ipadx=3)
-
+    lfFlyList.pack(anchor=NW, fill=BOTH, expand=True, padx=10, pady=[0, 10])
 
     # -------------БЛОК кнопок управления графиком-------------
 
     # создаем рамку для кнопок
     frManageBtns = LabelFrame(frMain, font=consts.FNTLBLH2, text="Настрока отображения графика", borderwidth=1, relief=SOLID)
 
-    # сетка компонентов 12x8
-    createGrid(frManageBtns, 12, 8, 1, 1)
+    # сетка компонентов 8x9
+    createGrid(frManageBtns, 8, 8, 1, 1)
+    # массив компонентов управления данными
+    components = []
+    # переменная для отслеживания изменения чекбокса ,,сохранить график,,
+    cbtnSaveGraphVar = IntVar()
 
             # -------------ЭЛЕМЕНТЫ управления ДАТОЙ И ВРЕМЕНЕМ-------------
     # дата от
     lblDateFrom = Label(frManageBtns, font=consts.FNTLBLS, text="Дата от:", padx=0, pady=0)
     lblDateFrom.grid(row=0, column=0, columnspan=2, padx=10, pady=[10, 0], sticky=W)
 
+    # переменная для отслеживания изменения поля ввода
+    etrDateFromVar = StringVar()
+    etrDateFromVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components))
     # текстовое поле дата ОТ
-    etrDateFrom = Entry(frManageBtns, font=consts.FNTLBLS)
+    etrDateFrom = Entry(frManageBtns, font=consts.FNTLBLS, textvariable=etrDateFromVar)
     # значение по умолчанию для поля ввода
     etrDateFrom.insert(0, "YYYY-MM-DD")
     etrDateFrom.grid(row=1, column=0, columnspan=1, padx=10, pady=[0, 0], sticky=W)
+    # добавляем в массив компонентов текущий элемент
+    components.append(etrDateFrom)
 
     # дата до
     lblDateUntil = Label(frManageBtns, font=consts.FNTLBLS, text="Дата до:", padx=0, pady=0)
     lblDateUntil.grid(row=2, column=0, columnspan=2, padx=10, pady=[0, 0], sticky=W)
 
+    # переменная для отслеживания изменения поля ввода
+    etrDateUntilVar = StringVar()
+    etrDateUntilVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components))
     # текстовое поле дата ДО
-    etrDateUntil = Entry(frManageBtns, font=consts.FNTLBLS)
+    etrDateUntil = Entry(frManageBtns, font=consts.FNTLBLS, textvariable=etrDateUntilVar)
     # значение по умолчанию для поля ввода
     etrDateUntil.insert(0, "YYYY-MM-DD")
     etrDateUntil.grid(row=3, column=0, columnspan=1, padx=10, pady=[0, 0], sticky=W)
+    # добавляем в массив компонентов текущий элемент
+    components.append(etrDateUntil)
 
     # время от
     lblTimeFrom = Label(frManageBtns, font=consts.FNTLBLS, text="Время от:", padx=0, pady=0)
     lblTimeFrom.grid(row=0, column=2, columnspan=2, padx=0, pady=[10, 0], sticky=W)
 
+    # переменная для отслеживания изменения поля ввода
+    etrTimeFromVar = StringVar()
+    etrTimeFromVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components))
     # текстовое поле время ОТ
-    etrTimeFrom = Entry(frManageBtns, font=consts.FNTLBLS)
+    etrTimeFrom = Entry(frManageBtns, font=consts.FNTLBLS, textvariable=etrTimeFromVar)
     # значение по умолчанию для поля ввода
     etrTimeFrom.insert(0, "00:01")
     etrTimeFrom.grid(row=1, column=2, columnspan=1, padx=0, pady=[0, 0], sticky=W)
+    # добавляем в массив компонентов текущий элемент
+    components.append(etrTimeFrom)
 
     # время до
     lblTimeUntil = Label(frManageBtns, font=consts.FNTLBLS, text="Время до:", padx=0, pady=0)
     lblTimeUntil.grid(row=2, column=2, columnspan=2, padx=0, pady=[0, 0], sticky=W)
 
+    # переменная для отслеживания изменения поля ввода
+    etrTimeUntilVar = StringVar()
+    etrTimeUntilVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components))
     # текстовое поле время ДО
-    etrTimeUntil = Entry(frManageBtns, font=consts.FNTLBLS)
+    etrTimeUntil = Entry(frManageBtns, font=consts.FNTLBLS, textvariable=etrTimeUntilVar)
     # значение по умолчанию для поля ввода
     etrTimeUntil.insert(0, "23:59")
     etrTimeUntil.grid(row=3, column=2, columnspan=1, padx=0, pady=[0, 0], sticky=W)
+    # добавляем в массив компонентов текущий элемент
+    components.append(etrTimeUntil)
 
         # -------------ЭЛЕМЕНТЫ управления ВЫЛЕТОМ И ПРИЗЕМЛЕНИЕМ-------------
 
@@ -160,8 +174,10 @@ def createAnalystFlightsForm(db, root, usrData):
 
     # группа для radioBtns
     workModeDep = StringVar(value="allDep")
+    # добавляем в массив компонентов текущий элемент
+    components.append(workModeDep)
     # изменение поиска все, опоздавшие, вылетевшие по расписанию
-    clickFunc = lambda: changeWorkMode(workModeDep)
+    clickFunc = lambda: insertDataToTable(db, flyList, components)
     # кнопка для выбора всех вариантов вылетов
     radioAllDep = Radiobutton(frManageBtns, font=consts.FNTBTNMINI, text="Все варианты", command=clickFunc, padx=5,
                               pady=0, value="allDep", variable=workModeDep)
@@ -181,8 +197,10 @@ def createAnalystFlightsForm(db, root, usrData):
 
     # группа для radioBtns
     workModeArr = StringVar(value="allArr")
+    # добавляем в массив компонентов текущий элемент
+    components.append(workModeArr)
     # изменение поиска все, опоздавшие, вылетевшие по расписанию
-    clickFunc = lambda: changeWorkMode(workModeArr)
+    clickFunc = lambda: insertDataToTable(db, flyList, components)
     # кнопка для выбора всех вариантов вылетов
     radioAllArr = Radiobutton(frManageBtns, font=consts.FNTBTNMINI, text="Все варианты", command=clickFunc, padx=5,
                               pady=0, value="allArr", variable=workModeArr)
@@ -194,7 +212,8 @@ def createAnalystFlightsForm(db, root, usrData):
     # кнопка для выбора рейсов, улетевших по расписанию
     radioScheduleArr = Radiobutton(frManageBtns, font=consts.FNTBTNMINI, text="По расписанию",
                                    command=clickFunc, padx=5, pady=0, value="scheduleArr", variable=workModeArr)
-    radioScheduleArr.grid(row=7, column=4, rowspan=1, padx=15, pady=[0, 10], sticky=W)
+    radioScheduleArr.grid(row=7, column=4, rowspan=1, padx=15, pady=[0, 20], sticky=W)
+
 
         # -------------ЭЛЕМЕНТЫ управления КОМПАНИЕЙ И СТАТУСОМ-------------
 
@@ -202,27 +221,38 @@ def createAnalystFlightsForm(db, root, usrData):
     lblCompany = Label(frManageBtns, font=consts.FNTLBLS, text="Авиакомпания: ", padx=0, pady=0)
     lblCompany.grid(row=0, column=5, columnspan=2, padx=10, pady=[10, 0], sticky=W)
 
+    # переменная для отслеживания изменения поля ввода
+    cbxCompanyVar = StringVar()
+    cbxCompanyVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components))
     # получаем список авиакомпаний
     companyList = getCompany(db)
     # выпадающий список компаний
-    cbxCompany = ttk.Combobox(frManageBtns, values=["Все компании", *companyList], state="readonly")
+    cbxCompany = ttk.Combobox(frManageBtns, values=["Все компании", *companyList], state="readonly", textvar=cbxCompanyVar)
     # устанавливаем значение по умолчанию
     cbxCompany.current(0)
     # устанавливаем позицию компонента в сетке
     cbxCompany.grid(row=1, column=5, padx=15, pady=[0, 0], sticky=W)
+    # добавляем в массив компонентов текущий элемент
+    components.append(cbxCompany)
 
     # статус рейса
     lblStatus = Label(frManageBtns, font=consts.FNTLBLS, text="Статус рейса: ", padx=0, pady=0)
     lblStatus.grid(row=2, column=5, columnspan=2, padx=10, pady=[0, 0], sticky=W)
 
+    # переменная для отслеживания изменения поля ввода
+    cbxStatusVar = StringVar()
+    cbxStatusVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components))
     # выпадающий список статусов
     cbxStatus = ttk.Combobox(frManageBtns, values=["Все варианты", "Отменен", "Открыта регистрация", "Открыта посадка",
                                                  "Вылет задерживается", "Регистрация завершена", "Посадка закончена",
-                                                 "Вылет состоялся", "Посадка задерживается", "Прибыл"], state="readonly")
+                                                 "Вылет состоялся", "Посадка задерживается", "Прибыл по расписанию",
+                                                 "Прибыл с задержкой"], state="readonly", textvar=cbxStatusVar)
     # устанавливаем значение по умолчанию
     cbxStatus.current(0)
     # устанавливаем позицию компонента в сетке
     cbxStatus.grid(row=3, column=5, padx=15, pady=[0, 0], sticky=W)
+    # добавляем в массив компонентов текущий элемент
+    components.append(cbxStatus)
 
 
         # -------------ЭЛЕМЕНТЫ управления АЭРОПОРТОМ-------------
@@ -231,70 +261,74 @@ def createAnalystFlightsForm(db, root, usrData):
     lblAirportDep = Label(frManageBtns, font=consts.FNTLBLS, text="Аэропорт вылета: ", padx=0, pady=0)
     lblAirportDep.grid(row=0, column=6, columnspan=2, padx=10, pady=[10, 0], sticky=W)
 
+    # переменная для отслеживания изменения поля ввода
+    cbxAirportDepVar = StringVar()
+    cbxAirportDepVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components))
     # получаем список аэропортов отправления
     airportList = getAirport(db, "dep")
     # выпадающий список аэропортов
-    cbxAirportDep = ttk.Combobox(frManageBtns, values=["Все аэропорты", *airportList], state="readonly")
+    cbxAirportDep = ttk.Combobox(frManageBtns, values=["Все аэропорты", *airportList], state="readonly", textvar=cbxAirportDepVar)
     # устанавливаем значение по умолчанию
     cbxAirportDep.current(0)
     # устанавливаем позицию компонента в сетке
     cbxAirportDep.grid(row=1, column=6, padx=15, pady=[0, 0], sticky=W)
+    # добавляем в массив компонентов текущий элемент
+    components.append(cbxAirportDep)
 
     # аэропорт приземления
     lblAirportArr = Label(frManageBtns, font=consts.FNTLBLS, text="Аэропорт посадки: ", padx=0, pady=0)
     lblAirportArr.grid(row=2, column=6, columnspan=2, padx=10, pady=[0, 0], sticky=W)
 
+    # переменная для отслеживания изменения поля ввода
+    cbxAirportArrVar = StringVar()
+    cbxAirportArrVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components))
     # получаем список аэропортов отправления
     airportList = getAirport(db, "arr")
     # выпадающий список аэропортов
-    cbxAirportArr = ttk.Combobox(frManageBtns, values=["Все аэропорты", *airportList], state="readonly")
+    cbxAirportArr = ttk.Combobox(frManageBtns, values=["Все аэропорты", *airportList], state="readonly", textvar=cbxAirportArrVar)
     # устанавливаем значение по умолчанию
     cbxAirportArr.current(0)
     # устанавливаем позицию компонента в сетке
     cbxAirportArr.grid(row=3, column=6, padx=15, pady=[0, 10], sticky=W)
+    # добавляем в массив компонентов текущий элемент
+    components.append(cbxAirportArr)
 
 
         # -------------КНОПКИ управления-------------
 
     # сформировать отчет
-    clickFunc = lambda: createReport(db, etrDateFrom.get(), etrDateUntil.get(), etrTimeFrom.get(), etrTimeUntil.get(),
-                                     workModeDep, workModeArr, cbxCompany.get(), cbxStatus.get(), cbxAirportDep.get(), cbxAirportArr.get())
+    clickFunc = lambda: createReport(db, components)
     btnCreateReport = Button(frManageBtns, font=consts.FNTBTN, text="Сформировать отчет", command=clickFunc, padx=15, pady=10)
     btnCreateReport.grid(row=0, column=7, columnspan=2, rowspan=2, padx=0, pady=[10, 0])
 
     # сформировать график
-    clickFunc = lambda: createGraph(db, etrDateFrom.get(), etrDateUntil.get(), etrTimeFrom.get(), etrTimeUntil.get(),
-                                    workModeDep, workModeArr, cbxCompany.get(), cbxStatus.get(), cbxAirportDep.get(), cbxAirportArr.get())
+    clickFunc = lambda: createGraph(db, components, cbtnSaveGraphVar)
     btnCreateGraph = Button(frManageBtns, font=consts.FNTBTN, text="Сформировать график", command=clickFunc, padx=9, pady=10)
     btnCreateGraph.grid(row=2, column=7, columnspan=2, rowspan=2, padx=0, pady=[0, 0])
 
     # сохранить график
-    clickFunc = lambda: saveGraph()
-    btnSaveGraph = Button(frManageBtns, font=consts.FNTBTN, text="Сохранить график", command=clickFunc, padx=26, pady=10)
-    btnSaveGraph.grid(row=4, column=7, columnspan=2, rowspan=2, padx=0, pady=[0, 0])
+    cbtnSaveGraph = Checkbutton(frManageBtns, font=consts.FNTBTN, text="Сохранить график", variable=cbtnSaveGraphVar)
+    cbtnSaveGraph.grid(row=4, column=7, columnspan=2, rowspan=2, padx=0, pady=[0, 0])
 
     # массив радио-кнопок
     # radioBtnArr = [radioAllDep, radioDelayDep, radioScheduleDep, radioAllArr, radioDelayArr, radioScheduleArr]
     # массив комбобоксов
     cbxArr = [cbxCompany, cbxStatus, cbxAirportDep, cbxAirportArr]
     # сбросить настройки
-    # clickFunc = lambda: resetSettings(etrDateFrom, etrDateUntil, etrTimeFrom, etrTimeUntil, radioBtnArr, cbxArr)
     clickFunc = lambda: resetSettings(etrDateFrom, etrDateUntil, etrTimeFrom, etrTimeUntil, workModeDep, workModeArr, cbxArr)
     btnResetSettings = Button(frManageBtns, font=consts.FNTBTN, text="Сбросить настройки", command=clickFunc, padx=20, pady=10)
-    btnResetSettings.grid(row=6, column=7, columnspan=2, rowspan=2, padx=0, pady=[0, 10])
+    btnResetSettings.grid(row=6, column=7, columnspan=2, rowspan=2, padx=0, pady=[0, 20])
 
-
-
-    frManageBtns.pack(fill=BOTH, padx=10, pady=5, ipadx=3)
+    frManageBtns.pack(fill=BOTH, padx=10, pady=[10, 20], ipadx=3)
 
     # выход в предыдущее меню
     clickFunc = lambda: createAnalystMainForm(db, root, usrData)
     # кнопка ,,назад,, (выйти в предыдущее меню)
-    btnBack = Button(frMain, font=consts.FNTLBLH2, text="Назад", command=clickFunc, padx=5, pady=5)
-    btnBack.pack(fill=BOTH, padx=30, pady=5, ipadx=10, ipady=5)
+    btnBack = Button(frMain, font=consts.FNTLBLH2, text="Назад", command=clickFunc, padx=5, pady=10)
+    btnBack.pack(fill=BOTH, padx=30, pady=20, ipadx=10, ipady=5)
 
 
-    frMain.pack(fill=BOTH, padx=10, pady=5, ipadx=10, ipady=5)
+    frMain.pack(fill=BOTH, padx=10, pady=20, ipadx=10, ipady=5)
 
     root.mainloop()
 

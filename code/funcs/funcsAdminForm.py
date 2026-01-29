@@ -15,7 +15,7 @@ import pandas as pd
 # модули для работы с операционной системой
 import os
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # библиотеки для создания отчетов
 from docxtpl import DocxTemplate
@@ -413,26 +413,69 @@ def delRecord(db, table):
         showerror(title="Удаление записи лога",
                       message="Произошла непредвиденная ошибка при удалении записи лога, попробуйте еще раз")
 
+# проверяет правильность даты или времени, сохраненных в виде строки
+def checkDateTime(data, isTime, str):
+    # если проверяем время:
+    if (isTime):
+        # проверяем правильную длину и то, что формат соответствует
+        # возвращаем ошибки
+        # if len(data.split(':')) == 2:
+        try:
+            datetime.strptime(data, '%H:%M:%S')
+            return ""
+        except Exception:
+            return f"Неправильный формат времени в поле \"{str}\". Запишите в виде: HH:MM, например 09:12"
+        # else:
+        #     return "Неправильный формат времени. Запишите в виде: HH:MM, например 09:12"
+    else: # проверяем дату
+        # if len(data.split('-')) == 3:
+        try:
+            datetime.strptime(data, '%Y-%m-%d')
+            return ""
+        except Exception:
+            return f"Неправильный формат даты в поле \"{str}\". Запишите в виде: YYYY-MM-DD, например 2026-06-29"
+        # else:
+        #     return 2
+
 # функция проверки правильности заполнения полей для генерации отчета
 def checkDataReport(dateFrom, dateUntil, timeFrom, timeUntil):
     # список ошибок
     err = []
 
-    # дописать проверку данных
-    # добавить дописанный код в аналогичную функцию админа
+    # проверяем поля даты и времени
+    err.append(checkDateTime(dateFrom, False, "Дата от"))
+    err.append(checkDateTime(dateUntil, False, "Дата до"))
+    err.append(checkDateTime(timeFrom, True, "Время от"))
+    err.append(checkDateTime(timeUntil, True, "Время до"))
 
+    flag = True
     # если были обнаружены ошибки в заполнении формы
     if (len(err) != 0):
         # выводим не больше 5 ошибок
         for i in range(min(5, len(err))):
-            showerror(title="Данные заполнены неверно!", message=err[i])
-        # сообщаем, что данные заполнены неверно
-        return False
-    return True
+            # ошибки может и не быть
+            if (err[i] != ""):
+                showerror(title="Данные заполнены неверно!", message=err[i])
+                # сообщаем, что данные заполнены неверно
+                flag = False
 
+    return flag
 
 # создание отчета по логам от и до даты и времени
 def createReport(db, dateFrom, dateUntil, timeFrom, timeUntil):
+    # дату и время выставляем по умолчанию
+    if ((dateFrom == "YYYY-MM-DD") or (dateFrom == "")):
+        dateFrom = "2025-01-01"
+    if ((dateUntil == "YYYY-MM-DD") or (dateUntil == "")):
+        dateUntil = "2026-12-31"
+    if (timeFrom == ""):
+        timeFrom = "00:00"
+    if (timeUntil == ""):
+        timeUntil = "23:59"
+
+    timeFrom += ":00"
+    timeUntil += ":00"
+
     # проверяем, что все данные верны, если нет, выходим из функции
     if (not checkDataReport(dateFrom, dateUntil, timeFrom, timeUntil)):
         return False
@@ -463,33 +506,18 @@ def createReport(db, dateFrom, dateUntil, timeFrom, timeUntil):
                 if (str(row["time"]).split()[-1] >= timeFrom) and (str(row["time"]).split()[-1] <= timeUntil):
                     filterData.append(row)
 
-        # словарь, из которого данные выгружаются в отчет
-        # data = []
-        # '''
-        # # структура данных массива
-        # [
-        #     [id1, caption1, type1, status1, descr1, date1, time1],
-        #     [id2, caption2, type2, status2, descr2, date2, time2],
-        # ]
-        # '''
-
-        # # проходим по датафрейму с целью сформировать словарь логов
-        # for caption, value in range(filterData):
-        #     # проверяем, что данный ключ есть в словаре
-        #     el = df.iloc[i]
-        #     # разбираем дату и время на части
-        #     dt = el["date"]
-        #     tm = el["time"]
-        #     # добавляем в 5ый индекс - в массив логов
-        #     data.append([el["id"], el["caption"], el["type"], el["status"], el["descr"], dt, tm])
-
         # создаем отчеты по полученным из БД данным
         # если папка для отчетов уже есть, удаляем ее, чтобы создать новые отчеты
-        if (os.path.exists("logReports")):
-            shutil.rmtree("logReports")
-            # os.rmdir("logReports")
-        # создаем папку для отчетов
-        os.mkdir("logReports")
+        # if (os.path.exists("logReports")):
+        #     shutil.rmtree("logReports")
+        #     # os.rmdir("logReports")
+        # # создаем папку для отчетов
+        # os.mkdir("logReports")
+
+        if (not os.path.exists("logReports")):
+            # shutil.rmtree("logReports")
+            # создаем папку для отчетов
+            os.mkdir("logReports")
 
         # создаем папку с указанием текущей даты и времени
         folderName = datetime.now()

@@ -11,8 +11,6 @@ import configparser
 
 # константы
 import consts
-# основные формы
-from forms.formMain import *
 
 # библиотека для работы с изображениями
 from PIL import ImageTk, Image  # pip install pillow
