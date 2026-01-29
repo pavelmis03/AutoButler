@@ -62,23 +62,23 @@ def logOut(db, root):
 def chooseNextForm(db, df, root):
     # упрощаем датафрейм до обычного словаря с нужными полями
     userData = {
-        "login": df["login"][0],
-        "pwd": df["pwd"][0],
-        "role": df["role"][0],
-        "email": df["email"][0],
-        "phone": df["phone"][0],
-        "name": df["name"][0],
-        "surname": df["surname"][0],
-        "patr": df["patr"][0],
-        "descr": df["descr"][0],
+        "login": list(df["login"])[0],
+        "pwd": list(df["pwd"])[0],
+        "role": list(df["role"])[0],
+        "email": list(df["email"])[0],
+        "phone": list(df["phone"])[0],
+        "name": list(df["name"])[0],
+        "surname": list(df["surname"])[0],
+        "patr": list(df["patr"])[0],
+        "descr": list(df["descr"])[0],
     }
     # меняем роли на более удобные названия и вызываем функции стартовых окон
     if (userData["role"] == consts.ROLELIST[0][0]):
-        userData["role"] = consts.ROLELIST[1][0]   # "admin"
-        createAdminMainForm(db, root, userData)
-    elif (userData["role"] == consts.ROLELIST[0][1]):
-        userData["role"] = consts.ROLELIST[1][1]   # "analyst"
+        userData["role"] = consts.ROLELIST[1][0]   # "analyst"
         createAnalystMainForm(db, root, userData)
+    elif (userData["role"] == consts.ROLELIST[0][1]):
+        userData["role"] = consts.ROLELIST[1][1]   # "admin"
+        createAdminMainForm(db, root, userData)
     elif (userData["role"] == consts.ROLELIST[0][2]):
         userData["role"] = consts.ROLELIST[1][2]   # "operator"
         createOperatorMainForm(db, root, userData)

@@ -413,8 +413,30 @@ def delRecord(db, table):
         showerror(title="Удаление записи лога",
                       message="Произошла непредвиденная ошибка при удалении записи лога, попробуйте еще раз")
 
-# создание отчета по логам от до даты и времени
+# функция проверки правильности заполнения полей для генерации отчета
+def checkDataReport(dateFrom, dateUntil, timeFrom, timeUntil):
+    # список ошибок
+    err = []
+
+    # дописать проверку данных
+    # добавить дописанный код в аналогичную функцию админа
+
+    # если были обнаружены ошибки в заполнении формы
+    if (len(err) != 0):
+        # выводим не больше 5 ошибок
+        for i in range(min(5, len(err))):
+            showerror(title="Данные заполнены неверно!", message=err[i])
+        # сообщаем, что данные заполнены неверно
+        return False
+    return True
+
+
+# создание отчета по логам от и до даты и времени
 def createReport(db, dateFrom, dateUntil, timeFrom, timeUntil):
+    # проверяем, что все данные верны, если нет, выходим из функции
+    if (not checkDataReport(dateFrom, dateUntil, timeFrom, timeUntil)):
+        return False
+
     # запрос на получение данных о системе
     qr = '''SELECT system_log.id_log AS id,
                 system_log.action_caption AS caption,
@@ -426,29 +448,13 @@ def createReport(db, dateFrom, dateUntil, timeFrom, timeUntil):
                 FROM db.system_log
         '''
 
-    # дату и время выставляем по умолчанию
-    if ((dateFrom == "YYYY-MM-DD") or (dateFrom == "")):
-        dateFrom = "1900-01-01"
-    if ((dateUntil == "YYYY-MM-DD") or (dateUntil == "")):
-        dateUntil = "2100-12-31"
-    if (timeFrom == ""):
-        timeFrom = "00:00"
-    if (timeUntil == ""):
-        timeUntil = "23:59"
-
-    timeFrom += ":00"
-    timeUntil += ":00"
-    # собираем дату и время в единый параметр, добавляем секунды
-    # dateTimeFrom = dateFrom + " " + timeFrom + ":00"
-    # dateTimeUntil = dateUntil + " " + timeUntil + ":00"
-
     # пробуем прочитать данные
     try:
         # чтение данных из БД с помощью query запроса
         df = pd.read_sql(qr, con=db)
 
         # сортируем df по дате и затем по времени
-        sorted_df = df.sort_values(by=["date", "time"])
+        # sorted_df = df.sort_values(by=["date", "time"])
 
         filterData = []
         # обходим DF, берем только подходящие по дате и времени строки
@@ -531,18 +537,3 @@ def createReport(db, dateFrom, dateUntil, timeFrom, timeUntil):
     except Exception as e:
         showinfo(title="Создание отчета",
                  message="При создании отчета произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
-
-def checkDataReport(db, dateFrom, dateUntil, timeFrom, timeUntil):
-    # список ошибок
-    err = []
-
-    # если были обнаружены ошибки в заполнении формы
-    if (len(err) != 0):
-        # выводим не больше 5 ошибок
-        for i in range(min(5, len(err))):
-            showerror(title="Данные заполнены неверно!", message=err[i])
-        # сообщаем, что данные заполнены неверно
-        return False
-    else:
-        # создание отчета по логам от и до даты и времени
-        createReport(db, dateFrom, dateUntil, timeFrom, timeUntil)

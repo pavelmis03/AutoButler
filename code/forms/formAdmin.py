@@ -28,7 +28,7 @@ from funcs.funcsForm import createGrid, createWindow
 # константы
 import consts
 
-# создаем форму для работы Админа - окно вывода ошибок
+# создаем форму для работы Админа с пользователями
 # userData = {"login", "pwd", "role", "email", "phone", "name", "surname", "patr", "descr"}
 def createAndminUserManageForm(db, root, usrData):
     # удаляем предыдущее окно
@@ -239,7 +239,7 @@ def createAndminUserManageForm(db, root, usrData):
 
     root.mainloop()
 
-# создаем форму для работы Админа - окно вывода ошибок
+# создаем форму для работы Админа - окно управления системой
 # userData = {"login", "pwd", "role", "email", "phone", "name", "surname", "patr", "descr"}
 def createAndminSystemManageForm(db, root, usrData):
     # удаляем предыдущее окно
@@ -311,7 +311,7 @@ def createAndminSystemManageForm(db, root, usrData):
 
     # очистить журнал
     clickFunc = lambda: clearLogList(db, logList)
-    btnCleareLogList = Button(frManageBtns, font=consts.FNTBTN, text="Очистить журнал", command=clickFunc, padx=10, pady=10)
+    btnCleareLogList = Button(frManageBtns, font=consts.FNTBTN, text="Очистить журнал", command=clickFunc, padx=20, pady=10)
     btnCleareLogList.grid(row=0, column=0, columnspan=2, padx=10, pady=[10, 10], ipadx=10)
 
     # удалить запись
@@ -321,13 +321,13 @@ def createAndminSystemManageForm(db, root, usrData):
 
     # дата от
     lblDateFrom = Label(frManageBtns, font=consts.FNTLBLS, text="Дата от:")
-    lblDateFrom.grid(row=1, column=2, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+    lblDateFrom.grid(row=1, column=2, columnspan=2, padx=10, pady=[0, 0], sticky=W)
 
     # текстовое поле дата ОТ
     etrDateFrom = Entry(frManageBtns, font=consts.FNTLBLS)
     # значение по умолчанию для поля ввода
     etrDateFrom.insert(0, "YYYY-MM-DD")
-    etrDateFrom.grid(row=2, column=2, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+    etrDateFrom.grid(row=2, column=2, columnspan=1, padx=20, pady=[0, 10], sticky=W)
 
     # дата до
     lblDateUntil = Label(frManageBtns, font=consts.FNTLBLS, text="Дата до:")
@@ -337,30 +337,30 @@ def createAndminSystemManageForm(db, root, usrData):
     etrDateUntil = Entry(frManageBtns, font=consts.FNTLBLS)
     # значение по умолчанию для поля ввода
     etrDateUntil.insert(0, "YYYY-MM-DD")
-    etrDateUntil.grid(row=4, column=2, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+    etrDateUntil.grid(row=4, column=2, columnspan=1, padx=20, pady=[0, 10], sticky=W)
 
     # время от
     lblTimeFrom = Label(frManageBtns, font=consts.FNTLBLS, text="Время от:")
-    lblTimeFrom.grid(row=1, column=4, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+    lblTimeFrom.grid(row=1, column=3, columnspan=2, padx=10, pady=[0, 0], sticky=W)
 
     # текстовое поле время ОТ
     etrTimeFrom = Entry(frManageBtns, font=consts.FNTLBLS)
     # значение по умолчанию для поля ввода
     etrTimeFrom.insert(0, "00:01")
-    etrTimeFrom.grid(row=2, column=4, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+    etrTimeFrom.grid(row=2, column=3, columnspan=2, padx=10, pady=[0, 10], sticky=W)
 
     # время до
     lblTimeUntil = Label(frManageBtns, font=consts.FNTLBLS, text="Время до:")
-    lblTimeUntil.grid(row=3, column=4, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+    lblTimeUntil.grid(row=3, column=3, columnspan=2, padx=10, pady=[0, 10], sticky=W)
 
     # текстовое поле время ДО
     etrTimeUntil = Entry(frManageBtns, font=consts.FNTLBLS)
     # значение по умолчанию для поля ввода
     etrTimeUntil.insert(0, "23:59")
-    etrTimeUntil.grid(row=4, column=4, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+    etrTimeUntil.grid(row=4, column=3, columnspan=2, padx=10, pady=[0, 10], sticky=W)
 
     # сформировать отчет
-    clickFunc = lambda: checkDataReport(db, etrDateFrom.get(), etrDateUntil.get(), etrTimeFrom.get(), etrTimeUntil.get())
+    clickFunc = lambda: createReport(db, etrDateFrom.get(), etrDateUntil.get(), etrTimeFrom.get(), etrTimeUntil.get())
     btnCreateReport = Button(frManageBtns, font=consts.FNTBTN, text="Сформировать отчет", command=clickFunc, padx=10, pady=10)
     btnCreateReport.grid(row=1, column=0, columnspan=2, rowspan=2, padx=15, pady=[35, 10])
 
@@ -397,7 +397,7 @@ def createAdminMainForm(db, root, usrData):
     lblMain.pack(pady=30)
 
     # создаем рамку для кнопок
-    frBtns = LabelFrame(frMain, font=consts.FNTLBLH2, text="Рабочие окна", borderwidth=1, relief=SOLID)
+    frBtns = LabelFrame(frMain, font=consts.FNTLBLH2, text="Управление", borderwidth=1, relief=SOLID)
 
     # сетка компонентов 3x3
     createGrid(frBtns, 3, 9, 1, 1)
@@ -413,7 +413,7 @@ def createAdminMainForm(db, root, usrData):
     # настройка системы
     clickFunc = lambda: createAndminSystemManageForm(db, root, usrData)
     # настройка системы
-    btnSystemManageForm = Button(frBtns, font=consts.FNTBTN, text="Настройки системы", command=clickFunc, padx=20, pady=20)
+    btnSystemManageForm = Button(frBtns, font=consts.FNTBTN, text="Настройки системы", command=clickFunc, padx=30, pady=20)
     btnSystemManageForm.grid(row=4, column=1, rowspan=2, padx=15, pady=[10, 10])
 
     # выход из пользователя
