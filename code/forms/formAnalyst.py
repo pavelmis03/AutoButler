@@ -28,10 +28,7 @@ from funcs.funcsForm import createGrid, createWindow
 # константы
 import consts
 
-# создаем форму для работы Админа с пользователями
-# userData = {"login", "pwd", "role", "email", "phone", "name", "surname", "patr", "descr"}
-
-# создаем форму для работы Админа - окно вывода ошибок
+# создаем форму для работы аналитика - окно работы с таблицей полетов
 # userData = {"login", "pwd", "role", "email", "phone", "name", "surname", "patr", "descr"}
 def createAnalystFlightsForm(db, root, usrData):
     # удаляем предыдущее окно
@@ -332,6 +329,7 @@ def createAnalystFlightsForm(db, root, usrData):
 
     root.mainloop()
 
+# окно прогнозирования отмены рейсов и количества людей, которые захотят остаться в гостинице
 def createAnalystForecastForm(db, root, usrData):
     # удаляем предыдущее окно
     root.destroy()
@@ -351,6 +349,50 @@ def createAnalystForecastForm(db, root, usrData):
     lblMain.pack(pady=30)
 
     # -------------БЛОК таблицы-------------
+
+    # создаем рамку таблицы логов
+    lfFlyList = LabelFrame(frMain, font=consts.FNTLBLH2, text="Список рейсов", borderwidth=1, relief=SOLID)
+
+    # строим таблицу по полученным данным
+    flyList = ttk.Treeview(lfFlyList, columns=[], show="headings", height=9)
+
+    # создаем полосы прокрутки для таблицы
+    scrlV = Scrollbar(lfFlyList, orient="vertical", command=flyList.yview)
+    scrlV.pack(side=RIGHT, fill=Y)
+    scrlH = Scrollbar(lfFlyList, orient="horizontal", command=flyList.xview)
+    scrlH.pack(side=BOTTOM, fill=X)
+    # привязка полос прокрутки к таблице
+    flyList["yscrollcommand"] = scrlV.set
+    flyList["xscrollcommand"] = scrlH.set
+
+    # очищаем таблицу перед наполнением
+    for col in flyList['columns']:
+        flyList.heading(col, text='')
+    flyList.delete(*flyList.get_children())
+
+    # список колонок будущей таблицы
+    cols = ["№", "Номер рейса", "Авиакомпания", "Аэропорт вылета", "Аэропорт прибытия", "Плановое время вылета",
+            "Плановое время прибытия", "Фактическое время вылета", "Фактическое время прибытия", "      Статус      ",
+            "Минуты задержки", "Причина отмены"]
+    # строим таблицу по полученным данным
+    flyList["columns"] = cols
+    # определяем заголовки для столбцов
+    i = 1
+    for col in cols:
+        flyList.heading(col, text=col, anchor=CENTER)
+        # выравнивание по центру для данных в ячейках
+        flyList.column(f"#{i}", width=len(col) * 7, minwidth=40, anchor=CENTER, stretch=True)
+        i += 1
+
+    # наполняем таблицу данными
+    insertDataToTable(db, flyList, [])
+
+    # добавляем, растягивая по ширине элементы и заполняя контейнер
+    flyList.pack(fill=BOTH, expand=1, padx=5, pady=[10, 10])
+    # добавляем таблицу на форму
+    lfFlyList.pack(anchor=NW, fill=BOTH, expand=True, padx=10, pady=[0, 10])
+
+
 
     # выход в предыдущее меню
     clickFunc = lambda: createAnalystMainForm(db, root, usrData)

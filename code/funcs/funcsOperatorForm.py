@@ -28,9 +28,9 @@ from funcs.funcsForm import createGrid, createWindow
 # константы
 import consts
 
-# создаем форму для работы менеджера - окно работы с бюджетом
+# создаем форму для работы оператора - окно подбора гостиницы по данным пассажира
 # userData = {"login", "pwd", "role", "email", "phone", "name", "surname", "patr", "descr"}
-def createManagerFinanceForm(db, root, usrData):
+def createOperatorChooseHotelForm(db, root, usrData):
     # удаляем предыдущее окно
     root.destroy()
 
@@ -45,14 +45,14 @@ def createManagerFinanceForm(db, root, usrData):
     frMain = Frame(borderwidth=1, relief=SOLID)
 
     # основной заголовок
-    lblMain = Label(frMain, font=consts.FNTLBLH1, text="УПРАВЛЕНИЕ ФИНАНСАМИ")
+    lblMain = Label(frMain, font=consts.FNTLBLH1, text="ПОДОБРАТЬ ГОСТИНИЦУ")
     lblMain.pack(pady=[30, 10])
 
     # -------------БЛОК таблицы-------------
 
 
     # выход в предыдущее меню
-    clickFunc = lambda: createManagerMainForm(db, root, usrData)
+    clickFunc = lambda: createOperatorMainForm(db, root, usrData)
     # кнопка ,,назад,, (выйти в предыдущее меню)
     btnBack = Button(frMain, font=consts.FNTLBLH2, text="Назад", command=clickFunc, padx=5, pady=10)
     btnBack.pack(fill=BOTH, padx=30, pady=20, ipadx=10, ipady=5)
@@ -62,9 +62,8 @@ def createManagerFinanceForm(db, root, usrData):
 
     root.mainloop()
 
-# окно для просмотра аналитики: сколько людей размещено, сколько рейсов отменено,
-# сколько отчетов было сделано другими пользователями
-def createManagerAnalyticsForm(db, root, usrData):
+# окно для создания отчетов
+def createOperatorReportsForm(db, root, usrData):
     # удаляем предыдущее окно
     root.destroy()
 
@@ -79,7 +78,7 @@ def createManagerAnalyticsForm(db, root, usrData):
     frMain = Frame(borderwidth=1, relief=SOLID)
 
     # основной заголовок
-    lblMain = Label(frMain, font=consts.FNTLBLH1, text="СТАТИСТИКА И АНАЛИТИКА")
+    lblMain = Label(frMain, font=consts.FNTLBLH1, text="ОТЧЕТЫ")
     lblMain.pack(pady=30)
 
     # -------------БЛОК таблицы-------------
@@ -129,7 +128,7 @@ def createManagerAnalyticsForm(db, root, usrData):
 
 
     # выход в предыдущее меню
-    clickFunc = lambda: createManagerMainForm(db, root, usrData)
+    clickFunc = lambda: createOperatorMainForm(db, root, usrData)
     # кнопка ,,назад,, (выйти в предыдущее меню)
     btnBack = Button(frMain, font=consts.FNTLBLH2, text="Назад", command=clickFunc, padx=5, pady=5)
     btnBack.pack(fill=BOTH, padx=30, pady=5, ipadx=10, ipady=10)
@@ -139,7 +138,7 @@ def createManagerAnalyticsForm(db, root, usrData):
     root.mainloop()
 
 # создаем форму для работы аналитика - выбор рабочего окна
-def createManagerMainForm(db, root, usrData):
+def createOperatorMainForm(db, root, usrData):
     # удаляем предыдущее окно
     root.destroy()
 
@@ -154,7 +153,7 @@ def createManagerMainForm(db, root, usrData):
     frMain = Frame(borderwidth=1, relief=SOLID)
 
     # основной заголовок
-    lblMain = Label(frMain, font=consts.FNTLBLH1, text="УПРАВЛЕНИЕ И УЧЕТ")
+    lblMain = Label(frMain, font=consts.FNTLBLH1, text="РАЗМЕЩЕНИЕ ПАССАЖИРОВ")
     lblMain.pack(pady=30)
 
     # создаем рамку для кнопок
@@ -166,15 +165,15 @@ def createManagerMainForm(db, root, usrData):
     # -------------БЛОК выбора окна-------------
 
     # прогнозирование
-    clickFunc = lambda: createManagerFinanceForm(db, root, usrData)
+    clickFunc = lambda: createOperatorChooseHotelForm(db, root, usrData)
     # прогнозирование
-    btnForecastForm = Button(frBtns, font=consts.FNTBTN, text="Управление финансами", command=clickFunc, padx=25, pady=20)
+    btnForecastForm = Button(frBtns, font=consts.FNTBTN, text="Подобрать гостиницу", command=clickFunc, padx=25, pady=20)
     btnForecastForm.grid(row=1, column=1, rowspan=2, padx=15, pady=[35, 10])
 
     # аналитика рейсов
-    clickFunc = lambda: createManagerAnalyticsForm(db, root, usrData)
+    clickFunc = lambda: createOperatorReportsForm(db, root, usrData)
     # аналитика рейсов
-    btnFlightsForm = Button(frBtns, font=consts.FNTBTN, text="Статистика и аналитика", command=clickFunc, padx=43, pady=20)
+    btnFlightsForm = Button(frBtns, font=consts.FNTBTN, text="Создать отчет", command=clickFunc, padx=43, pady=20)
     btnFlightsForm.grid(row=4, column=1, rowspan=2, padx=15, pady=[10, 10])
 
     # выход из пользователя
