@@ -4,6 +4,8 @@ from tkinter import *
 from tkinter import ttk
 # шрифты
 from tkinter import font
+# прокручиваемый текст
+from tkinter.scrolledtext import ScrolledText
 # сообщения
 from tkinter.messagebox import showerror, showwarning, showinfo
 # бибиблиотека для работы с ini файлами
@@ -50,7 +52,7 @@ def createAnalystFlightsForm(db, root, usrData):
 
     # -------------БЛОК таблицы-------------
 
-    # создаем рамку таблицы логов
+    # создаем рамку таблицы рейсов
     lfFlyList = LabelFrame(frMain, font=consts.FNTLBLH2, text="Список рейсов", borderwidth=1, relief=SOLID)
 
     # строим таблицу по полученным данным
@@ -339,22 +341,22 @@ def createAnalystForecastForm(db, root, usrData):
     h = 1000
     # если дошло до этого места, значит, есть пользователь с введенными данными - создаем новое окно
     root = createWindow(f"Добро пожаловать, {usrData['name']}. Ваша роль: {usrData['role']}", w=w, h=h, marginx=250,
-                        marginy=10)
+                        marginy=0)
 
     # создаем основную рамку
     frMain = Frame(borderwidth=1, relief=SOLID)
 
     # основной заголовок
     lblMain = Label(frMain, font=consts.FNTLBLH1, text="ПРОГНОЗИРОВАНИЕ И АНАЛИТИКА")
-    lblMain.pack(pady=30)
+    lblMain.pack(pady=[10, 0])
 
     # -------------БЛОК таблицы-------------
 
-    # создаем рамку таблицы логов
+    # создаем рамку таблицы рейсов
     lfFlyList = LabelFrame(frMain, font=consts.FNTLBLH2, text="Список рейсов", borderwidth=1, relief=SOLID)
 
     # строим таблицу по полученным данным
-    flyList = ttk.Treeview(lfFlyList, columns=[], show="headings", height=9)
+    flyList = ttk.Treeview(lfFlyList, columns=[], show="headings", height=5)
 
     # создаем полосы прокрутки для таблицы
     scrlV = Scrollbar(lfFlyList, orient="vertical", command=flyList.yview)
@@ -392,13 +394,147 @@ def createAnalystForecastForm(db, root, usrData):
     # добавляем таблицу на форму
     lfFlyList.pack(anchor=NW, fill=BOTH, expand=True, padx=10, pady=[0, 10])
 
+    # -------------БЛОК управления-------------
 
+    # создаем рамку блока управления
+    lfManageField = LabelFrame(frMain, font=consts.FNTLBLH2, text="Настройки прогнозирования", borderwidth=1, relief=SOLID)
+
+    # сетка компонентов 5x10
+    createGrid(lfManageField, 5, 10, 1, 1)
+
+    # поиск рейсов
+    lblFindFlyght = Label(lfManageField, font=consts.FNTLBLH2, text="Поиск рейсов:")
+    lblFindFlyght.grid(row=0, column=0, columnspan=1, rowspan=1, padx=10, pady=[0, 0], sticky=W)
+    # номер рейса
+    lblFlyghtNum = Label(lfManageField, font=consts.FNTLBLH3, text="Введите номер рейса:")
+    lblFlyghtNum.grid(row=1, column=0, columnspan=1, rowspan=1, padx=10, pady=[10, 0], sticky=W)
+    # текстовое поле номер рейса
+    etrFlyghtNum = Entry(lfManageField, font=consts.FNTLBLS)
+    # значение по умолчанию для поля ввода
+    etrFlyghtNum.insert(0, "")
+    etrFlyghtNum.grid(row=2, column=0, columnspan=1, padx=10, pady=[0, 0], sticky=W)
+    # найти рейс
+    clickFunc = lambda: findFlyght()
+    btnfindFlyght = Button(lfManageField, font=consts.FNTBTNMINI, text="Найти рейс",
+                                   command=clickFunc, padx=35, pady=5)
+    btnfindFlyght.grid(row=3, column=0, columnspan=1, rowspan=2, padx=10, pady=[10, 10], sticky=W)
+
+        # -------------управление типом прогноза-------------
+    # тип прогноза
+    lblForecastType = Label(lfManageField, font=consts.FNTLBLH2, text="Выберите тип прогноза:")
+    lblForecastType.grid(row=0, column=1, columnspan=1, rowspan=1, padx=0, pady=[10, 0], sticky=W)
+
+    # группа для radioBtns
+    forecastType = StringVar(value="flyghtCansel")
+    # кнопка для выбора прогноза по одному рейсу
+    radioFlyghtCansel = Radiobutton(lfManageField, font=consts.FNTBTNMINI, text="Отмена рейса", padx=5,
+                              pady=0, value="flyghtCansel", variable=forecastType)
+    radioFlyghtCansel.grid(row=1, column=1, rowspan=1, padx=15, pady=[0, 0], sticky=W)
+    # кнопка для выбора прогноза по всем рейсам за период времени
+    radioAllFlyghtCansel = Radiobutton(lfManageField, font=consts.FNTBTNMINI, text="Количество отменных\nрейсов за период", padx=5,
+                                    pady=0, value="allFlyghtCansel", variable=forecastType)
+    radioAllFlyghtCansel.grid(row=2, column=1, rowspan=2, padx=15, pady=[0, 0], sticky=W)
+    # кнопка для выбора прогноза по количеству пассажиров на рейсе
+    radioPassengerCount = Radiobutton(lfManageField, font=consts.FNTBTNMINI, text="Количество пассажиров\nс рейса, которым\nпотребуется гостиница", padx=5,
+                                    pady=0, value="passengerCount", variable=forecastType)
+    radioPassengerCount.grid(row=4, column=1, rowspan=2, padx=15, pady=[0, 0], sticky=W)
+    # кнопка для выбора прогноза по количеству пассажиров по всем рейсам за период
+    radioAllPassengerCount = Radiobutton(lfManageField, font=consts.FNTBTNMINI, text="Количество пассажиров,\nкоторым потребуется\nгостиница за период", padx=5,
+                                    pady=0, value="allPassengerCount", variable=forecastType)
+    radioAllPassengerCount.grid(row=6, column=1, rowspan=2, padx=15, pady=[0, 0], sticky=W)
+
+        # -------------управление датой и временем-------------
+    # заголовок блока управления датой и временем
+    lblDateTime = Label(lfManageField, font=consts.FNTLBLH2, text="Настроить диапазон:")
+    lblDateTime.grid(row=0, column=2, columnspan=2, rowspan=1, padx=0, pady=[10, 0], sticky=N)
+
+    # дата от
+    lblDateFrom = Label(lfManageField, font=consts.FNTLBLS, text="Дата от:")
+    lblDateFrom.grid(row=1, column=2, columnspan=1, padx=10, pady=[0, 0], sticky=E)
+
+    # текстовое поле дата ОТ
+    etrDateFrom = Entry(lfManageField, font=consts.FNTLBLS)
+    # значение по умолчанию для поля ввода
+    etrDateFrom.insert(0, "YYYY-MM-DD")
+    etrDateFrom.grid(row=2, column=2, columnspan=1, padx=20, pady=[0, 10], sticky=E)
+
+    # дата до
+    lblDateUntil = Label(lfManageField, font=consts.FNTLBLS, text="Дата до:")
+    lblDateUntil.grid(row=3, column=2, columnspan=1, padx=10, pady=[0, 0], sticky=E)
+
+    # текстовое поле дата ДО
+    etrDateUntil = Entry(lfManageField, font=consts.FNTLBLS)
+    # значение по умолчанию для поля ввода
+    etrDateUntil.insert(0, "YYYY-MM-DD")
+    etrDateUntil.grid(row=4, column=2, columnspan=1, padx=20, pady=[0, 10], sticky=E)
+
+    # время от
+    lblTimeFrom = Label(lfManageField, font=consts.FNTLBLS, text="Время от:")
+    lblTimeFrom.grid(row=1, column=3, columnspan=1, padx=10, pady=[0, 0], sticky=W)
+
+    # текстовое поле время ОТ
+    etrTimeFrom = Entry(lfManageField, font=consts.FNTLBLS)
+    # значение по умолчанию для поля ввода
+    etrTimeFrom.insert(0, "00:01")
+    etrTimeFrom.grid(row=2, column=3, columnspan=1, padx=10, pady=[0, 10], sticky=W)
+
+    # время до
+    lblTimeUntil = Label(lfManageField, font=consts.FNTLBLS, text="Время до:")
+    lblTimeUntil.grid(row=3, column=3, columnspan=1, padx=10, pady=[0, 0], sticky=W)
+
+    # текстовое поле время ДО
+    etrTimeUntil = Entry(lfManageField, font=consts.FNTLBLS)
+    # значение по умолчанию для поля ввода
+    etrTimeUntil.insert(0, "23:59")
+    etrTimeUntil.grid(row=4, column=3, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+
+    # добавляем блок на форму
+    lfManageField.pack(anchor=NW, fill=BOTH, expand=True, padx=10, pady=[0, 10])
+
+        # -------------дополнительное сообщени для прогнозирования-------------
+    # доп сообщение
+    lblAdditionsMessage = Label(lfManageField, font=consts.FNTLBLH2, text="Дополнительное сообщение для донастройки модели:")
+    lblAdditionsMessage.grid(row=5, column=2, columnspan=2, rowspan=1, padx=10, pady=[10, 10], sticky=W)
+    # текстовое поле доп сообщения
+    tbAdditionsMessage = ScrolledText(lfManageField, width=90, height=3, wrap="word")
+    tbAdditionsMessage.grid(row=6, column=2, columnspan=2, rowspan=3, padx=10, pady=[0, 10], sticky=W)
+
+    # -------------БЛОК общения с нейронкой-------------
+
+    # создаем рамку блока общения с нейронкой
+    lfCommunicationField = LabelFrame(frMain, font=consts.FNTLBLH2, text="Результат прогнозирования", borderwidth=1, relief=SOLID)
+
+    # сетка компонентов 5x4
+    createGrid(lfCommunicationField, 7, 4, 1, 1)
+
+    # текстовое поле для отображения переписки с нейронкой
+    tbCommunication = ScrolledText(lfCommunicationField, width=170, height=10, wrap="word", state="disabled")
+    tbCommunication.grid(row=0, column=0, columnspan=5, rowspan=4, padx=10, pady=[10, 10])
+
+    # начать прогнозирование
+    clickFunc = lambda: startCommunication()
+    btnStartCommunication = Button(lfCommunicationField, font=consts.FNTBTNMINI, text="Начать прогнозирование",
+                                   command=clickFunc, padx=30, pady=5)
+    btnStartCommunication.grid(row=0, column=5, columnspan=2, rowspan=1, padx=10, pady=[0, 0])
+
+    # текстовое поле для ввода сообщения-ответа нейронке
+    tbMessage = ScrolledText(lfCommunicationField, width=40, height=5, wrap="word", pady=0)
+    tbMessage.grid(row=1, column=5, columnspan=2, rowspan=1, padx=10, pady=[0, 0])
+
+    # отправить сообщение
+    clickFunc = lambda: startCommunication()
+    btnSendMessage = Button(lfCommunicationField, font=consts.FNTBTNMINI, text="Отправить сообщение",
+                                   command=clickFunc, padx=40, pady=5)
+    btnSendMessage.grid(row=2, column=5, columnspan=2, rowspan=1, padx=10, pady=[0, 10])
+
+    # добавляем блок на форму
+    lfCommunicationField.pack(anchor=NW, fill=BOTH, expand=True, padx=10, pady=[0, 10])
 
     # выход в предыдущее меню
     clickFunc = lambda: createAnalystMainForm(db, root, usrData)
     # кнопка ,,назад,, (выйти в предыдущее меню)
-    btnBack = Button(frMain, font=consts.FNTLBLH2, text="Назад", command=clickFunc, padx=5, pady=5)
-    btnBack.pack(fill=BOTH, padx=30, pady=5, ipadx=10, ipady=10)
+    btnBack = Button(frMain, font=consts.FNTLBLH2, text="Назад", command=clickFunc, padx=3, pady=2)
+    btnBack.pack(fill=BOTH, padx=30, pady=0, ipadx=10, ipady=5)
 
     frMain.pack(fill=BOTH, padx=10, pady=5, ipadx=10, ipady=10)
 

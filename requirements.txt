@@ -13,3 +13,7 @@ docxtpl
 pylab-sdk
 matplotlib
 DateTime
+# AI
+requests
+openai
+python-dotenv
