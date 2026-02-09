@@ -34,6 +34,136 @@ from funcs.funcsForm import *
 # константы
 import consts
 
+# библиотеки AI
+import requests
+from openai import OpenAI
+from dotenv import load_dotenv
+
+# создаем подключение к модели
+def getClient():
+    try:
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        if not api_key:
+            raise ValueError("OPENROUTER_API_KEY не найден в переменных окружения")
+        return OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=api_key,
+        )
+    except Exception as e:
+        print(f"Ошибка при создании клиента OpenAI: {e}")
+        raise
+
+# функция, в которой определяются настройки для нейронки
+def updateSystemMessage(messages):
+    messages[0] = {
+        "role": "system",
+        "content": (
+            "Ты Мастер Ролевой Игры (GM) для сольного приключения в стиле DnD для одного игрока; "
+            "Возраст игрока: 12-14 лет, поэтому следи за цензурой и возрастными ограничениями; "
+            "Современный мир; "
+            "Жанр игры: не хоррор, не мистика, не ужасы; "
+            "Веди историю кинематографично, кратко и ярко; предлагай игроку 2–4 выбора с нумерацией; "
+            "Запоминай факты и последствия; соблюдай логику мира; всегда отвечай по-русски; "
+            "Мастер игры должен быть коротким и кратким, не более 3-4 предложений; "
+            f"Следи за количеством сообщений. До конца игры осталось сообщений; "
+            f"Используй местоположение игрока для описания окружающей среды: ; "
+            f"Используй погоду для описания окружающей среды: . "
+        ),
+    }
+
+# первый запрос для нейронки
+def addStartPrompt(messages):
+    first_message = {
+        "role": "user",
+        "content": "Начни игру: короткое вступление и 2–4 варианта действий для игрока.",
+    }
+    messages.append(first_message)
+
+# отправляем нейронке вопрос, получаем ответ
+def chat(messages, model, client):
+    try:
+        # отправляем запрос к API OpenAI, чтобы сгенерировать ответ модели для данного чата
+        return client.chat.completions.create(
+            model=model,
+            messages=messages,
+        )
+    except Exception as e:
+        showerror(title="Анализ чего-то", message=f"Ошибка при запросе к API: {e}")
+        raise
+
+# получаем ответ от пользователя
+def addUserMessage(messages):
+    user_input = input("Вы: ")
+    user_msg = {"role": "user", "content": user_input}
+    # добавляем ответ пользователя в переписку
+    messages.append(user_msg)
+
+# получаем текст ответа модели
+def addAssistantResponse(response, messages):
+    try:
+        # проверяем, чтоб был ответ от сервера, что в ответе были варианты ответа модели
+        if ((not response) or (not response.choices) or (len(response.choices) == 0)):
+            raise ValueError("Пустой ответ от API")
+        # получаем первый ответ
+        assistant_text = response.choices[0].message.content
+        # если ответ пустой
+        if (not assistant_text):
+            raise ValueError("Пустое содержимое сообщения")
+        # добавляем в переписку ответ модели
+        assistant_msg = {"role": "assistant", "content": assistant_text}
+        messages.append(assistant_msg)
+        return assistant_text
+    except Exception as e:
+        showerror(title="Анализ чего-то", message=f"Ошибка при обработке ответа ассистента: {e}")
+        raise
+
+# функция общения с нейронкой
+def communication():
+    try:
+        # получаем ответ пользователя
+        addUserMessage(messages)
+        # получаем ответ от сервера модели по отправленным сообщениям теперь уже по ответу пользователя
+        response = chat(messages, model, client)
+        # получаем текст ответа модели
+        assistant_text = addAssistantResponse(response, messages)
+        print(f"\nМастер игры: {assistant_text}\n")
+        # вывод в текст бокс
+        # обновляем настройки для нейронки
+        updateSystemMessage(messages)
+    except Exception as e:
+        showerror(title="Анализ чего-то", message=f"Ошибка во анализа: {e}")
+        # print("Попробуйте еще раз или завершите анализ (Ctrl+C).")
+
+# первичные настройки для подготовки общения с нейронкой
+def startCommunication():
+    try:
+        # загружаем переменные среды из .env
+        load_dotenv()
+        # устанавливаем соединение с нейронкой
+        client = getClient()
+        # получаем объект модели
+        model = os.getenv("model")
+        # сообщения для нейронки
+        messages = []
+        messages.append({"role": "system"})
+        # обновляем настройки для нейронки
+        updateSystemMessage(messages)
+        # первый запрос для нейронки
+        addStartPrompt(messages)
+        # получаем ответ от сервера модели по отправленным сообщениям
+        response = chat(messages, model, client)
+        # получаем текст ответа модели
+        assistant_text = addAssistantResponse(response, messages)
+        print(assistant_text)
+
+    except Exception as e:
+        showerror(title="Анализ чего-то", message=f"Ошибка во анализа: {e}")
+
+
+
+
+
+
 # получает список авиакомпаний из БД
 def getCompany(db):
     # запрос на получение данных о системе
