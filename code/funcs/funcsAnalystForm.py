@@ -159,11 +159,6 @@ def startCommunication():
     except Exception as e:
         showerror(title="Анализ чего-то", message=f"Ошибка во анализа: {e}")
 
-
-
-
-
-
 # получает список авиакомпаний из БД
 def getCompany(db):
     # запрос на получение данных о системе

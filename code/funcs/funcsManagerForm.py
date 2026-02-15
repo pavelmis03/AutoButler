@@ -34,6 +34,7 @@ from funcs.funcsForm import *
 # константы
 import consts
 
+"""
 # получает список авиакомпаний из БД
 def getCompany(db):
     # запрос на получение данных о системе
@@ -470,3 +471,5 @@ def createReport(db, components):
     except Exception as e:
         showinfo(title="Создание отчета",
                  message="При создании отчета произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
+
+"""

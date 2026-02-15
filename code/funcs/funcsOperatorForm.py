@@ -5,7 +5,7 @@ from tkinter import ttk
 # шрифты
 from tkinter import font
 # сообщения
-from tkinter.messagebox import showerror, showwarning, showinfo
+from tkinter.messagebox import showerror, showwarning, showinfo, askyesno, askokcancel, askretrycancel
 # бибиблиотека для работы с ini файлами
 import configparser
 
@@ -15,175 +15,211 @@ import pandas as pd
 # модули для работы с операционной системой
 import os
 import shutil
+from datetime import datetime, timedelta
+import time
+
+# библиотека для построения графика
+import matplotlib.pyplot as plt
+import pylab
+# import cryptography
+
+# библиотеки для создания отчетов
+from docxtpl import DocxTemplate
+import cryptography
 
 # библиотека для работы с изображениями
 from PIL import ImageTk, Image  # pip install pillow
 
-# подключаем файл с функциями обработки данных, получаемых от форм
-import funcs.funcsAuth as fAuth
-# подключаем файл с функциями обработки данных, получаемых от форм админа
-from funcs.funcsAnalystForm import *
 # функции для работы с формами
-from funcs.funcsForm import createGrid, createWindow
+from funcs.funcsForm import *
 # константы
 import consts
 
-# создаем форму для работы оператора - окно подбора гостиницы по данным пассажира
-# userData = {"login", "pwd", "role", "email", "phone", "name", "surname", "patr", "descr"}
-def createOperatorChooseHotelForm(db, root, usrData):
-    # удаляем предыдущее окно
-    root.destroy()
+# библиотеки AI
+import requests
+from openai import OpenAI
+from dotenv import load_dotenv
 
-    # ширина и высота окна
-    w = 1270
-    h = 800
-    # если дошло до этого места, значит, есть пользователь с введенными данными - создаем новое окно
-    root = createWindow(f"Добро пожаловать, {usrData['name']}. Ваша роль: {usrData['role']}", w=w, h=h, marginx=250,
-                        marginy=10)
+# получаем номер рейса по таблице
+def getTableItemData(table, itemNum):
+    # если есть выделенные строки
+    if (len(table.selection()) != 0):
+        # получаем список выделенных строк, берем первую
+        selected_item = table.selection()[0]
+        # выделенный элемент
+        item = table.item(selected_item)
+        # получаем номер рейса
+        flyNum = item["values"][itemNum]
+    else:
+        # по умолчанию берем первую строку и из нее нужный номер рейса
+        flyNum = table.item(0)["values"][itemNum]
 
-    # создаем основную рамку
-    frMain = Frame(borderwidth=1, relief=SOLID)
+    return flyNum
 
-    # основной заголовок
-    lblMain = Label(frMain, font=consts.FNTLBLH1, text="ПОДОБРАТЬ ГОСТИНИЦУ")
-    lblMain.pack(pady=[30, 10])
+# функция для фильтрации данных
+def filterData(df, key, filter):
+    fData = []
 
-    # -------------БЛОК таблицы-------------
+    for index, row in df.iterrows():
+        # проверяем что пассажир с выбранного рейса
+        if (row[key] == filter):
+            fData.append(row)
 
+    return fData
 
-    # выход в предыдущее меню
-    clickFunc = lambda: createOperatorMainForm(db, root, usrData)
-    # кнопка ,,назад,, (выйти в предыдущее меню)
-    btnBack = Button(frMain, font=consts.FNTLBLH2, text="Назад", command=clickFunc, padx=5, pady=10)
-    btnBack.pack(fill=BOTH, padx=30, pady=20, ipadx=10, ipady=5)
+# ищем пассажиров по фио или рейсу
+def getPass(db, tableFlight, tablePass, filter, cbx, components):
+    # загружаем список полетов для построения таблицы
+    dfPass = loadPassengerList(db)
+    # получаем номер рейса по таблице
+    flyNum = getTableItemData(tableFlight, 1)
+    # фильтруем данные таблицы пользователей по рейсу, или имени, или фамилии
+    filterData = dfPass.query(f"(name == '{filter}' or surname == '{filter}') and flyNum == '{flyNum}'", inplace=False)
 
+    # если нашли таковых
+    if (not filterData.empty):
+        # получаем данные по фамилиям и именам в виде списков
+        surnames = filterData["surname"].tolist()
+        names = filterData["name"].tolist()
+        # склеиваем имя и фамилию и добавляем этот массив в комбобокс
+        cbx["values"] = [s + " " + n for s, n in zip(surnames, names)][:]
+        # устанавливаем значение по умолчанию
+        cbx.current(0)
+        # автоматически подставляем данные по пассажиру
+        selectPass(cbx, tableFlight, tablePass, components, "cbx")
+    else:
+        cbx["values"] =  ["Пассажиров не найдено"]
+        # очищаем данные лэйблов
+        for lbl, val in zip(components, ["ФИО: ", "Рейс№: ", "Класс рейса: "]):
+            lbl["text"] = val
+    # устанавливаем значение по умолчанию
+    cbx.current(0)
 
-    frMain.pack(fill=BOTH, padx=10, pady=20, ipadx=10, ipady=5)
-
-    root.mainloop()
-
-# окно для создания отчетов
-def createOperatorReportsForm(db, root, usrData):
-    # удаляем предыдущее окно
-    root.destroy()
-
-    # ширина и высота окна
-    w = 1270
-    h = 1000
-    # если дошло до этого места, значит, есть пользователь с введенными данными - создаем новое окно
-    root = createWindow(f"Добро пожаловать, {usrData['name']}. Ваша роль: {usrData['role']}", w=w, h=h, marginx=250,
-                        marginy=10)
-
-    # создаем основную рамку
-    frMain = Frame(borderwidth=1, relief=SOLID)
-
-    # основной заголовок
-    lblMain = Label(frMain, font=consts.FNTLBLH1, text="ОТЧЕТЫ")
-    lblMain.pack(pady=30)
-
-    # -------------БЛОК таблицы-------------
-
-    # создаем рамку таблицы логов
-    lfFlyList = LabelFrame(frMain, font=consts.FNTLBLH2, text="Список рейсов", borderwidth=1, relief=SOLID)
-
-    # строим таблицу по полученным данным
-    flyList = ttk.Treeview(lfFlyList, columns=[], show="headings", height=9)
-
-    # создаем полосы прокрутки для таблицы
-    scrlV = Scrollbar(lfFlyList, orient="vertical", command=flyList.yview)
-    scrlV.pack(side=RIGHT, fill=Y)
-    scrlH = Scrollbar(lfFlyList, orient="horizontal", command=flyList.xview)
-    scrlH.pack(side=BOTTOM, fill=X)
-    # привязка полос прокрутки к таблице
-    flyList["yscrollcommand"] = scrlV.set
-    flyList["xscrollcommand"] = scrlH.set
-
-    # очищаем таблицу перед наполнением
-    for col in flyList['columns']:
-        flyList.heading(col, text='')
-    flyList.delete(*flyList.get_children())
-
-    # список колонок будущей таблицы
-    cols = ["№", "Номер рейса", "Авиакомпания", "Аэропорт вылета", "Аэропорт прибытия", "Плановое время вылета",
-            "Плановое время прибытия", "Фактическое время вылета", "Фактическое время прибытия", "      Статус      ",
-            "Минуты задержки", "Причина отмены"]
-    # строим таблицу по полученным данным
-    flyList["columns"] = cols
-    # определяем заголовки для столбцов
-    i = 1
-    for col in cols:
-        flyList.heading(col, text=col, anchor=CENTER)
-        # выравнивание по центру для данных в ячейках
-        flyList.column(f"#{i}", width=len(col) * 7, minwidth=40, anchor=CENTER, stretch=True)
-        i += 1
-
-    # наполняем таблицу данными
-    insertDataToTable(db, flyList, [])
-
-    # добавляем, растягивая по ширине элементы и заполняя контейнер
-    flyList.pack(fill=BOTH, expand=1, padx=5, pady=[10, 10])
-    # добавляем таблицу на форму
-    lfFlyList.pack(anchor=NW, fill=BOTH, expand=True, padx=10, pady=[0, 10])
+# вывести данные по выбранному пассажиру
+def selectPass(cbx, tableFlight, tablePass, labels, type):
+    # получаем ссылки на лэйблы в виде отдельных переменных
+    fio, flight, fClass = labels
+    # если вызвали функцию, когда кликнули на комбо-бокс
+    if (type == "cbx"):
+        fio["text"] = "ФИО: " + cbx.get()
+    else:
+        # если вызвали функцию, когда кликнули на строку таблицы
+        # получаем данные по имени и фамилии пассажира и склеиваем
+        fio["text"] = "ФИО: " + getTableItemData(tablePass, 2) + " " + getTableItemData(tablePass, 3)
+    flight["text"] = "Рейс№: " + getTableItemData(tableFlight, 1)
+    # класс рейса
+    fClass["text"] = "Класс рейса: " + getTableItemData(tableFlight, 7)
 
 
+# загружает список рейсов из БД
+def loadFlyList(db):
+    # запрос на получение данных о полетах
+    qr = '''SELECT flights.ID AS id,
+                flights.FLIGHT_NUMBER AS flyNum,
+                flights.AIRLINE AS company,
+                flights.DEP_AIRPORT AS airportDep,
+                flights.ARR_AIRPORT AS airportArr,
+                flights.STATUS as status,
+                flights.CANCELLATION_REASON AS reason,
+                flights.FLIGHTS_TYPE AS type,
+                flights.PASSENGERS_COUNT AS passCnt
+        FROM db.flights
+        '''
 
-    # выход в предыдущее меню
-    clickFunc = lambda: createOperatorMainForm(db, root, usrData)
-    # кнопка ,,назад,, (выйти в предыдущее меню)
-    btnBack = Button(frMain, font=consts.FNTLBLH2, text="Назад", command=clickFunc, padx=5, pady=5)
-    btnBack.pack(fill=BOTH, padx=30, pady=5, ipadx=10, ipady=10)
+    # пробуем прочитать данные
+    try:
+        # чтение данных из БД с помощью query запроса
+        df = pd.read_sql(qr, con=db)
 
-    frMain.pack(fill=BOTH, padx=10, pady=5, ipadx=10, ipady=10)
+        return df
 
-    root.mainloop()
+    except Exception as e:
+        showinfo(title="Загрузка рейсов", message="При выгрузке рейсов из БД произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
+        return False
 
-# создаем форму для работы аналитика - выбор рабочего окна
-def createOperatorMainForm(db, root, usrData):
-    # удаляем предыдущее окно
-    root.destroy()
+# загружает список пассажиров из БД
+def loadPassengerList(db):
+    # запрос на получение данных о полетах
+    qr = '''SELECT passengers.ID AS id,
+                passengers.FLIGHT_NUMBER AS flyNum,
+                passengers.FIRST_NAME AS name,
+                passengers.LAST_NAME AS surname,
+                passengers.BOOKING_REF AS ref,
+                passengers.TICKET_NUMBER AS ticket,
+                passengers.TICKET_PRICE AS price
+        FROM db.passengers
+        '''
 
-    # ширина и высота окна
-    w = 570
-    h = 620
-    # если дошло до этого места, значит, есть пользователь с введенными данными - создаем новое окно
-    root = createWindow(f"Добро пожаловать, {usrData['name']}. Ваша роль: {usrData['role']}", w=w, h=h, marginx=250,
-                        marginy=10)
+    # пробуем прочитать данные
+    try:
+        # чтение данных из БД с помощью query запроса
+        df = pd.read_sql(qr, con=db)
 
-    # создаем основную рамку
-    frMain = Frame(borderwidth=1, relief=SOLID)
+        return df
 
-    # основной заголовок
-    lblMain = Label(frMain, font=consts.FNTLBLH1, text="РАЗМЕЩЕНИЕ ПАССАЖИРОВ")
-    lblMain.pack(pady=30)
+    except Exception as e:
+        showinfo(title="Загрузка пассажиров", message="При выгрузке пассажиров из БД произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
+        return False
 
-    # создаем рамку для кнопок
-    frBtns = LabelFrame(frMain, font=consts.FNTLBLH2, text="Рабочие окна", borderwidth=1, relief=SOLID)
+# заполнение таблицы данными на форме анализа рейсов из БД
+def insertDataToTable(db, tableFlight, tablePass, insertType):
+    # загружаем список полетов для построения таблицы
+    dfFlight = loadFlyList(db)
 
-    # сетка компонентов 9x3
-    createGrid(frBtns, 3, 9, 1, 1)
+    # загружаем список полетов для построения таблицы
+    dfPass = loadPassengerList(db)
 
-    # -------------БЛОК выбора окна-------------
+    # при повторной загрузке нужно загрузить только пассажиров
+    if (insertType == "first"):
+        # очищаем таблицу
+        for item in tableFlight.get_children():
+            tableFlight.delete(item)
+    # очищаем таблицу
+    for item in tablePass.get_children():
+        tablePass.delete(item)
 
-    # прогнозирование
-    clickFunc = lambda: createOperatorChooseHotelForm(db, root, usrData)
-    # прогнозирование
-    btnForecastForm = Button(frBtns, font=consts.FNTBTN, text="Подобрать гостиницу", command=clickFunc, padx=25, pady=20)
-    btnForecastForm.grid(row=1, column=1, rowspan=2, padx=15, pady=[35, 10])
+    # если не был прочитан фрейм, не делаем разбор его строк
+    if (not dfFlight.empty):
+        # при повторной загрузке нужно загрузить только пассажиров
+        if (insertType == "first"):
+            # отфильтрованный список данных
+            fDataFlight = filterData(dfFlight, "status", "Отменен")
 
-    # аналитика рейсов
-    clickFunc = lambda: createOperatorReportsForm(db, root, usrData)
-    # аналитика рейсов
-    btnFlightsForm = Button(frBtns, font=consts.FNTBTN, text="Создать отчет", command=clickFunc, padx=43, pady=20)
-    btnFlightsForm.grid(row=4, column=1, rowspan=2, padx=15, pady=[10, 10])
+            i = 0
+            # добавляем данные по рейсам в таблицу
+            for row in fDataFlight:
+                # разбираем дату и время на отдельные составляющие
+                tableFlight.insert("", END, i, values=tuple([*row]))
+                i += 1
 
-    # выход из пользователя
-    btnLogOut = Button(frBtns, font=consts.FNTBTN, text="Сменить пользователя", padx=12, pady=20,
-                       command=lambda: fAuth.logOut(db, root))
-    btnLogOut.grid(row=7, column=1, rowspan=2, padx=15, pady=[10, 35])
+        # получаем номер рейса по таблице
+        flyNum = getTableItemData(tableFlight, 1)
+        # отфильтрованный список данных - фильтруем по заданному номеру рейса
+        fDataPass = filterData(dfPass, "flyNum", flyNum)
 
-    # добавляем раздел на форму
-    frBtns.pack(anchor=NW, fill=BOTH, padx=15, pady=[0, 10])
+        i = 0
+        # добавляем данные по пассажирам в таблицу
+        for row in fDataPass:
+            # разбираем дату и время на отдельные составляющие
+            tablePass.insert("", END, i, values=tuple([*row]))
+            i += 1
 
-    frMain.pack(fill=BOTH, padx=5, pady=5, ipadx=10, ipady=10)
+# закрепить отель за человеком
+def chooseHotel():
+    pass
 
-    root.mainloop()
+# получить список отелей от нейронки
+def getHotels():
+    pass
+
+# отправить сообщение
+def addMessage():
+    pass
+
+
+
+
+
+
+
+
