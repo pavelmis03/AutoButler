@@ -397,7 +397,7 @@ def createAdminMainForm(db, root, usrData):
     lblMain.pack(pady=30)
 
     # создаем рамку для кнопок
-    frBtns = LabelFrame(frMain, font=consts.FNTLBLH2, text="Управление", borderwidth=1, relief=SOLID)
+    frBtns = LabelFrame(frMain, font=consts.FNTLBLH2, text="Рабочие окна", borderwidth=1, relief=SOLID)
 
     # сетка компонентов 3x3
     createGrid(frBtns, 3, 9, 1, 1)

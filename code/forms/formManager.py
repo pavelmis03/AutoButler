@@ -4,6 +4,8 @@ from tkinter import *
 from tkinter import ttk
 # шрифты
 from tkinter import font
+# прокручиваемый текст
+from tkinter.scrolledtext import ScrolledText
 # сообщения
 from tkinter.messagebox import showerror, showwarning, showinfo
 # бибиблиотека для работы с ini файлами

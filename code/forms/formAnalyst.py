@@ -403,21 +403,21 @@ def createAnalystForecastForm(db, root, usrData):
     createGrid(lfManageField, 5, 10, 1, 1)
 
     # поиск рейсов
-    lblFindFlyght = Label(lfManageField, font=consts.FNTLBLH2, text="Поиск рейсов:")
-    lblFindFlyght.grid(row=0, column=0, columnspan=1, rowspan=1, padx=10, pady=[0, 0], sticky=W)
+    lblFindFlight = Label(lfManageField, font=consts.FNTLBLH2, text="Поиск рейсов:")
+    lblFindFlight.grid(row=0, column=0, columnspan=1, rowspan=1, padx=10, pady=[0, 0], sticky=W)
     # номер рейса
-    lblFlyghtNum = Label(lfManageField, font=consts.FNTLBLH3, text="Введите номер рейса:")
-    lblFlyghtNum.grid(row=1, column=0, columnspan=1, rowspan=1, padx=10, pady=[10, 0], sticky=W)
+    lblFlightNum = Label(lfManageField, font=consts.FNTLBLH3, text="Введите номер рейса:")
+    lblFlightNum.grid(row=1, column=0, columnspan=1, rowspan=1, padx=10, pady=[10, 0], sticky=W)
     # текстовое поле номер рейса
-    etrFlyghtNum = Entry(lfManageField, font=consts.FNTLBLS)
+    etrFlightNum = Entry(lfManageField, font=consts.FNTLBLS)
     # значение по умолчанию для поля ввода
-    etrFlyghtNum.insert(0, "")
-    etrFlyghtNum.grid(row=2, column=0, columnspan=1, padx=10, pady=[0, 0], sticky=W)
+    etrFlightNum.insert(0, "")
+    etrFlightNum.grid(row=2, column=0, columnspan=1, padx=10, pady=[0, 0], sticky=W)
     # найти рейс
-    clickFunc = lambda: findFlyght()
-    btnfindFlyght = Button(lfManageField, font=consts.FNTBTNMINI, text="Найти рейс",
+    clickFunc = lambda: findFlight()
+    btnfindFlight = Button(lfManageField, font=consts.FNTBTNMINI, text="Найти рейс",
                                    command=clickFunc, padx=35, pady=5)
-    btnfindFlyght.grid(row=3, column=0, columnspan=1, rowspan=2, padx=10, pady=[10, 10], sticky=W)
+    btnfindFlight.grid(row=3, column=0, columnspan=1, rowspan=2, padx=10, pady=[10, 10], sticky=W)
 
         # -------------управление типом прогноза-------------
     # тип прогноза
@@ -425,15 +425,15 @@ def createAnalystForecastForm(db, root, usrData):
     lblForecastType.grid(row=0, column=1, columnspan=1, rowspan=1, padx=0, pady=[10, 0], sticky=W)
 
     # группа для radioBtns
-    forecastType = StringVar(value="flyghtCansel")
+    forecastType = StringVar(value="FlightCansel")
     # кнопка для выбора прогноза по одному рейсу
-    radioFlyghtCansel = Radiobutton(lfManageField, font=consts.FNTBTNMINI, text="Отмена рейса", padx=5,
-                              pady=0, value="flyghtCansel", variable=forecastType)
-    radioFlyghtCansel.grid(row=1, column=1, rowspan=1, padx=15, pady=[0, 0], sticky=W)
+    radioFlightCansel = Radiobutton(lfManageField, font=consts.FNTBTNMINI, text="Отмена рейса", padx=5,
+                              pady=0, value="FlightCansel", variable=forecastType)
+    radioFlightCansel.grid(row=1, column=1, rowspan=1, padx=15, pady=[0, 0], sticky=W)
     # кнопка для выбора прогноза по всем рейсам за период времени
-    radioAllFlyghtCansel = Radiobutton(lfManageField, font=consts.FNTBTNMINI, text="Количество отменных\nрейсов за период", padx=5,
-                                    pady=0, value="allFlyghtCansel", variable=forecastType)
-    radioAllFlyghtCansel.grid(row=2, column=1, rowspan=2, padx=15, pady=[0, 0], sticky=W)
+    radioAllFlightCansel = Radiobutton(lfManageField, font=consts.FNTBTNMINI, text="Количество отменных\nрейсов за период", padx=5,
+                                    pady=0, value="allFlightCansel", variable=forecastType)
+    radioAllFlightCansel.grid(row=2, column=1, rowspan=2, padx=15, pady=[0, 0], sticky=W)
     # кнопка для выбора прогноза по количеству пассажиров на рейсе
     radioPassengerCount = Radiobutton(lfManageField, font=consts.FNTBTNMINI, text="Количество пассажиров\nс рейса, которым\nпотребуется гостиница", padx=5,
                                     pady=0, value="passengerCount", variable=forecastType)
