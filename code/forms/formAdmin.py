@@ -123,7 +123,7 @@ def createAndminUserManageForm(db, root, usrData):
     # устанавливаем позицию компонента в сетке
     lblComm.grid(row=4, column=1, padx=15, pady=10, sticky=W)
     # текстовое поле для комментария
-    tbComm = Text(frAddUser, width=25, height=5, wrap="word")
+    tbComm = ScrolledText(frAddUser, width=25, height=5, wrap="word")
     tbComm.grid(row=5, column=1, rowspan=3, padx=15, pady=[0, 10], sticky=W)
     # скроллбары для текстбокса, привязываем их к виду в текстбоксе
     # ys = ttk.Scrollbar(orient="vertical", command=tbComm.yview)

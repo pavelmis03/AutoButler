@@ -15,6 +15,10 @@ import pandas as pd
 # модули для работы с операционной системой
 import os
 import shutil
+# копирование текста в буфер обмена
+import pyperclip
+
+# дата и время
 from datetime import datetime, timedelta
 import time
 
@@ -67,6 +71,41 @@ def filterData(df, key, filter):
 
     return fData
 
+# ищем рейс по компании или по номеру
+def getFlight(db, filter, cbx):
+    # загружаем список полетов для построения таблицы
+    df = loadFlyList(db)
+    # фильтруем данные таблицы пользователей по рейсу, или имени, или фамилии
+    filterData = df.query(f"(company == '{filter}' or flyNum == '{filter}') and status == 'Отменен'", inplace=False)
+
+    # если нашли таковых
+    if (not filterData.empty):
+        # получаем данные по фамилиям и именам в виде списков
+        company = filterData["company"].tolist()
+        flyNum = filterData["flyNum"].tolist()
+        # склеиваем компанию и рейс и добавляем этот массив в комбо-бокс
+        cbx["values"] = [c + " - " + f for c, f in zip(company, flyNum)][:]
+    else:
+        cbx["values"] = ["Рейсов не найдено"]
+
+    # устанавливаем значение по умолчанию
+    cbx.current(0)
+
+# вывести данные по выбранному рейсу
+def selectPass(cbx, tableFlight, tablePass, labels, type):
+    # получаем ссылки на лэйблы в виде отдельных переменных
+    fio, flight, fClass = labels
+    # если вызвали функцию, когда кликнули на комбо-бокс
+    if (type == "cbx"):
+        fio["text"] = "ФИО: " + cbx.get()
+    else:
+        # если вызвали функцию, когда кликнули на строку таблицы
+        # получаем данные по имени и фамилии пассажира и склеиваем
+        fio["text"] = "ФИО: " + getTableItemData(tablePass, 2) + " " + getTableItemData(tablePass, 3)
+    flight["text"] = "Рейс№: " + getTableItemData(tableFlight, 1)
+    # класс рейса
+    fClass["text"] = "Класс рейса: " + getTableItemData(tableFlight, 7)
+
 # ищем пассажиров по фио или рейсу
 def getPass(db, tableFlight, tablePass, filter, cbx, components):
     # загружаем список полетов для построения таблицы
@@ -81,7 +120,7 @@ def getPass(db, tableFlight, tablePass, filter, cbx, components):
         # получаем данные по фамилиям и именам в виде списков
         surnames = filterData["surname"].tolist()
         names = filterData["name"].tolist()
-        # склеиваем имя и фамилию и добавляем этот массив в комбобокс
+        # склеиваем имя и фамилию и добавляем этот массив в комбо-бокс
         cbx["values"] = [s + " " + n for s, n in zip(surnames, names)][:]
         # устанавливаем значение по умолчанию
         cbx.current(0)
@@ -109,7 +148,6 @@ def selectPass(cbx, tableFlight, tablePass, labels, type):
     flight["text"] = "Рейс№: " + getTableItemData(tableFlight, 1)
     # класс рейса
     fClass["text"] = "Класс рейса: " + getTableItemData(tableFlight, 7)
-
 
 # загружает список рейсов из БД
 def loadFlyList(db):
@@ -162,7 +200,7 @@ def loadPassengerList(db):
         return False
 
 # заполнение таблицы данными на форме анализа рейсов из БД
-def insertDataToTable(db, tableFlight, tablePass, insertType):
+def insertDataToTable(db, tableFlight, tablePass, insertType, cbx=""):
     # загружаем список полетов для построения таблицы
     dfFlight = loadFlyList(db)
 
@@ -192,8 +230,25 @@ def insertDataToTable(db, tableFlight, tablePass, insertType):
                 tableFlight.insert("", END, i, values=tuple([*row]))
                 i += 1
 
-        # получаем номер рейса по таблице
-        flyNum = getTableItemData(tableFlight, 1)
+        # если мы НЕ выбирали рейс через поиск
+        if (insertType != "chooseFlight"):
+            # получаем номер рейса по таблице
+            flyNum = getTableItemData(tableFlight, 1)
+        else:
+            # получаем номер рейса по комбо-боксу, формат данных: "авиакомпания - рейс"
+            flyNum = cbx.get()
+            # если рейсов не нашли, выводим предупреждение и загружаем пассажиров по выделенной строке
+            if (flyNum == "Рейсов не найдено"):
+                showerror(title="Ошибка!", message="Не найдено рейсов по указанным параметрам!")
+                showinfo(title="Внимание", message="Пассажиры будут отображены по последнему выбранному рейсу")
+                flyNum = getTableItemData(tableFlight, 1)
+            else:
+                # снимаем выделение с таблицы, чтобы не путать пользователя
+                for select_item in tableFlight.selection():
+                    tableFlight.selection_remove(select_item)
+                # получаем именно номер рейса
+                flyNum = flyNum.split(" - ")[1]
+
         # отфильтрованный список данных - фильтруем по заданному номеру рейса
         fDataPass = filterData(dfPass, "flyNum", flyNum)
 
@@ -204,11 +259,11 @@ def insertDataToTable(db, tableFlight, tablePass, insertType):
             tablePass.insert("", END, i, values=tuple([*row]))
             i += 1
 
-# закрепить отель за человеком
+# закрепить гостиницу за человеком
 def chooseHotel():
     pass
 
-# получить список отелей от нейронки
+# получить список гостиниц от нейронки
 def getHotels():
     pass
 
@@ -216,6 +271,19 @@ def getHotels():
 def addMessage():
     pass
 
+# копирует в буфер обмена ссылку на отель
+def copyHotelLink(link):
+    # "Ссылка: https://..."
+    link = link.lower()
+    # получаем именно ссылку
+    link = link.split()[1]
+    # проверяем, что это действительно ссылка
+    if (link.startswith("http")):
+        pyperclip.copy(link)
+        showinfo(title="Успешно!",
+                 message="Ссылка на номер в гостинице успешно скопирована в буфер обмена!")
+    else:
+        showwarning(title="Внимание!", message="Сначала выберите номер, ссылку на который хотите скопировать!")
 
 
 

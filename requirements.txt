@@ -13,6 +13,7 @@ docxtpl
 pylab-sdk
 matplotlib
 DateTime
+pyperclip
 # AI
 requests
 openai
