@@ -174,6 +174,10 @@ def getCompany(db):
         # чтение данных из БД с помощью query запроса
         df = pd.read_sql(qr, con=db)
         company = df['company'].tolist()
+        # избавляемся от повторов с помощью множества
+        company = set(company)
+        # возвращаемся к списку
+        company = list(company)
 
     except Exception as e:
         showinfo(title="Получение авиакомпаний",
@@ -202,6 +206,10 @@ def getAirport(db, dest):
         # чтение данных из БД с помощью query запроса
         df = pd.read_sql(qr, con=db)
         airport = df['airport'].tolist()
+        # избавляемся от повторов с помощью множества
+        airport = set(airport)
+        # возвращаемся к списку
+        airport = list(airport)
 
     except Exception as e:
         showinfo(title="Получение авиакомпаний",

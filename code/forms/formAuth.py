@@ -37,7 +37,7 @@ def createStartForm(db):
     # создаем рамку для текста
     frHello = Frame(frMain, borderwidth=0, relief=SOLID, padx=8, pady=10)
     # приветственная подпись
-    lblHello = Label(frHello, font=consts.FNTLBLS, text="Добро пожаловать в систему оптимизации затрат и\nподдержки процесса размещения пассажиров\nв гостиницах при задержках и отмене авиарейсов")
+    lblHello = Label(frHello, font=consts.FNTLBLS, text="Интеллектуальная система оптимизации затрат\nпри размещении пассажиров в гостиницах\nпри сбоях в расписании авиарейсов")
     # добавление элемента на форму
     lblHello.pack()
     # добавляем frame на форму

@@ -81,7 +81,7 @@ def createOperatorChooseHotelForm(db, root, usrData):
     # определяем заголовки для столбцов
     i = 1
     for col in cols:
-        flyList.heading(col, text=col, anchor=CENTER)
+        flyList.heading(col, text=col, anchor=CENTER, command=lambda: sortData(i - 1, False, flyList))
         # выравнивание по центру для данных в ячейках
         flyList.column(f"#{i}", width=len(col) * 7, minwidth=60, anchor=CENTER, stretch=True)
         i += 1
@@ -114,7 +114,7 @@ def createOperatorChooseHotelForm(db, root, usrData):
     # определяем заголовки для столбцов
     i = 1
     for col in cols:
-        passList.heading(col, text=col, anchor=CENTER)
+        passList.heading(col, text=col, anchor=CENTER, command=lambda: sortData(i - 1, False, passList))
         # выравнивание по центру для данных в ячейках
         passList.column(f"#{i}", width=len(col) * 9, minwidth=40, anchor=CENTER, stretch=True)
         i += 1
@@ -157,6 +157,7 @@ def createOperatorChooseHotelForm(db, root, usrData):
     # введите номер и компанию
     lblFindFlight = Label(lfHotelSettings, font=consts.FNTLBLH3, text="Введите номер или компанию:")
     lblFindFlight.grid(row=1, column=0, columnspan=2, rowspan=1, padx=10, pady=[5, 0], sticky=W)
+
     # текстовое поле для поиска
     etrFindFlight = Entry(lfHotelSettings, font=consts.FNTLBLS)
     # значение по умолчанию для поля ввода
@@ -225,7 +226,7 @@ def createOperatorChooseHotelForm(db, root, usrData):
     components = [lblPassFIO, lblPassFlight, lblPassClass]
 
     # подобрать номер
-    clickFunc = lambda: getHotels()
+    clickFunc = lambda: getHotelList(db)
     btnFindHotels = Button(lfHotelSettings, font=consts.FNTBTNMINI, text="Подобрать номера", command=clickFunc, padx=48, pady=2)
     btnFindHotels.grid(row=4, column=4, columnspan=2, rowspan=1, padx=10, pady=[5, 0], sticky=W)
 
@@ -347,7 +348,7 @@ def createOperatorChooseHotelForm(db, root, usrData):
     # определяем заголовки для столбцов
     i = 1
     for col in cols:
-        hotelList.heading(col, text=col, anchor=CENTER)
+        hotelList.heading(col, text=col, anchor=CENTER, command=lambda: sortData(i - 1, False, hotelList))
         # выравнивание по центру для данных в ячейках
         hotelList.column(f"#{i}", width=len(col) * 9, minwidth=40, anchor=CENTER, stretch=True)
         i += 1
@@ -390,53 +391,168 @@ def createOperatorReportsForm(db, root, usrData):
     frMain = Frame(borderwidth=1, relief=SOLID)
 
     # основной заголовок
-    lblMain = Label(frMain, font=consts.FNTLBLH1, text="ОТЧЕТЫ")
+    lblMain = Label(frMain, font=consts.FNTLBLH1, text="ОТЧЕТЫ ПО РАЗМЕЩЕННЫМ ПАССАЖИРАМ")
     lblMain.pack(pady=30)
 
     # -------------БЛОК таблицы-------------
 
-    # создаем рамку таблицы рейсов
-    lfFlyList = LabelFrame(frMain, font=consts.FNTLBLH2, text="Список отмененных рейсов", borderwidth=1, relief=SOLID)
+    # создаем рамку таблицы пассажиров
+    lfPassList = LabelFrame(frMain, font=consts.FNTLBLH2, text="Размещенные пассажиры", borderwidth=1, relief=SOLID)
 
     # строим таблицу по полученным данным
-    flyList = ttk.Treeview(lfFlyList, columns=[], show="headings", height=9)
+    passList = ttk.Treeview(lfPassList, columns=[], show="headings", height=9)
 
     # создаем полосы прокрутки для таблицы
-    scrlV = Scrollbar(lfFlyList, orient="vertical", command=flyList.yview)
+    scrlV = Scrollbar(lfPassList, orient="vertical", command=passList.yview)
     scrlV.pack(side=RIGHT, fill=Y)
-    scrlH = Scrollbar(lfFlyList, orient="horizontal", command=flyList.xview)
+    scrlH = Scrollbar(lfPassList, orient="horizontal", command=passList.xview)
     scrlH.pack(side=BOTTOM, fill=X)
     # привязка полос прокрутки к таблице
-    flyList["yscrollcommand"] = scrlV.set
-    flyList["xscrollcommand"] = scrlH.set
+    passList["yscrollcommand"] = scrlV.set
+    passList["xscrollcommand"] = scrlH.set
 
     # очищаем таблицу перед наполнением
-    for col in flyList['columns']:
-        flyList.heading(col, text='')
-    flyList.delete(*flyList.get_children())
+    for col in passList['columns']:
+        passList.heading(col, text='')
+    passList.delete(*passList.get_children())
 
     # список колонок будущей таблицы
-    cols = ["№", "Номер рейса", "Авиакомпания", "Аэропорт вылета", "Аэропорт прибытия", "Плановое время вылета",
-            "Плановое время прибытия", "Фактическое время вылета", "Фактическое время прибытия", "      Статус      ",
-            "Минуты задержки", "Причина отмены"]
+    cols = [" № ", "Дата заявки", "     Диспетчер     ", "Номер рейса", "Пассажир",
+            "Количество гостей", "   Гостиница   ", "   Номер   ", "  Дата заезда  ",
+            "  Дата выезда  ", "Стоимость проживания"]
     # строим таблицу по полученным данным
-    flyList["columns"] = cols
+    passList["columns"] = cols
     # определяем заголовки для столбцов
     i = 1
     for col in cols:
-        flyList.heading(col, text=col, anchor=CENTER)
+        passList.heading(col, text=col, anchor=CENTER, command=lambda: sortData(i - 1, False, passList))
         # выравнивание по центру для данных в ячейках
-        flyList.column(f"#{i}", width=len(col) * 6, minwidth=40, anchor=CENTER, stretch=True)
+        passList.column(f"#{i}", width=len(col) * 6, minwidth=40, anchor=CENTER, stretch=True)
         i += 1
 
-    # наполняем таблицу данными
-    insertDataToTable(db, flyList, [])
-
     # добавляем, растягивая по ширине элементы и заполняя контейнер
-    flyList.pack(fill=BOTH, expand=1, padx=5, pady=[10, 10])
+    passList.pack(fill=BOTH, expand=1, padx=5, pady=[10, 10])
     # добавляем таблицу на форму
-    lfFlyList.pack(anchor=NW, fill=BOTH, expand=True, padx=10, pady=[0, 10])
+    lfPassList.pack(anchor=NW, fill=BOTH, expand=True, padx=10, pady=[0, 10])
 
+    # -------------БЛОК управления-------------
+
+    # создаем рамку блока управления отчетом
+    lfManageField = LabelFrame(frMain, font=consts.FNTLBLH2, text="Настройки отчета", borderwidth=1, relief=SOLID)
+
+    # сетка компонентов 7x7
+    createGrid(lfManageField, 7, 7, 1, 1)
+    # массив компонентов управления данными
+    components = []
+
+    # всего затрачено средств
+    lblSummaryCaption = Label(lfManageField, font=consts.FNTLBLH2, text="Затрачено за указанный период: ")
+    lblSummaryCaption.grid(row=0, column=0, columnspan=3, rowspan=1, padx=10, pady=[10, 0], sticky=NW)
+    lblSummary = Label(lfManageField, font=consts.FNTLBLH2, text="")
+    lblSummary.grid(row=0, column=3, columnspan=1, rowspan=1, padx=0, pady=[10, 0], sticky=NW)
+    # добавляем в массив компонентов текущий элемент
+    components.append(lblSummary)
+
+    # всего размещено пассажиров
+    lblPassCountCaption = Label(lfManageField, font=consts.FNTLBLH2, text="Размещено пассажиров за указанный период: ")
+    lblPassCountCaption.grid(row=1, column=0, columnspan=3, rowspan=1, padx=10, pady=[5, 0], sticky=NW)
+    lblPassCount = Label(lfManageField, font=consts.FNTLBLH2, text="")
+    lblPassCount.grid(row=1, column=3, columnspan=1, rowspan=1, padx=0, pady=[5, 0], sticky=NW)
+    # добавляем в массив компонентов текущий элемент
+    components.append(lblPassCount)
+
+    # заголовок блока управления датой и временем
+    lblDateTime = Label(lfManageField, font=consts.FNTLBLH2, text="Настроить диапазон:")
+    lblDateTime.grid(row=2, column=0, columnspan=2, rowspan=1, padx=10, pady=[10, 0], sticky=N)
+
+    # дата от
+    lblDateFrom = Label(lfManageField, font=consts.FNTLBLS, text="Дата от:")
+    lblDateFrom.grid(row=3, column=0, columnspan=1, padx=10, pady=[0, 0], sticky=E)
+
+    # переменная для отслеживания изменения поля ввода
+    etrDateFromVar = StringVar()
+    etrDateFromVar.trace("w", lambda a, b, c: insertDataHotelToTable(db, passList, components, usrData['name']))
+    # текстовое поле дата ОТ
+    etrDateFrom = Entry(lfManageField, font=consts.FNTLBLS, textvariable=etrDateFromVar)
+    # значение по умолчанию для поля ввода
+    etrDateFrom.insert(0, "YYYY-MM-DD")
+    etrDateFrom.grid(row=4, column=0, columnspan=1, padx=20, pady=[0, 10], sticky=E)
+    # добавляем в массив компонентов текущий элемент
+    components.append(etrDateFrom)
+
+    # дата до
+    lblDateUntil = Label(lfManageField, font=consts.FNTLBLS, text="Дата до:")
+    lblDateUntil.grid(row=5, column=0, columnspan=1, padx=10, pady=[0, 0], sticky=E)
+
+    # переменная для отслеживания изменения поля ввода
+    etrDateUntilVar = StringVar()
+    etrDateUntilVar.trace("w", lambda a, b, c: insertDataHotelToTable(db, passList, components, usrData['name']))
+    # текстовое поле дата ДО
+    etrDateUntil = Entry(lfManageField, font=consts.FNTLBLS, textvariable=etrDateUntilVar)
+    # значение по умолчанию для поля ввода
+    etrDateUntil.insert(0, "YYYY-MM-DD")
+    etrDateUntil.grid(row=6, column=0, columnspan=1, padx=20, pady=[0, 10], sticky=E)
+    # добавляем в массив компонентов текущий элемент
+    components.append(etrDateUntil)
+
+    # время от
+    lblTimeFrom = Label(lfManageField, font=consts.FNTLBLS, text="Время от:")
+    lblTimeFrom.grid(row=3, column=2, columnspan=1, padx=10, pady=[0, 0], sticky=W)
+
+    # переменная для отслеживания изменения поля ввода
+    etrTimeFromVar = StringVar()
+    etrTimeFromVar.trace("w", lambda a, b, c: insertDataHotelToTable(db, passList, components, usrData['name']))
+    # текстовое поле время ОТ
+    etrTimeFrom = Entry(lfManageField, font=consts.FNTLBLS, textvariable=etrTimeFromVar)
+    # значение по умолчанию для поля ввода
+    etrTimeFrom.insert(0, "00:01")
+    etrTimeFrom.grid(row=4, column=2, columnspan=1, padx=10, pady=[0, 10], sticky=W)
+    # добавляем в массив компонентов текущий элемент
+    components.append(etrTimeFrom)
+
+    # время до
+    lblTimeUntil = Label(lfManageField, font=consts.FNTLBLS, text="Время до:")
+    lblTimeUntil.grid(row=5, column=2, columnspan=1, padx=10, pady=[0, 0], sticky=W)
+
+    # переменная для отслеживания изменения поля ввода
+    etrTimeUntilVar = StringVar()
+    etrTimeUntilVar.trace("w", lambda a, b, c: insertDataHotelToTable(db, passList, components, usrData['name']))
+    # текстовое поле время ДО
+    etrTimeUntil = Entry(lfManageField, font=consts.FNTLBLS, textvariable=etrTimeUntilVar)
+    # значение по умолчанию для поля ввода
+    etrTimeUntil.insert(0, "23:59")
+    etrTimeUntil.grid(row=6, column=2, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+    # добавляем в массив компонентов текущий элемент
+    components.append(etrTimeUntil)
+
+    # Гостиница
+    lblHotel = Label(lfManageField, font=consts.FNTLBLS, text="Гостиница: ", padx=0, pady=0)
+    lblHotel.grid(row=2, column=3, columnspan=2, padx=10, pady=[10, 0], sticky=W)
+
+    # переменная для отслеживания изменения поля ввода
+    cbxHotelVar = StringVar()
+    cbxHotelVar.trace("w", lambda a, b, c: insertDataHotelToTable(db, passList, components, usrData['name']))
+    # получаем список гостиниц
+    hotelList = getHotel(db)
+    # выпадающий список гостиниц
+    cbxHotel = ttk.Combobox(lfManageField, values=["Все гостиницы", *hotelList], state="readonly",
+                              textvar=cbxHotelVar)
+    # устанавливаем значение по умолчанию
+    cbxHotel.current(0)
+    # устанавливаем позицию компонента в сетке
+    cbxHotel.grid(row=3, column=3, columnspan=2, padx=15, pady=[0, 0], sticky=W)
+    # добавляем в массив компонентов текущий элемент
+    components.append(cbxHotel)
+
+    # наполняем таблицу данными при первом запуске
+    insertDataHotelToTable(db, passList, components, usrData['name'])
+
+    # сформировать отчет
+    clickFunc = lambda: createReport(db, components, usrData['name'])
+    btnCreateReport = Button(lfManageField, font=consts.FNTBTN, text="Сформировать отчет", command=clickFunc, padx=15, pady=10)
+    btnCreateReport.grid(row=4, column=3, columnspan=2, rowspan=2, padx=0, pady=[10, 0], sticky=W)
+
+    lfManageField.pack(fill=BOTH, padx=10, pady=5, ipadx=10, ipady=10)
 
 
     # выход в предыдущее меню
