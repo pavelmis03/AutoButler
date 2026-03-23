@@ -39,6 +39,18 @@ import requests
 from openai import OpenAI
 from dotenv import load_dotenv
 
+# сортировка по нажатию на столбец
+def columnSort(tree, col, reverse):
+    # получаем все значения столбцов в виде отдельного списка
+    l = [(tree.set(k, col), k) for k in tree.get_children("")]
+    # сортируем список
+    l.sort(reverse=reverse)
+    # переупорядочиваем значения в отсортированном порядке
+    for index,  (_, k) in enumerate(l):
+        tree.move(k, "", index)
+    # в следующий раз выполняем сортировку в обратном порядке
+    tree.heading(col, command=lambda: columnSort(tree, col, not reverse))
+
 # создаем подключение к модели
 def getClient():
     try:

@@ -29,6 +29,18 @@ from funcs.funcsForm import *
 # константы
 import consts
 
+# сортировка по нажатию на столбец
+def columnSort(tree, col, reverse):
+    # получаем все значения столбцов в виде отдельного списка
+    l = [(tree.set(k, col), k) for k in tree.get_children("")]
+    # сортируем список
+    l.sort(reverse=reverse)
+    # переупорядочиваем значения в отсортированном порядке
+    for index,  (_, k) in enumerate(l):
+        tree.move(k, "", index)
+    # в следующий раз выполняем сортировку в обратном порядке
+    tree.heading(col, command=lambda: columnSort(tree, col, not reverse))
+
 # изменение пользователя
 def changeUser(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, etrEmail, tbComm, etrLogin, etrPass, userData, findData, cbxFindUserRes):
     # сначала проверяем правильность заполнения данных
@@ -556,3 +568,4 @@ def createReport(db, dateFrom, dateUntil, timeFrom, timeUntil):
     except Exception as e:
         showinfo(title="Создание отчета",
                  message="При создании отчета произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
+

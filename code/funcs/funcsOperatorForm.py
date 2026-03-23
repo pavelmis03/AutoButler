@@ -44,19 +44,19 @@ import requests
 from openai import OpenAI
 from dotenv import load_dotenv
 
-# сортировка данных в таблице
-def sortData(col, reverse, table):
+# сортировка по нажатию на столбец
+def columnSort(tree, col, reverse):
     # получаем все значения столбцов в виде отдельного списка
-    l = [(table.set(k, col), k) for k in table.get_children("")]
+    l = [(tree.set(k, col), k) for k in tree.get_children("")]
     # сортируем список
     l.sort(reverse=reverse)
     # переупорядочиваем значения в отсортированном порядке
     for index,  (_, k) in enumerate(l):
-        table.move(k, "", index)
+        tree.move(k, "", index)
     # в следующий раз выполняем сортировку в обратном порядке
-    table.heading(col, command=lambda: sortData(col, not reverse, table))
+    tree.heading(col, command=lambda: columnSort(tree, col, not reverse))
 
-# получаем номер рейса по таблице
+# получаем данные из выделенной строки в таблице
 def getTableItemData(table, itemNum):
     # если есть выделенные строки
     if (len(table.selection()) != 0):
@@ -69,6 +69,8 @@ def getTableItemData(table, itemNum):
     else:
         # по умолчанию берем первую строку и из нее нужный номер рейса
         flyNum = table.item(0)["values"][itemNum]
+        # выделяем первую строку
+        table.selection_add(0)
 
     return flyNum
 
@@ -146,21 +148,6 @@ def getHotel(db):
                  message="При выгрузке данных из БД произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
 
     return hotels
-
-# вывести данные по выбранному рейсу
-def selectPass(cbx, tableFlight, tablePass, labels, type):
-    # получаем ссылки на лэйблы в виде отдельных переменных
-    fio, flight, fClass = labels
-    # если вызвали функцию, когда кликнули на комбо-бокс
-    if (type == "cbx"):
-        fio["text"] = "ФИО: " + cbx.get()
-    else:
-        # если вызвали функцию, когда кликнули на строку таблицы
-        # получаем данные по имени и фамилии пассажира и склеиваем
-        fio["text"] = "ФИО: " + getTableItemData(tablePass, 2) + " " + getTableItemData(tablePass, 3)
-    flight["text"] = "Рейс№: " + getTableItemData(tableFlight, 1)
-    # класс рейса
-    fClass["text"] = "Класс рейса: " + getTableItemData(tableFlight, 7)
 
 # ищем пассажиров по фио или рейсу
 def getPass(db, tableFlight, tablePass, filter, cbx, components):
@@ -318,6 +305,7 @@ def insertDataToTable(db, tableFlight, tablePass, insertType, cbx=""):
         if (insertType != "chooseFlight"):
             # получаем номер рейса по таблице
             flyNum = getTableItemData(tableFlight, 1)
+
         else:
             # получаем номер рейса по комбо-боксу, формат данных: "авиакомпания - рейс"
             flyNum = cbx.get()
@@ -342,6 +330,9 @@ def insertDataToTable(db, tableFlight, tablePass, insertType, cbx=""):
             # разбираем дату и время на отдельные составляющие
             tablePass.insert("", END, i, values=tuple([*row]))
             i += 1
+        # дописать
+
+
 
 # проверка и изменение данных даты и времени, если у них остались значения по умолчанию
 def processComponents(components, startInd):

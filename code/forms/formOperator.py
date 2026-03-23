@@ -81,7 +81,9 @@ def createOperatorChooseHotelForm(db, root, usrData):
     # определяем заголовки для столбцов
     i = 1
     for col in cols:
-        flyList.heading(col, text=col, anchor=CENTER, command=lambda: sortData(i - 1, False, flyList))
+        flyList.heading(col, text=col, anchor=CENTER,
+        # здесь создаю замыкание, чтобы i передавалась, как значение, а не как ссылка
+        command = (lambda tree, i, f: (lambda: columnSort(tree, i, f)))(flyList, i - 1, False))
         # выравнивание по центру для данных в ячейках
         flyList.column(f"#{i}", width=len(col) * 7, minwidth=60, anchor=CENTER, stretch=True)
         i += 1
@@ -114,7 +116,9 @@ def createOperatorChooseHotelForm(db, root, usrData):
     # определяем заголовки для столбцов
     i = 1
     for col in cols:
-        passList.heading(col, text=col, anchor=CENTER, command=lambda: sortData(i - 1, False, passList))
+        passList.heading(col, text=col, anchor=CENTER,
+        # здесь создаю замыкание, чтобы i передавалась, как значение, а не как ссылка
+        command = (lambda tree, i, f: (lambda: columnSort(tree, i, f)))(passList, i - 1, False))
         # выравнивание по центру для данных в ячейках
         passList.column(f"#{i}", width=len(col) * 9, minwidth=40, anchor=CENTER, stretch=True)
         i += 1
@@ -348,7 +352,9 @@ def createOperatorChooseHotelForm(db, root, usrData):
     # определяем заголовки для столбцов
     i = 1
     for col in cols:
-        hotelList.heading(col, text=col, anchor=CENTER, command=lambda: sortData(i - 1, False, hotelList))
+        hotelList.heading(col, text=col, anchor=CENTER,
+        # здесь создаю замыкание, чтобы i передавалась, как значение, а не как ссылка
+        command = (lambda tree, i, f: (lambda: columnSort(tree, i, f)))(hotelList, i - 1, False))
         # выравнивание по центру для данных в ячейках
         hotelList.column(f"#{i}", width=len(col) * 9, minwidth=40, anchor=CENTER, stretch=True)
         i += 1
@@ -425,7 +431,9 @@ def createOperatorReportsForm(db, root, usrData):
     # определяем заголовки для столбцов
     i = 1
     for col in cols:
-        passList.heading(col, text=col, anchor=CENTER, command=lambda: sortData(i - 1, False, passList))
+        passList.heading(col, text=col, anchor=CENTER,
+        # здесь создаю замыкание, чтобы i передавалась, как значение, а не как ссылка
+        command = (lambda tree, i, f: (lambda: columnSort(tree, i, f)))(passList, i - 1, False))
         # выравнивание по центру для данных в ячейках
         passList.column(f"#{i}", width=len(col) * 6, minwidth=40, anchor=CENTER, stretch=True)
         i += 1

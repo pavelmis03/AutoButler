@@ -79,7 +79,9 @@ def createAnalystFlightsForm(db, root, usrData):
     # определяем заголовки для столбцов
     i = 1
     for col in cols:
-        flyList.heading(col, text=col, anchor=CENTER)
+        flyList.heading(col, text=col, anchor=CENTER,
+        # здесь создаю замыкание, чтобы i передавалась, как значение, а не как ссылка
+        command = (lambda tree, i, f: (lambda: columnSort(tree, i, f)))(flyList, i - 1, False))
         # выравнивание по центру для данных в ячейках
         flyList.column(f"#{i}", width=len(col) * 7, minwidth=40, anchor=CENTER, stretch=True)
         i += 1
@@ -381,7 +383,9 @@ def createAnalystForecastForm(db, root, usrData):
     # определяем заголовки для столбцов
     i = 1
     for col in cols:
-        flyList.heading(col, text=col, anchor=CENTER)
+        flyList.heading(col, text=col, anchor=CENTER,
+        # здесь создаю замыкание, чтобы i передавалась, как значение, а не как ссылка
+        command = (lambda tree, i, f: (lambda: columnSort(tree, i, f)))(flyList, i - 1, False))
         # выравнивание по центру для данных в ячейках
         flyList.column(f"#{i}", width=len(col) * 7, minwidth=40, anchor=CENTER, stretch=True)
         i += 1

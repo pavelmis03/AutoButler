@@ -4,6 +4,8 @@ from tkinter import *
 from tkinter import ttk
 # шрифты
 from tkinter import font
+# прокручиваемый текст
+from tkinter.scrolledtext import ScrolledText
 # сообщения
 from tkinter.messagebox import showerror, showwarning, showinfo
 # бибиблиотека для работы с ini файлами
@@ -272,13 +274,20 @@ def createAndminSystemManageForm(db, root, usrData):
     scrlV.pack(side=RIGHT, fill=Y)
     scrlH = ttk.Scrollbar(lFRegList, orient="horizontal", command=logList.xview)
     scrlH.pack(side=BOTTOM, fill=X)
+
     # привязка полос прокрутки к таблице
     logList["yscrollcommand"] = scrlV.set
     logList["xscrollcommand"] = scrlH.set
 
+    # добавляем, растягивая по ширине элементы и заполняя контэйнер
+    logList.pack(fill=BOTH, expand=1, padx=5, pady=[5, 10])
+
+    # определяем заголовки для столбцов
+    i = 1
     # очищаем таблицу перед наполнением
     for col in logList['columns']:
         logList.heading(col, text='')
+        i += 1
     logList.delete(*logList.get_children())
 
     # список колонок будущей таблицы
@@ -288,7 +297,10 @@ def createAndminSystemManageForm(db, root, usrData):
     # определяем заголовки для столбцов
     i = 1
     for col in cols:
-        logList.heading(col, text=col, anchor=CENTER)
+        logList.heading(col, text=col, anchor=CENTER,
+                        # здесь создаю замыкание, чтобы i передавалась, как значение, а не как ссылка
+                        # настройка сортировки по столбцам
+                        command=(lambda tree, i, f: (lambda: columnSort(tree, i, f)))(logList, i - 1, False))
         # выравнивание по центру для данных в ячейках
         logList.column(f"#{i}", width=len(col) * 7, minwidth=40, anchor=CENTER, stretch=True)
         i += 1
@@ -296,8 +308,6 @@ def createAndminSystemManageForm(db, root, usrData):
     # наполняем таблицу данными
     insertDataToTable(db, logList)
 
-    # добавляем, растягивая по ширине элементы и заполняя контэйнер
-    logList.pack(fill=BOTH, expand=1, padx=5, pady=[5, 10])
     # добавляем таблицу на форму
     lFRegList.pack(anchor=NW, fill=BOTH, expand=True, padx=10, pady=10)
 
