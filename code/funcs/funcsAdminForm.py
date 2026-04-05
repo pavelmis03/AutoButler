@@ -17,6 +17,11 @@ import os
 import shutil
 from datetime import datetime, timedelta
 
+# библиотека для построения графика
+import matplotlib.pyplot as plt
+import pylab
+# import cryptography
+
 # библиотеки для создания отчетов
 from docxtpl import DocxTemplate
 import cryptography
@@ -28,6 +33,14 @@ from PIL import ImageTk, Image  # pip install pillow
 from funcs.funcsForm import *
 # константы
 import consts
+
+# библиотеки AI
+# библиотека обмена запросами
+import requests
+# для работы с нейронкой
+from openai import OpenAI
+# для работы с файлами окружения
+from dotenv import load_dotenv
 
 # сортировка по нажатию на столбец
 def columnSort(tree, col, reverse):
@@ -69,9 +82,9 @@ def delUser(db, userData, findData, cbxFindUserRes, message=True):
         name, surname, login = userData.split()
         # убираем скобки
         login = login[1:-1]
-        qr = f'''DELETE FROM users
-                WHERE user_name = '{name}' AND user_surname = '{surname}' AND user_login = '{login}';
-              '''
+        qr = f"""DELETE FROM users
+                WHERE user_name = "{name}" AND user_surname = "{surname}" AND user_login = "{login}";
+              """
         try:
             # создаем объект курсора для выбора нужной строки
             cur = db.cursor()
@@ -102,7 +115,7 @@ def delUser(db, userData, findData, cbxFindUserRes, message=True):
 # поиск пользователя по фрагменту данных
 def findUser(db, findData, cbxFindUserRes):
     # запрос на получение данных о пользователях из БД
-    qr = '''SELECT
+    qr = """SELECT
                 users.user_role AS role, 
                 users.user_login AS login,
                 users.user_email AS email,
@@ -111,7 +124,7 @@ def findUser(db, findData, cbxFindUserRes):
                 users.user_surname AS surname,
                 users.user_patronymic AS patr
                 FROM db.users
-        '''
+        """
     # чтение данных из БД с помощью query запроса
     df = pd.read_sql(qr, con=db)
     # фильтруем данные таблицы users для поиска соответствий введенным данным
@@ -157,10 +170,10 @@ def changeWorkMode(workMode, btnAddUser, btnChangeUser, btnDelUser, btnFindUser)
 
 # добавление нового пользователя
 def addNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, etrEmail, tbComm, etrLogin, etrPass, message=True):
-    qr = f'''INSERT INTO db.users 
+    qr = f"""INSERT INTO db.users 
             (user_name, user_surname, user_patronymic, user_description, user_email, user_phone, user_login, user_pass, user_role) 
-            VALUES ('{ etrName }', '{ etrSurname }', '{ etrPatr }', '{ tbComm }', '{ etrEmail }', '{ etrPhone }', '{ etrLogin }', '{ etrPass }', '{ cbxRole }');
-            '''
+            VALUES ("{ etrName }", "{ etrSurname }", "{ etrPatr }", "{ tbComm }", "{ etrEmail }", "{ etrPhone }", "{ etrLogin }", "{ etrPass }", "{ cbxRole }");
+            """
     try:
         # создаем объект курсора для выбора нужной строки
         cur = db.cursor()
@@ -189,7 +202,7 @@ def checkPhone(etrPhone):
     err = []
     # проверяем, что поле заполнено
     if ((etrPhone == "") or (etrPhone == "79991112233")):
-        err.append("Заполните поле 'Телефон'")
+        err.append("Заполните поле \"Телефон\"")
     else: # нет смысла в остальных проверках, если поле не заполнено
         # проверяем, что номер телефона записан правильно
         for num in etrPhone:
@@ -213,14 +226,14 @@ def checkEmail(etrEmail):
     err = []
     # проверяем, что поле заполнено
     if ((etrEmail == "") or (etrEmail == "post@gmail.com")):
-        err.append("Заполните поле 'Почта'")
+        err.append("Заполните поле \"Почта\"")
     else: # нет смысла в остальных проверках, если поле не заполнено
         # проверка на наличие собачки
         if (not "@" in etrEmail):
-            err.append("Не обнаружен значок '@'")
+            err.append("Не обнаружен значок \"@\"")
         # проверка на наличие точки
         if (not "." in etrEmail):
-            err.append("Не обнаружен значок '.'")
+            err.append("Не обнаружен значок \".\"")
         # список почтовых сервисов
         serv = ["gmail", "yandex", "ya", "mail", "yahoo", "bsdmail", "outlook", "hotmail", "protonmail", "web"]
         # список доменов для почтовых адресов
@@ -248,9 +261,9 @@ def checkEmail(etrEmail):
 
 def checkLogin(db, etrLogin):
     # запрос на получение данных о пользователях из БД
-    qr = '''SELECT users.user_login AS login
+    qr = """SELECT users.user_login AS login
                 FROM db.users
-        '''
+        """
     # чтение данных из БД с помощью query запроса
     df = pd.read_sql(qr, con=db)
     # фильтруем данные таблицы users для поиска соответствий введенным данным
@@ -260,7 +273,7 @@ def checkLogin(db, etrLogin):
     err = []
     # проверяем, что поле заполнено
     if ((etrLogin == "") or (etrLogin == "Введите логин")):
-        err.append("Заполните поле 'Логин'")
+        err.append("Заполните поле \"Логин\"")
     else:  # нет смысла в остальных проверках, если поле не заполнено
         # если мы нашли пользователя с таким логином
         if (not filterData.empty):
@@ -273,11 +286,11 @@ def checkNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, 
     err = []
     # проверяем заполнение основных полей
     if ((etrName == "") or (etrName == "Введите имя")):
-        err.append("Заполните поле 'Имя'")
+        err.append("Заполните поле \"Имя\"")
     if ((etrSurname == "") or (etrSurname == "Введите фамилию")):
-        err.append("Заполните поле 'Фамилия'")
+        err.append("Заполните поле \"Фамилия\"")
     if ((etrPatr == "") or (etrPatr == "Введите отчество")):
-        err.append("Заполните поле 'Отчество'")
+        err.append("Заполните поле \"Отчество\"")
     if ((cbxRole == "") or (cbxRole == "Выберите роль")):
         err.append("Выберите роль")
     # проверяем телефон
@@ -301,7 +314,7 @@ def checkNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, 
             err = err + tmpErr
 
     if (etrPass == ""):
-        err.append("Заполните поле 'Пароль'")
+        err.append("Заполните поле \"Пароль\"")
 
     # если были обнаружены ошибки в заполнении формы
     if (len(err) != 0):
@@ -319,7 +332,7 @@ def checkNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, 
 # загружает список логов из БД
 def loadLogList(db):
     # запрос на получение данных о системе
-    qr = '''SELECT system_log.id_log AS id,
+    qr = """SELECT system_log.id_log AS id,
                     system_log.action_caption AS caption,
                     system_log.action_type AS type,
                     system_log.action_status AS status,
@@ -327,7 +340,7 @@ def loadLogList(db):
                     system_log.action_date AS date,
                     system_log.action_time AS time
                     FROM db.system_log
-            '''
+            """
 
     # пробуем прочитать данные
     try:
@@ -373,7 +386,7 @@ def insertDataToTable(db, table):
 # очистка всех логов в БД
 def clearLogList(db, table):
     # запрос на удаление всех записей
-    qr = f'''DELETE FROM system_log'''
+    qr = f"""DELETE FROM system_log"""
     ans = askyesno(title="Очистка логов", message="Вы действительно хотите удалить ВСЕ записи логов?")
     if ans:
         try:
@@ -405,9 +418,9 @@ def delRecord(db, table):
     id_log = vals[0]
 
     # запрос на удаление всех записей
-    qr = f'''DELETE FROM system_log
+    qr = f"""DELETE FROM system_log
                         WHERE system_log.id_log = { id_log };
-                      '''
+                      """
     try:
         # создаем объект курсора для выбора нужной строки
         cur = db.cursor()
@@ -431,18 +444,18 @@ def checkDateTime(data, isTime, str):
     if (isTime):
         # проверяем правильную длину и то, что формат соответствует
         # возвращаем ошибки
-        # if len(data.split(':')) == 2:
+        # if len(data.split(":")) == 2:
         try:
-            datetime.strptime(data, '%H:%M:%S')
+            datetime.strptime(data, "%H:%M:%S")
             return ""
         except Exception:
             return f"Неправильный формат времени в поле \"{str}\". Запишите в виде: HH:MM, например 09:12"
         # else:
         #     return "Неправильный формат времени. Запишите в виде: HH:MM, например 09:12"
     else: # проверяем дату
-        # if len(data.split('-')) == 3:
+        # if len(data.split("-")) == 3:
         try:
-            datetime.strptime(data, '%Y-%m-%d')
+            datetime.strptime(data, "%Y-%m-%d")
             return ""
         except Exception:
             return f"Неправильный формат даты в поле \"{str}\". Запишите в виде: YYYY-MM-DD, например 2026-06-29"
@@ -493,7 +506,7 @@ def createReport(db, dateFrom, dateUntil, timeFrom, timeUntil):
         return False
 
     # запрос на получение данных о системе
-    qr = '''SELECT system_log.id_log AS id,
+    qr = """SELECT system_log.id_log AS id,
                 system_log.action_caption AS caption,
                 system_log.action_type AS type,
                 system_log.action_status AS status,
@@ -501,7 +514,7 @@ def createReport(db, dateFrom, dateUntil, timeFrom, timeUntil):
                 system_log.action_date AS date,
                 system_log.action_time AS time
                 FROM db.system_log
-        '''
+        """
 
     # пробуем прочитать данные
     try:

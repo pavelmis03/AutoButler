@@ -102,8 +102,8 @@ def createManagerAnalyticsForm(db, root, usrData):
     flyList["xscrollcommand"] = scrlH.set
 
     # очищаем таблицу перед наполнением
-    for col in flyList['columns']:
-        flyList.heading(col, text='')
+    for col in flyList["columns"]:
+        flyList.heading(col, text="")
     flyList.delete(*flyList.get_children())
 
     # список колонок будущей таблицы

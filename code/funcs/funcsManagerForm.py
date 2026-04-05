@@ -34,6 +34,14 @@ from funcs.funcsForm import *
 # константы
 import consts
 
+# библиотеки AI
+# библиотека обмена запросами
+import requests
+# для работы с нейронкой
+from openai import OpenAI
+# для работы с файлами окружения
+from dotenv import load_dotenv
+
 """
 # получает список авиакомпаний из БД
 def getCompany(db):
@@ -49,7 +57,7 @@ def getCompany(db):
     try:
         # чтение данных из БД с помощью query запроса
         df = pd.read_sql(qr, con=db)
-        company = df['company'].tolist()
+        company = df["company"].tolist()
 
     except Exception as e:
         showinfo(title="Получение авиакомпаний",
@@ -77,7 +85,7 @@ def getAirport(db, dest):
     try:
         # чтение данных из БД с помощью query запроса
         df = pd.read_sql(qr, con=db)
-        airport = df['airport'].tolist()
+        airport = df["airport"].tolist()
 
     except Exception as e:
         showinfo(title="Получение авиакомпаний",
@@ -145,14 +153,14 @@ def createGraph(db, components, needSave):
         dtStart += timedelta(days=daysStep)
 
     # настройка шрифта
-    plt.rcParams.update({'font.size': 10})
+    plt.rcParams.update({"font.size": 10})
     # настраиваем размеры окна
     plt.figure(figsize=(10, 5))
     # настраиваем заголовок графика
-    plt.title('Список полетов')
+    plt.title("Список полетов")
     # настраиваем заголовки осей
-    plt.xlabel('Дата вылета')
-    plt.ylabel('Количество рейсов')
+    plt.xlabel("Дата вылета")
+    plt.ylabel("Количество рейсов")
     plt.plot(names, valuesOnTime, color="green")
     plt.plot(names, valuesDelay, color="yellow")
     plt.plot(names, valuesCansel, color="red")
@@ -336,18 +344,18 @@ def checkDateTime(data, isTime, str):
     if (isTime):
         # проверяем правильную длину и то, что формат соответствует
         # возвращаем ошибки
-        # if len(data.split(':')) == 2:
+        # if len(data.split(":")) == 2:
         try:
-            datetime.strptime(data, '%H:%M:%S')
+            datetime.strptime(data, "%H:%M:%S")
             return ""
         except Exception:
             return f"Неправильный формат времени в поле \"{str}\". Запишите в виде: HH:MM, например 09:12"
         # else:
         #     return "Неправильный формат времени. Запишите в виде: HH:MM, например 09:12"
     else: # проверяем дату
-        # if len(data.split('-')) == 3:
+        # if len(data.split("-")) == 3:
         try:
-            datetime.strptime(data, '%Y-%m-%d')
+            datetime.strptime(data, "%Y-%m-%d")
             return ""
         except Exception:
             return f"Неправильный формат даты в поле \"{str}\". Запишите в виде: YYYY-MM-DD, например 2026-06-29"

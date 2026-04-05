@@ -70,8 +70,8 @@ def createOperatorChooseHotelForm(db, root, usrData):
     flyList["xscrollcommand"] = scrlH.set
 
     # очищаем таблицу перед наполнением
-    for col in flyList['columns']:
-        flyList.heading(col, text='')
+    for col in flyList["columns"]:
+        flyList.heading(col, text="")
     flyList.delete(*flyList.get_children())
 
     # список колонок будущей таблицы
@@ -105,8 +105,8 @@ def createOperatorChooseHotelForm(db, root, usrData):
     passList["xscrollcommand"] = scrlH.set
 
     # очищаем таблицу перед наполнением
-    for col in passList['columns']:
-        passList.heading(col, text='')
+    for col in passList["columns"]:
+        passList.heading(col, text="")
     passList.delete(*passList.get_children())
 
     # список колонок будущей таблицы
@@ -228,14 +228,19 @@ def createOperatorChooseHotelForm(db, root, usrData):
 
     # список лэйблов для передачи данных о пассажире
     components = [lblPassFIO, lblPassFlight, lblPassClass]
+    # список лэйблов для передачи данных о выбранном номере
+    componentsH = []
 
+    # заранее создаю переменные, чтобы потом сохранить в них нужные компоненты, не нарушая структуры кода
+    hotelList = 0
+    tbMess = 0
     # подобрать номер
-    clickFunc = lambda: getHotelList(db)
+    clickFunc = lambda: getHotelList(flyList, sbFamilyMember.get(), tbComm.get("1.0", "end"), tbMess, hotelList)
     btnFindHotels = Button(lfHotelSettings, font=consts.FNTBTNMINI, text="Подобрать номера", command=clickFunc, padx=48, pady=2)
     btnFindHotels.grid(row=4, column=4, columnspan=2, rowspan=1, padx=10, pady=[5, 0], sticky=W)
 
     # закрепить номер за пассажиром
-    clickFunc = lambda: chooseHotel(db, flyList, passList, etrFindPass.get(), cbxPassResult, components)
+    clickFunc = lambda: chooseHotel(db, hotelList, passList, sbFamilyMember.get(), usrData["name"]) # , etrFindPass.get(), cbxPassResult
     btnChooseHotel = Button(lfHotelSettings, font=consts.FNTBTNMINI, text="Закрепить номер за пассажиром", command=clickFunc, padx=5, pady=2)
     btnChooseHotel.grid(row=5, column=4, columnspan=2, rowspan=1, padx=10, pady=[5, 0], sticky=W)
 
@@ -246,23 +251,29 @@ def createOperatorChooseHotelForm(db, root, usrData):
     lblChoosedHotel.grid(row=0, column=6, columnspan=2, rowspan=1, padx=10, pady=[5, 0], sticky=NW)
 
     # данные по гостинице
-    lblHotelName = Label(lfHotelSettings, font=consts.FNTLBLH3, text="Название: ")
+    lblHotelName = Label(lfHotelSettings, font=consts.FNTLBLH4, text="Название: ")
     lblHotelName.grid(row=1, column=6, columnspan=2, rowspan=1, padx=10, pady=[5, 0], sticky=NW)
+    componentsH.append(lblHotelName)
     # данные по гостинице
-    lblHotelDist = Label(lfHotelSettings, font=consts.FNTLBLH3, text="Удаленность: ")
+    lblHotelDist = Label(lfHotelSettings, font=consts.FNTLBLH4, text="Удаленность: ")
     lblHotelDist.grid(row=2, column=6, columnspan=2, rowspan=1, padx=10, pady=[5, 0], sticky=NW)
+    componentsH.append(lblHotelDist)
     # данные по гостинице
-    lblHotelCost = Label(lfHotelSettings, font=consts.FNTLBLH3, text="Стоимость номера: ")
+    lblHotelCost = Label(lfHotelSettings, font=consts.FNTLBLH4, text="Стоимость номера: ")
     lblHotelCost.grid(row=3, column=6, columnspan=2, rowspan=1, padx=10, pady=[5, 0], sticky=NW)
+    componentsH.append(lblHotelCost)
     # данные по гостинице
-    lblHotelMeals = Label(lfHotelSettings, font=consts.FNTLBLH3, text="Питание: ")
+    lblHotelMeals = Label(lfHotelSettings, font=consts.FNTLBLH4, text="Питание: ")
     lblHotelMeals.grid(row=4, column=6, columnspan=2, rowspan=1, padx=10, pady=[5, 0], sticky=NW)
+    componentsH.append(lblHotelMeals)
     # данные по гостинице
-    lblHotelLink = Label(lfHotelSettings, font=consts.FNTLBLH3, text="Ссылка: https")
+    lblHotelLink = Label(lfHotelSettings, font=consts.FNTLBLH5, text="Ссылка: ")
     lblHotelLink.grid(row=5, column=6, columnspan=2, rowspan=1, padx=10, pady=[5, 0], sticky=NW)
+    componentsH.append(lblHotelLink)
     # данные по гостинице
-    lblHotelAddit = Label(lfHotelSettings, font=consts.FNTLBLH3, text="Дополнительно: ")
+    lblHotelAddit = Label(lfHotelSettings, font=consts.FNTLBLH4, text="Дополнительно: ")
     lblHotelAddit.grid(row=6, column=6, columnspan=2, rowspan=1, padx=10, pady=[5, 0], sticky=NW)
+    componentsH.append(lblHotelAddit)
 
     # скопировать ссылку
     clickFunc = lambda: copyHotelLink(lblHotelLink["text"])
@@ -288,7 +299,8 @@ def createOperatorChooseHotelForm(db, root, usrData):
     lblMess = Label(lfHotelSettings, font=consts.FNTLBLH2, text="Вывод модели:")
     lblMess.grid(row=0, column=10, columnspan=2, rowspan=1, padx=10, pady=[5, 0], sticky=NW)
     # текстовое поле сообщений от нейронки
-    tbMess = ScrolledText(lfHotelSettings, width=35, height=14, wrap="word", pady=0, state="disabled")
+    # tbMess = ScrolledText(lfHotelSettings, width=35, height=14, wrap="word", pady=0)
+    tbMess = ScrolledText(lfHotelSettings, width=35, height=14, pady=0)
     tbMess.grid(row=1, column=10, rowspan=8, columnspan=4, padx=10, pady=[5, 0], sticky=NW)
 
     # добавляем блок на форму
@@ -341,35 +353,33 @@ def createOperatorChooseHotelForm(db, root, usrData):
     hotelList["xscrollcommand"] = scrlH.set
 
     # очищаем таблицу перед наполнением
-    for col in hotelList['columns']:
-        hotelList.heading(col, text='')
+    for col in hotelList["columns"]:
+        hotelList.heading(col, text="")
     hotelList.delete(*hotelList.get_children())
 
     # список колонок будущей таблицы
-    cols = ["№", "Название", "Удаленность", "Стоимость", "Питание", "Ссылка", "Доп услуги"]
+    cols = ["№", "Ссылка", "Название", "Удаленность", "Класс гостиницы", "Стоимость", "Питание", "  Номер  "]
     # строим таблицу по полученным данным
     hotelList["columns"] = cols
     # определяем заголовки для столбцов
     i = 1
     for col in cols:
         hotelList.heading(col, text=col, anchor=CENTER,
-        # здесь создаю замыкание, чтобы i передавалась, как значение, а не как ссылка
-        command = (lambda tree, i, f: (lambda: columnSort(tree, i, f)))(hotelList, i - 1, False))
+            # здесь создаю замыкание, чтобы i передавалась, как значение, а не как ссылка
+            command = (lambda tree, i, f: (lambda: columnSort(tree, i, f)))(hotelList, i - 1, False))
         # выравнивание по центру для данных в ячейках
         hotelList.column(f"#{i}", width=len(col) * 9, minwidth=40, anchor=CENTER, stretch=True)
         i += 1
 
     # добавляем, растягивая по ширине элементы и заполняя контейнер
     hotelList.pack(fill=BOTH, expand=0, padx=10, pady=[10, 10], anchor=NW)
-    # при нажатии на строку таблицы полетов подгружаются данные по пассажирам этого рейса
-    clickFunc = lambda e: chooseHotel()
+    # при нажатии на строку таблицы гостиниц подгружаются данные по конкретной гостинице
+    clickFunc = lambda e: selectHotel(hotelList, componentsH)
     # привязываем событие обработки нажатия на строку
     hotelList.bind("<<TreeviewSelect>>", clickFunc)
 
     # добавляем блок таблицы пассажиров на форму
     lfHotels.pack(anchor=NW, fill=BOTH, padx=10, pady=[0, 0])
-
-
 
     # выход в предыдущее меню
     clickFunc = lambda: createOperatorMainForm(db, root, usrData)
@@ -418,8 +428,8 @@ def createOperatorReportsForm(db, root, usrData):
     passList["xscrollcommand"] = scrlH.set
 
     # очищаем таблицу перед наполнением
-    for col in passList['columns']:
-        passList.heading(col, text='')
+    for col in passList["columns"]:
+        passList.heading(col, text="")
     passList.delete(*passList.get_children())
 
     # список колонок будущей таблицы
@@ -479,7 +489,7 @@ def createOperatorReportsForm(db, root, usrData):
 
     # переменная для отслеживания изменения поля ввода
     etrDateFromVar = StringVar()
-    etrDateFromVar.trace("w", lambda a, b, c: insertDataHotelToTable(db, passList, components, usrData['name']))
+    etrDateFromVar.trace("w", lambda a, b, c: insertDataHotelToTable(db, passList, components, usrData["name"]))
     # текстовое поле дата ОТ
     etrDateFrom = Entry(lfManageField, font=consts.FNTLBLS, textvariable=etrDateFromVar)
     # значение по умолчанию для поля ввода
@@ -494,7 +504,7 @@ def createOperatorReportsForm(db, root, usrData):
 
     # переменная для отслеживания изменения поля ввода
     etrDateUntilVar = StringVar()
-    etrDateUntilVar.trace("w", lambda a, b, c: insertDataHotelToTable(db, passList, components, usrData['name']))
+    etrDateUntilVar.trace("w", lambda a, b, c: insertDataHotelToTable(db, passList, components, usrData["name"]))
     # текстовое поле дата ДО
     etrDateUntil = Entry(lfManageField, font=consts.FNTLBLS, textvariable=etrDateUntilVar)
     # значение по умолчанию для поля ввода
@@ -509,7 +519,7 @@ def createOperatorReportsForm(db, root, usrData):
 
     # переменная для отслеживания изменения поля ввода
     etrTimeFromVar = StringVar()
-    etrTimeFromVar.trace("w", lambda a, b, c: insertDataHotelToTable(db, passList, components, usrData['name']))
+    etrTimeFromVar.trace("w", lambda a, b, c: insertDataHotelToTable(db, passList, components, usrData["name"]))
     # текстовое поле время ОТ
     etrTimeFrom = Entry(lfManageField, font=consts.FNTLBLS, textvariable=etrTimeFromVar)
     # значение по умолчанию для поля ввода
@@ -524,7 +534,7 @@ def createOperatorReportsForm(db, root, usrData):
 
     # переменная для отслеживания изменения поля ввода
     etrTimeUntilVar = StringVar()
-    etrTimeUntilVar.trace("w", lambda a, b, c: insertDataHotelToTable(db, passList, components, usrData['name']))
+    etrTimeUntilVar.trace("w", lambda a, b, c: insertDataHotelToTable(db, passList, components, usrData["name"]))
     # текстовое поле время ДО
     etrTimeUntil = Entry(lfManageField, font=consts.FNTLBLS, textvariable=etrTimeUntilVar)
     # значение по умолчанию для поля ввода
@@ -539,7 +549,7 @@ def createOperatorReportsForm(db, root, usrData):
 
     # переменная для отслеживания изменения поля ввода
     cbxHotelVar = StringVar()
-    cbxHotelVar.trace("w", lambda a, b, c: insertDataHotelToTable(db, passList, components, usrData['name']))
+    cbxHotelVar.trace("w", lambda a, b, c: insertDataHotelToTable(db, passList, components, usrData["name"]))
     # получаем список гостиниц
     hotelList = getHotel(db)
     # выпадающий список гостиниц
@@ -553,10 +563,10 @@ def createOperatorReportsForm(db, root, usrData):
     components.append(cbxHotel)
 
     # наполняем таблицу данными при первом запуске
-    insertDataHotelToTable(db, passList, components, usrData['name'])
+    insertDataHotelToTable(db, passList, components, usrData["name"])
 
     # сформировать отчет
-    clickFunc = lambda: createReport(db, components, usrData['name'])
+    clickFunc = lambda: createReport(db, components, usrData["name"])
     btnCreateReport = Button(lfManageField, font=consts.FNTBTN, text="Сформировать отчет", command=clickFunc, padx=15, pady=10)
     btnCreateReport.grid(row=4, column=3, columnspan=2, rowspan=2, padx=0, pady=[10, 0], sticky=W)
 

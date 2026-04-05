@@ -21,6 +21,8 @@ import pyperclip
 # дата и время
 from datetime import datetime, timedelta
 import time
+# random
+import random
 
 # библиотека для построения графика
 import matplotlib.pyplot as plt
@@ -40,8 +42,12 @@ from funcs.funcsForm import *
 import consts
 
 # библиотеки AI
+# библиотека обмена запросами
 import requests
+# для работы с нейронкой
 from openai import OpenAI
+import openai
+# для работы с файлами окружения
 from dotenv import load_dotenv
 
 # сортировка по нажатию на столбец
@@ -56,21 +62,26 @@ def columnSort(tree, col, reverse):
     # в следующий раз выполняем сортировку в обратном порядке
     tree.heading(col, command=lambda: columnSort(tree, col, not reverse))
 
-# получаем данные из выделенной строки в таблице
-def getTableItemData(table, itemNum):
+# получаем данные из выделенной строки в таблице (по умолчанию берем 1 элемент, если itemCnt = -1 - всю строку
+def getTableItemData(table, itemNum, itemCnt=1):
     # если есть выделенные строки
     if (len(table.selection()) != 0):
         # получаем список выделенных строк, берем первую
         selected_item = table.selection()[0]
         # выделенный элемент
         item = table.item(selected_item)
-        # получаем номер рейса
-        flyNum = item["values"][itemNum]
+        # список значений строки
+        flyNum = item["values"]
     else:
         # по умолчанию берем первую строку и из нее нужный номер рейса
-        flyNum = table.item(0)["values"][itemNum]
+        flyNum = table.item(0)["values"]
         # выделяем первую строку
         table.selection_add(0)
+
+    # если нужен конктретный элемент, иначе получаем всю строку
+    if (itemCnt == 1):
+        # получаем номер рейса
+        flyNum = flyNum[itemNum]
 
     return flyNum
 
@@ -123,12 +134,12 @@ def getFlight(db, filter, cbx):
     # устанавливаем значение по умолчанию
     cbx.current(0)
 
-# ищем отели - получаем список отелей
+# ищем отели в БД - получаем список отелей
 def getHotel(db):
     # запрос на получение данных
-    qr = '''SELECT hotels_order.HOTEL AS hotel
+    qr = """SELECT hotels_order.HOTEL AS hotel
                         FROM db.hotels_order
-                     '''
+                     """
 
     # список гостиниц
     hotels = []
@@ -137,7 +148,7 @@ def getHotel(db):
     try:
         # чтение данных из БД с помощью query запроса
         df = pd.read_sql(qr, con=db)
-        hotels = df['hotel'].tolist()
+        hotels = df["hotel"].tolist()
         # избавляемся от повторов с помощью множества
         hotels = set(hotels)
         # возвращаемся к списку
@@ -172,8 +183,8 @@ def getPass(db, tableFlight, tablePass, filter, cbx, components):
     else:
         cbx["values"] =  ["Пассажиров не найдено"]
         # очищаем данные лэйблов
-        for lbl, val in zip(components, ["ФИО: ", "Рейс№: ", "Класс рейса: "]):
-            lbl["text"] = val
+        # for lbl, val in zip(components, ["ФИО: ", "Рейс№: ", "Класс рейса: "]):
+        #    lbl["text"] = val
     # устанавливаем значение по умолчанию
     cbx.current(0)
 
@@ -192,10 +203,24 @@ def selectPass(cbx, tableFlight, tablePass, labels, type):
     # класс рейса
     fClass["text"] = "Класс рейса: " + getTableItemData(tableFlight, 7)
 
+# вывести данные по выбранному номеру
+def selectHotel(hotelList, labels):
+    # получаем ссылки на лэйблы в виде отдельных переменных
+    # название, удаленность, стоимость комнаты, питание, ссылка, дополнительно
+    name, dist, cost, meals, link, addit = labels
+    #
+    # получаем константную часть надписи + данные по таблице
+    name["text"] = name["text"].split()[0] + " " + getTableItemData(hotelList, 2)
+    dist["text"] = dist["text"].split()[0] + " " + str(getTableItemData(hotelList, 3))
+    cost["text"] = cost["text"].split()[0] + " " + str(getTableItemData(hotelList, 5))
+    meals["text"] = meals["text"].split()[0] + " " + getTableItemData(hotelList, 6)
+    link["text"] = link["text"].split()[0] + " " + getTableItemData(hotelList, 1)
+    addit["text"] = addit["text"].split()[0] + " " + str(getTableItemData(hotelList, 4)) + " класс гостинницы"
+
 # загружает список рейсов из БД
 def loadFlyList(db):
     # запрос на получение данных о полетах
-    qr = '''SELECT flights.ID AS id,
+    qr = """SELECT flights.ID AS id,
                 flights.FLIGHT_NUMBER AS flyNum,
                 flights.AIRLINE AS company,
                 flights.DEP_AIRPORT AS airportDep,
@@ -205,7 +230,7 @@ def loadFlyList(db):
                 flights.FLIGHTS_TYPE AS type,
                 flights.PASSENGERS_COUNT AS passCnt
         FROM db.flights
-        '''
+        """
 
     # пробуем прочитать данные
     try:
@@ -221,7 +246,7 @@ def loadFlyList(db):
 # загружает список записей по отелям из БД
 def loadOrdersList(db):
     # запрос на получение данных о проживании гостей
-    qr = '''SELECT hotels_order.NUM_ORDER AS reservNum,
+    qr = """SELECT hotels_order.NUM_ORDER AS reservNum,
                 hotels_order.DATE_CREATE AS dateCreate,
                 hotels_order.EXECUTANT AS operator,
                 hotels_order.PROBLEM_FLIGHT_NAME as flyNum,
@@ -233,7 +258,7 @@ def loadOrdersList(db):
                 hotels_order.CHECK_OUT_DATE AS dateDeparture,
                 hotels_order.ROOM_COST AS roomCost
         FROM db.hotels_order
-        '''
+        """
 
     # пробуем прочитать данные
     try:
@@ -249,7 +274,7 @@ def loadOrdersList(db):
 # загружает список пассажиров из БД
 def loadPassengerList(db):
     # запрос на получение данных о полетах
-    qr = '''SELECT passengers.ID AS id,
+    qr = """SELECT passengers.ID AS id,
                 passengers.FLIGHT_NUMBER AS flyNum,
                 passengers.FIRST_NAME AS name,
                 passengers.LAST_NAME AS surname,
@@ -257,7 +282,7 @@ def loadPassengerList(db):
                 passengers.TICKET_NUMBER AS ticket,
                 passengers.TICKET_PRICE AS price
         FROM db.passengers
-        '''
+        """
 
     # пробуем прочитать данные
     try:
@@ -330,7 +355,6 @@ def insertDataToTable(db, tableFlight, tablePass, insertType, cbx=""):
             # разбираем дату и время на отдельные составляющие
             tablePass.insert("", END, i, values=tuple([*row]))
             i += 1
-        # дописать
 
 
 
@@ -408,13 +432,204 @@ def insertDataHotelToTable(db, table, components, role):
         # считаем общее количество пассажиров и отображаем в лэйбле
         components[1]["text"] = calcPass(fData)
 
-# закрепить гостиницу за человеком
-def chooseHotel():
-    pass
+# закрепить гостиницу за человеком и отметить это в бд
+def chooseHotel(db, hotelList, passList, guestCnt, usrName):
+    # если не выбран номер
+    if (len(hotelList.selection()) == 0):
+        showerror(title="Ошибка!", message="Сначала выберите номер в таблице подобранных номеров!")
+        return
+
+    # текущие дата и время
+    currDate = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
+    # следующий день
+    depDate = datetime.now() + timedelta(days=1)
+    depDate = depDate.strftime("%Y.%m.%d %H:%M:%S")
+
+    # получаем данные из таблиц для передачи в БД
+    num = getTableItemData(hotelList, 0)
+    pas = getTableItemData(passList, 2) + " " + getTableItemData(passList, 3)
+    # guestCnt - параметр функции
+    # usrName - параметр функции
+    flyName = getTableItemData(passList, 1)
+    hotel = getTableItemData(hotelList, 2)
+    room = getTableItemData(hotelList, 7)
+    tcost = str(getTableItemData(hotelList, 5)).split()
+    cost = ""
+    # превращаем сумму именно в число
+    for el in tcost:
+        if (el.isdigit()):
+            cost += el
+    nutr = getTableItemData(hotelList, 6)
+    # формируем запрос к бд
+    qr = f"""INSERT INTO db.hotels_order 
+                (NUM_ORDER, DATE_CREATE, PASSENGER, GUEST_COUNT, EXECUTANT, PROBLEM_FLIGHT_NAME, HOTEL, ROOM, ROOM_COST, CHECK_IN_DATE, CHECK_OUT_DATE, NUTRITION, PRIM) 
+                VALUES ({int(num)}, {currDate}, "{pas}", {int(guestCnt)}, "{usrName}", "{flyName}", "{hotel}", "{room}", {int(cost)}, {currDate}, {depDate}, "{nutr}", "Нет");
+                """
+    qr = f"""INSERT INTO db.hotels_order 
+                    (NUM_ORDER, DATE_CREATE, PASSENGER, GUEST_COUNT, EXECUTANT, PROBLEM_FLIGHT_NAME, HOTEL, ROOM, ROOM_COST, CHECK_IN_DATE, CHECK_OUT_DATE, NUTRITION, PRIM) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                    """
+    data = (int(num), str(currDate), pas, int(guestCnt), usrName, flyName, hotel, room, int(cost), str(currDate), str(depDate), nutr, "Нет")
+
+    # сообщение с подтверждением
+    ans = askyesno(title="Подтвердите закрепление номера", message=f"Закрепить за пассажиром '{pas}' номер '{room}' в отеле '{hotel}'?")
+    if (ans):
+        try:
+            # создаем объект курсора для выбора нужной строки
+            cur = db.cursor()
+            # выполняем query-запрос
+            cur.execute(qr, data)
+            # сохраняем изменения в БД
+            db.commit()
+
+            showinfo(title="Закрепление номера", message="Номер успешно закреплен за пассажиром!")
+            # удаляем строку с закрепленным номером
+            hotelList.delete(hotelList.selection()[0])
+
+        except Exception as e:
+            showerror(title="Закрепление номера", message="Произошла непредвиденная ошибка при закреплении, попробуйте еще раз")
+    else:
+        showinfo(title="Закрепление номера", message="Закрепление отменено")
+
+# функция наполнения таблицы по данным, найденным нейронкой
+def fillHotelList(hotelList, content):
+    # очищаем таблицу перед наполнением
+    for col in hotelList['columns']:
+        hotelList.heading(col, text='')
+    hotelList.delete(*hotelList.get_children())
+
+    # список колонок будущей таблицы
+    cols = ["№", "     Ссылка     ", "   Название   ", "Удаленность", "Класс гостиницы", "Стоимость", "Питание", "  Номер  "]
+    # строим таблицу по полученным данным
+    hotelList["columns"] = cols
+    # определяем заголовки для столбцов
+    i = 1
+    for col in cols:
+        hotelList.heading(col, text=col, anchor=CENTER,
+                          # здесь создаю замыкание, чтобы i передавалась, как значение, а не как ссылка
+                          command=(lambda tree, i, f: (lambda: columnSort(tree, i, f)))(hotelList, i - 1, False))
+        # выравнивание по центру для данных в ячейках
+        hotelList.column(f"#{i}", width=len(col) * 9, minwidth=40, anchor=CENTER, stretch=True)
+        i += 1
+
+    # временный массив
+    arr = content.split("\n")
+    tarr = []
+    # список отелей для таблицы
+    hotels = []
+    # считаем количество параметров
+    i = 0
+
+    for el in arr:
+        # если новая запись (начинаются со ссылки всегда)
+        if ("https" in el.strip()):
+            # проверяем, что собрали данные по очередному отелю
+            if (len(tarr) == 8):
+                hotels.append(tarr)
+            # отладочный
+            print(tarr)
+            # номер записи генерируем
+            tarr = [random.randint(100, 10000)]
+            # добавляем ссылку
+            tarr.append(str(el).strip())
+        else:
+            # убираем пустые строки
+            if (len(el) >= 1):
+                tarr.append(str(el).strip())
+                i += 1
+    # последний отель
+    # проверяем, что собрали данные по очередному отелю
+    if (len(tarr) == 8):
+        hotels.append(tarr)
+
+    i = 0
+    # добавляем данные по ответу нейронки в таблицу
+    for row in hotels:
+        # разбираем дату и время на отдельные составляющие
+        hotelList.insert("", END, i, values=tuple([*row]))
+        i += 1
 
 # получить список гостиниц от нейронки
-def getHotelList(db):
-    pass
+def getHotelList(table, familyMember, message, tbOutput, hotelList):
+    # получаем список выделенных строк, берем первую
+    selected_item = table.selection()[0]
+    # получаем элементы выделенной строки в виде списка
+    items = table.item(selected_item)["values"]
+    # получаем отдельные значения
+    #   0          1              2                    3                 4           5          6                  7             8
+    # ["№", "Номер рейса", "Авиакомпания", "Аэропорт вылета", "Аэропорт прибытия", Статус, "Причина отмены", "Класс рейса", "Количество пассажиров"]
+    company = items[2]
+    airport = items[3]
+    reason = items[6]
+    type = items[7]
+    passCnt = 1 + int(familyMember)
+
+    try:
+        # получаем переменные из окружения
+        load_dotenv()
+        # создаем объект клиента
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=os.getenv("OPENROUTER_API_KEY"),
+        )
+
+        # сам наш запрос
+        request = f"Подбери номер для { passCnt } человек с отмененного рейса класса { type }, рядом с аэропортом { airport }."
+
+        # создаем чат и настраиваем модель, потом задаем ей вопрос
+        completion = client.chat.completions.create(
+            model=os.getenv("MODEL"),
+            messages=[
+                {
+                    "role": "system",
+                    "content": """Ты специалист по подбору гостиничных номеров на одну ночь для людей с отмененного авиарейса.
+                                    Ты должен прислать ответ в виде списка из 3-5 ссылок на конкретные номера в разных отелях или гостиницах 
+                                    с краткой его характеристикой по трем параметрам, каждый параметр выводи обоязательно на отдельной строке без лишних символов и названия самого параметра:
+                                    1) ссылка
+                                    2) название гостиницы
+                                    3) удаленность от аэропорта
+                                    4) количество звезд гостиницы
+                                    5) стоимость найденного номера в рублях
+                                    6) входит ли в стоимость питание и какое
+                                    7) какой это номер (класс номера и количество комнат)
+                                    8) пустая строка-разделитель
+                                     При выборе гостиницы и номера ты должен опираться на параметры, которые будут переданы в 
+                                     последующих запросах - это аэропорт (гостиница должна быть недалеко от него), класс рейса
+                                     (пассажиры из бизнес класса должны заселяться в элитные гостиницы), количество человек на номер: 
+                                     больше 5 человек - номер должен быть трехкомнатный"""
+                },
+                {
+                    "role": "user",
+                    "content": request
+                },
+            ]
+        )
+        # выводим ответ нейронки в текстбокс
+        tbOutput.insert(END, completion.choices[0].message.content + "\n----------------------\n")
+        # обновляю вид текстбокса
+        tbOutput.update()
+
+        # отладочный
+        # print(completion.choices[0].message.content)
+
+        # функция наполнения таблицы по данным, найденным нейронкой
+        fillHotelList(hotelList, completion.choices[0].message.content)
+
+    # обрабатываем возможные исключения
+    # except requests.exceptions.Timeout:
+    except openai.APITimeoutError:
+        showwarning(title="Внимание!", message="Время ожидания ответа истекло")
+    except openai.APIConnectionError:
+        showwarning(title="Внимание!", message="Произошла ошибка сети")
+    except openai.InternalServerError:
+        showwarning(title="Внимание!", message="Произошла ошибка на стороне сервера")
+    except openai.RateLimitError:
+        showwarning(title="Внимание!", message="Превышено количество запросов к модели")
+    except Exception as e:
+        showwarning(title="Внимание!", message="Неизвестная ошибка при обработке запроса к модели")
+        # отладочный
+        print(e)
+
 
 # отправить сообщение
 def addMessage():
@@ -440,18 +655,18 @@ def checkDateTime(data, isTime, str):
     if (isTime):
         # проверяем правильную длину и то, что формат соответствует
         # возвращаем ошибки
-        # if len(data.split(':')) == 2:
+        # if len(data.split(":")) == 2:
         try:
-            datetime.strptime(data, '%H:%M:%S')
+            datetime.strptime(data, "%H:%M:%S")
             return ""
         except Exception:
             return f"Неправильный формат времени в поле \"{str}\". Запишите в виде: HH:MM, например 09:12"
         # else:
         #     return "Неправильный формат времени. Запишите в виде: HH:MM, например 09:12"
     else: # проверяем дату
-        # if len(data.split('-')) == 3:
+        # if len(data.split("-")) == 3:
         try:
-            datetime.strptime(data, '%Y-%m-%d')
+            datetime.strptime(data, "%Y-%m-%d")
             return ""
         except Exception:
             return f"Неправильный формат даты в поле \"{str}\". Запишите в виде: YYYY-MM-DD, например 2026-06-29"

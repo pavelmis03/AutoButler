@@ -21,7 +21,7 @@ from forms.formManager import createManagerMainForm
 # функция проверки логина и пароля при входе
 def checkSignInData(event, db, login, pwd, role, lblErr, etrPwd, root):
     # запрос на получение данных о пользователях из БД
-    qr = '''SELECT users.id_user AS id,
+    qr = """SELECT users.id_user AS id,
             users.user_login AS login,
             users.user_pass AS pwd,
             users.user_role AS role,
@@ -32,7 +32,7 @@ def checkSignInData(event, db, login, pwd, role, lblErr, etrPwd, root):
             users.user_patronymic AS patr,
             users.user_description AS descr
             FROM db.users
-    '''
+    """
     # чтение данных из БД с помощью query запроса
     df = pd.read_sql(qr, con=db)
     # фильтруем данные таблицы users для поиска соответствий введенным данным

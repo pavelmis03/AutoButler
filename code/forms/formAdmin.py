@@ -285,8 +285,8 @@ def createAndminSystemManageForm(db, root, usrData):
     # определяем заголовки для столбцов
     i = 1
     # очищаем таблицу перед наполнением
-    for col in logList['columns']:
-        logList.heading(col, text='')
+    for col in logList["columns"]:
+        logList.heading(col, text="")
         i += 1
     logList.delete(*logList.get_children())
 

@@ -35,8 +35,11 @@ from funcs.funcsForm import *
 import consts
 
 # библиотеки AI
+# библиотека обмена запросами
 import requests
+# для работы с нейронкой
 from openai import OpenAI
+# для работы с файлами окружения
 from dotenv import load_dotenv
 
 # сортировка по нажатию на столбец
@@ -174,9 +177,9 @@ def startCommunication():
 # получает список авиакомпаний из БД
 def getCompany(db):
     # запрос на получение данных о системе
-    qr = '''SELECT flights.AIRLINE AS company
+    qr = """SELECT flights.AIRLINE AS company
             FROM db.flights
-         '''
+         """
 
     # список авиакомпаний
     company = []
@@ -185,7 +188,7 @@ def getCompany(db):
     try:
         # чтение данных из БД с помощью query запроса
         df = pd.read_sql(qr, con=db)
-        company = df['company'].tolist()
+        company = df["company"].tolist()
         # избавляемся от повторов с помощью множества
         company = set(company)
         # возвращаемся к списку
@@ -206,9 +209,9 @@ def getAirport(db, dest):
         destination = "ARR_AIRPORT"
 
     # запрос на получение данных о системе
-    qr = f'''SELECT flights.{destination} AS airport
+    qr = f"""SELECT flights.{destination} AS airport
             FROM db.flights
-         '''
+         """
 
     # список аэропортов
     airport = []
@@ -217,7 +220,7 @@ def getAirport(db, dest):
     try:
         # чтение данных из БД с помощью query запроса
         df = pd.read_sql(qr, con=db)
-        airport = df['airport'].tolist()
+        airport = df["airport"].tolist()
         # избавляемся от повторов с помощью множества
         airport = set(airport)
         # возвращаемся к списку
@@ -289,14 +292,14 @@ def createGraph(db, components, needSave):
         dtStart += timedelta(days=daysStep)
 
     # настройка шрифта
-    plt.rcParams.update({'font.size': 10})
+    plt.rcParams.update({"font.size": 10})
     # настраиваем размеры окна
     plt.figure(figsize=(10, 5))
     # настраиваем заголовок графика
-    plt.title('Список полетов')
+    plt.title("Список полетов")
     # настраиваем заголовки осей
-    plt.xlabel('Дата вылета')
-    plt.ylabel('Количество рейсов')
+    plt.xlabel("Дата вылета")
+    plt.ylabel("Количество рейсов")
     plt.plot(names, valuesOnTime, color="green")
     plt.plot(names, valuesDelay, color="yellow")
     plt.plot(names, valuesCansel, color="red")
@@ -347,7 +350,7 @@ def resetSettings(dateFrom, dateUntil, timeFrom, timeUntil, workModeDep, workMod
 # загружает список рейсов из БД
 def loadFlyList(db):
     # запрос на получение данных о полетах
-    qr = '''SELECT flights.ID AS id,
+    qr = """SELECT flights.ID AS id,
                 flights.FLIGHT_NUMBER AS flyNum,
                 flights.AIRLINE AS company,
                 flights.DEP_AIRPORT AS airportDep,
@@ -360,7 +363,7 @@ def loadFlyList(db):
                 flights.DELAY_MINUTES AS delay,
                 flights.CANCELLATION_REASON AS reason
         FROM db.flights
-        '''
+        """
 
     # пробуем прочитать данные
     try:
@@ -480,18 +483,18 @@ def checkDateTime(data, isTime, str):
     if (isTime):
         # проверяем правильную длину и то, что формат соответствует
         # возвращаем ошибки
-        # if len(data.split(':')) == 2:
+        # if len(data.split(":")) == 2:
         try:
-            datetime.strptime(data, '%H:%M:%S')
+            datetime.strptime(data, "%H:%M:%S")
             return ""
         except Exception:
             return f"Неправильный формат времени в поле \"{str}\". Запишите в виде: HH:MM, например 09:12"
         # else:
         #     return "Неправильный формат времени. Запишите в виде: HH:MM, например 09:12"
     else: # проверяем дату
-        # if len(data.split('-')) == 3:
+        # if len(data.split("-")) == 3:
         try:
-            datetime.strptime(data, '%Y-%m-%d')
+            datetime.strptime(data, "%Y-%m-%d")
             return ""
         except Exception:
             return f"Неправильный формат даты в поле \"{str}\". Запишите в виде: YYYY-MM-DD, например 2026-06-29"
@@ -535,7 +538,7 @@ def createReport(db, components):
         return False
 
     # запрос на получение данных о полетах
-    qr = '''SELECT flights.ID AS id,
+    qr = """SELECT flights.ID AS id,
                 flights.FLIGHT_NUMBER AS flyNum,
                 flights.AIRLINE AS company,
                 flights.DEP_AIRPORT AS airportDep,
@@ -548,7 +551,7 @@ def createReport(db, components):
                 flights.DELAY_MINUTES AS delay,
                 flights.CANCELLATION_REASON AS reason
         FROM db.flights
-        '''
+        """
 
     # пробуем прочитать данные
     try:
