@@ -616,5 +616,22 @@ def createReport(db, components):
         showinfo(title="Создание отчета", message="Отчет успешно сформирован!")
 
     except Exception as e:
-        showinfo(title="Создание отчета",
-                 message="При создании отчета произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
+        showwarning(title="Создание отчета", message="При создании отчета произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
+
+# поиск нужного рейса по названию
+def findFlight(flyList, flyNum):
+    # удаляем выделение со строк
+    for k in flyList.selection():
+        flyList.selection_remove(k)
+
+    # проходим по таблице, ищем нужный рейс
+    for k in flyList.get_children(""):
+        # получаем строку по идентификатору
+        arr = flyList.item(k)["values"]
+        if (arr[1].lower() == flyNum.lower()):
+            showinfo(title="Поиск рейса", message=f"Выбран рейс {flyNum}")
+            # выделяем нужную строку
+            flyList.selection_add(k)
+            return
+    showwarning(title="Поиск рейса",
+                message="Указанный рейс не найден!")

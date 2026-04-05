@@ -418,7 +418,7 @@ def createAnalystForecastForm(db, root, usrData):
     etrFlightNum.insert(0, "")
     etrFlightNum.grid(row=2, column=0, columnspan=1, padx=10, pady=[0, 0], sticky=W)
     # найти рейс
-    clickFunc = lambda: findFlight()
+    clickFunc = lambda: findFlight(flyList, etrFlightNum.get())
     btnfindFlight = Button(lfManageField, font=consts.FNTBTNMINI, text="Найти рейс",
                                    command=clickFunc, padx=35, pady=5)
     btnfindFlight.grid(row=3, column=0, columnspan=1, rowspan=2, padx=10, pady=[10, 10], sticky=W)
