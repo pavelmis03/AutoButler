@@ -24,6 +24,7 @@ import pylab
 
 # библиотеки для создания отчетов
 from docxtpl import DocxTemplate
+from docx import Document, table
 import cryptography
 
 # библиотека для работы с изображениями

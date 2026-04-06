@@ -31,6 +31,7 @@ import pylab
 
 # библиотеки для создания отчетов
 from docxtpl import DocxTemplate
+from docx import Document, table
 import cryptography
 
 # библиотека для работы с изображениями
@@ -546,6 +547,40 @@ def chooseHotel(db, hotelList, passList, flyList, guestCnt, usrName):
                     hotelList.delete(hotelList.selection()[0])
                     # обновляем инфу по пассажиру
                     insertDataToTable(db, flyList, passList, "second")
+
+                    # создаем заявку на бронирование
+                    if (not os.path.exists("code/reports/hotelReserv")):
+                        # создаем папку для отчетов
+                        os.mkdir("code/reports/hotelReserv")
+
+                    # создаем папку с указанием текущей даты и времени
+                    folderName = datetime.now()
+                    folderName = folderName.strftime("%d") + "." + folderName.strftime(
+                        "%m") + "." + folderName.strftime("%Y") + "_" + folderName.strftime(
+                        "%H") + "-" + folderName.strftime("%M")
+                    # в названии папки указываем дату
+                    os.mkdir(f"code/reports/hotelReserv/report_{folderName}")
+                    # загружаем шаблон отчета
+                    doc = DocxTemplate(f"code/reports/hotelReserv.docx")
+                    # словарь подстановки данных в шаблон
+                    context = {
+                        "reservNum": str(random.randint(100, 10000)),
+                        "dateReserv": currDate,
+                        "room": room,
+                        "hotel": hotel,
+                        "dateArrival": currDate,
+                        "dateDeparture": depDate,
+                        "fullName": pas,
+                        "ticketNumber": getTableItemData(passList, 5),
+                        "flight": flyName,
+                        "passengerCount": guestCnt,
+                        "operator": usrName,
+                    }
+                    # загружаем данные из контекста в шаблон
+                    doc.render(context)
+                    # сохраняем отчет в конкретную папку
+                    doc.save(f"code/reports/hotelReserv/report_{folderName}/Заявка_на_бронирование_номера.docx")
+                    showinfo(title="Закрепление номера", message=f"Заявка на бронирование создана и лежит в папке\n\"reports/hotelReserv/report_{folderName}/Заявка_на_бронирование_номера.docx\"")
                 except Exception as e:
                     showerror(title="Обновление ссылки",
                               message="Произошла непредвиденная ошибка при закреплении, попробуйте еще раз")
@@ -814,8 +849,8 @@ def createReport(db, components, role):
     folderName = folderName.strftime("%d") + "." + folderName.strftime("%m") + "." + folderName.strftime("%Y") + "_" + folderName.strftime("%H") + "-" + folderName.strftime("%M")
     # в названии папки указываем дату
     os.mkdir(f"code/reports/hotelsReport/report_{folderName}")
-    # загружаем шаблон отчета
-    doc = DocxTemplate("code/reports/hotelsReport.docx")
+    # создаем документ
+    doc = Document("code/reports/hotelsReport.docx")
 
     dateFrom = dateFrom.split("-")
     dateUntil = dateUntil.split("-")
@@ -826,25 +861,15 @@ def createReport(db, components, role):
         "timeFrom": timeFrom,
         "dateUntil": dateUntil[-1] + "." + dateUntil[-2] + "." + dateUntil[-3],
         "timeUntil": timeUntil,
-        "idRecord": "",
-        "dateCreate": "",
-        "flight": "",
-        "passenger": "",
-        "guestCount": "",
-        "hotel": "",
-        "room": "",
-        "dateIn": "",
-        "dateOut": "",
-        "cost": "",
         "passengerCount": str(calcPass(fData)),
         "summaryCost": str(calcSummary(fData)),
         "operator": role,
     }
 
     # создаем таблицу
-    table = doc.add_table(rows=len(fData) + 1, cols=10)
+    table = doc.add_table(1, cols=10)
     header = table.rows[0].cells
-    # задаем столбцы
+    # задаем заголовки столбцов
     header[0].text = '№'
     header[1].text = 'Дата создания заявки'
     header[2].text = 'Рейс'
@@ -856,24 +881,31 @@ def createReport(db, components, role):
     header[8].text = 'Дата выезда'
     header[9].text = 'Расходы на размещение(руб)'
 
+    # добавляем строки
     # заполняем словарь данными из БД
     # здесь row - строка вида [(column_caption, value), (..), ..]
     for row in fData:
-        context["idRecord"] += str(row.iloc[0]) + "\n"
-        context["dateCreate"] += str(row.iloc[1]) + "\n"
-        # row[2] - operator
-        context["flight"] += row.iloc[3] + "\n"
-        context["passenger"] += str(row.iloc[4]) + "\n"
-        context["guestCount"] += str(int(row.iloc[5]) + 1) + "\n"
-        context["hotel"] += str(row.iloc[6]) + "\n"
-        context["room"] += row.iloc[7] + "\n"
-        context["dateIn"] += str(row.iloc[8]) + "\n"
-        context["dateOut"] += str(row.iloc[9]) + "\n"
-        context["cost"] += str(row.iloc[10]) + "\n"
+        rowTable = table.add_row().cells
+        rowTable[0].text = str(row.iloc[0])
+        rowTable[1].text = str(row.iloc[1])
+        rowTable[2].text = str(row.iloc[3])
+        rowTable[3].text = str(row.iloc[4])
+        rowTable[4].text = str(int(row.iloc[5]) + 1)
+        rowTable[5].text = str(row.iloc[6])
+        rowTable[6].text = str(row.iloc[7])
+        rowTable[7].text = str(row.iloc[8])
+        rowTable[8].text = str(row.iloc[9])
+        rowTable[9].text = str(row.iloc[10])
 
+    # сохраняем отчет в конкретную папку
+    doc.save(f"code/reports/hotelsReport/report_{folderName}/отчет_по_размещенным_гостям.docx")
+
+    # загружаем шаблон отчета
+    doc = DocxTemplate(f"code/reports/hotelsReport/report_{folderName}/отчет_по_размещенным_гостям.docx")
     # загружаем данные из контекста в шаблон
     doc.render(context)
     # сохраняем отчет в конкретную папку
     doc.save(f"code/reports/hotelsReport/report_{folderName}/отчет_по_размещенным_гостям.docx")
+
     showinfo(title="Создание отчета", message="Отчет успешно сформирован!")
 

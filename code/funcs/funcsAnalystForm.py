@@ -24,6 +24,7 @@ import pylab
 
 # библиотеки для создания отчетов
 from docxtpl import DocxTemplate
+from docx import Document, table
 import cryptography
 
 # библиотека для работы с изображениями
@@ -571,8 +572,9 @@ def createReport(db, components):
         folderName = folderName.strftime("%d") + "." + folderName.strftime("%m") + "." + folderName.strftime("%Y") + "_" + folderName.strftime("%H") + "-" + folderName.strftime("%M")
         # в названии папки указываем фамилию и дату
         os.mkdir(f"code/reports/flightsMainReport/report_{folderName}")
-        # загружаем шаблон отчета
-        doc = DocxTemplate("code/reports/flightsMainReport.docx")
+
+        # создаем документ
+        doc = Document("code/reports/flightsMainReport.docx")
 
         dateFrom = dateFrom.split("-")
         dateUntil = dateUntil.split("-")
@@ -583,36 +585,52 @@ def createReport(db, components):
             "timeFrom": timeFrom,
             "dateUntil": dateUntil[-1] + "." + dateUntil[-2] + "." + dateUntil[-3],
             "timeUntil": timeUntil,
-            "id": "",
-            "flyNum": "",
-            "company": "",
-            "airportDep": "",
-            "airportArr": "",
-            "dateTimeDep": "",
-            "dateTimeArr": "",
-            "status": "",
-            "delay": "",
-            "reason": "",
         }
 
+        # создаем таблицу
+        table = doc.add_table(1, cols=12)
+        header = table.rows[0].cells
+        # задаем заголовки столбцов
+        header[0].text = '№'
+        header[1].text = 'Номер рейса'
+        header[2].text = 'Компания'
+        header[3].text = 'Аэропорт отправления'
+        header[4].text = 'Аэропорт прибытия'
+        header[5].text = 'Дата и время вылета по расписанию'
+        header[6].text = 'Дата и время вылета фактические'
+        header[7].text = 'Дата и время посадки по расписанию'
+        header[8].text = 'Дата и время посадки фактические'
+        header[9].text = 'Статус рейса'
+        header[10].text = 'Задержка в минутах'
+        header[11].text = 'Причина отмены рейса'
+
+        # добавляем строки
         # заполняем словарь данными из БД
         # здесь row - строка вида [(column_caption, value), (..), ..]
         for row in fData:
-            context["id"] += str(row[0]) + "\n\n"
-            context["flyNum"] += row[1] + "\n\n"
-            context["company"] += row[2] + "\n\n"
-            context["airportDep"] += row[3] + "\n\n"
-            context["airportArr"] += row[4] + "\n\n"
-            context["dateTimeDep"] += str(row[5]) + "/" + str(row[7]) + "\n"
-            context["dateTimeArr"] += str(row[6]) + "/" + str(row[8]) + "\n"
-            context["status"] += row[9] + "\n"
-            context["delay"] += str(row[10]) + "\n\n"
-            context["reason"] += str(row[11]) + "\n\n"
+            rowTable = table.add_row().cells
+            rowTable[0].text = str(row.iloc[0])
+            rowTable[1].text = str(row.iloc[1])
+            rowTable[2].text = str(row.iloc[2])
+            rowTable[3].text = str(row.iloc[3])
+            rowTable[4].text = str(row.iloc[4])
+            rowTable[5].text = str(row.iloc[5])
+            rowTable[6].text = str(row.iloc[6])
+            rowTable[7].text = str(row.iloc[7])
+            rowTable[8].text = str(row.iloc[8])
+            rowTable[9].text = str(row.iloc[9])
+            rowTable[10].text = str(row.iloc[10])
 
+        # сохраняем отчет в конкретную папку
+        doc.save(f"code/reports/flightsMainReport/report_{folderName}/отчет_по_рейсам.docx")
+
+        # загружаем шаблон отчета, в котором только что сделали таблицу, чтобы закинуть туда переменные
+        doc = DocxTemplate(f"code/reports/flightsMainReport/report_{folderName}/отчет_по_рейсам.docx")
         # загружаем данные из контекста в шаблон
         doc.render(context)
         # сохраняем отчет в конкретную папку
         doc.save(f"code/reports/flightsMainReport/report_{folderName}/отчет_по_рейсам.docx")
+
         showinfo(title="Создание отчета", message="Отчет успешно сформирован!")
 
     except Exception as e:
