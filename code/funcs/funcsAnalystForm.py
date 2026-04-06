@@ -309,17 +309,17 @@ def createGraph(db, components, needSave):
 
     # если надо сохранить
     if (needSave.get()):
-        if (not os.path.exists("reports/flightsGraphReport")):
+        if (not os.path.exists("code/reports/flightsGraphReport")):
             # создаем папку для графиков
-            os.mkdir("reports/flightsGraphReport")
+            os.mkdir("code/reports/flightsGraphReport")
         # создаем папку с указанием текущей даты и времени
         folderName = datetime.now()
         folderName = folderName.strftime("%d") + "." + folderName.strftime("%m") + "." + folderName.strftime(
             "%Y") + "_" + folderName.strftime("%H") + "-" + folderName.strftime("%M")
         # в названии папки указываем дату
-        os.mkdir(f"reports/flightsGraphReport/report_{folderName}")
+        os.mkdir(f"code/reports/flightsGraphReport/report_{folderName}")
         # сохранение графика в виде изображения
-        plt.savefig(f"reports/flightsGraphReport/report_{folderName}/graph.jpg")
+        plt.savefig(f"code/reports/flightsGraphReport/report_{folderName}/graph.jpg")
         showinfo(title="Соханение графика", message="График успешно сохранен!")
 
     # показываем график
@@ -562,17 +562,17 @@ def createReport(db, components):
         # components = [dateFrom, dateUntil, timeFrom, timeUntil, depDel, arrDel, company, status, airportDep, airportArr]
         fData = filterData(df, componentsVal)
 
-        if (not os.path.exists("reports/flightsMainReport")):
+        if (not os.path.exists("code/reports/flightsMainReport")):
             # создаем папку для отчетов
-            os.mkdir("reports/flightsMainReport")
+            os.mkdir("code/reports/flightsMainReport")
 
         # создаем папку с указанием текущей даты и времени
         folderName = datetime.now()
         folderName = folderName.strftime("%d") + "." + folderName.strftime("%m") + "." + folderName.strftime("%Y") + "_" + folderName.strftime("%H") + "-" + folderName.strftime("%M")
         # в названии папки указываем фамилию и дату
-        os.mkdir(f"reports/flightsMainReport/report_{folderName}")
+        os.mkdir(f"code/reports/flightsMainReport/report_{folderName}")
         # загружаем шаблон отчета
-        doc = DocxTemplate("reports/flightsMainReport.docx")
+        doc = DocxTemplate("code/reports/flightsMainReport.docx")
 
         dateFrom = dateFrom.split("-")
         dateUntil = dateUntil.split("-")
@@ -612,7 +612,7 @@ def createReport(db, components):
         # загружаем данные из контекста в шаблон
         doc.render(context)
         # сохраняем отчет в конкретную папку
-        doc.save(f"reports/flightsMainReport/report_{folderName}/отчет_по_рейсам.docx")
+        doc.save(f"code/reports/flightsMainReport/report_{folderName}/отчет_по_рейсам.docx")
         showinfo(title="Создание отчета", message="Отчет успешно сформирован!")
 
     except Exception as e:

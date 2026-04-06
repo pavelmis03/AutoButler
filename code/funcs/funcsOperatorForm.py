@@ -118,6 +118,7 @@ def filterData(df, key, filter, componentsVal):
 def getFlight(db, filter, cbx):
     # загружаем список полетов для построения таблицы
     df = loadFlyList(db)
+    filter = filter.upper()
     # фильтруем данные таблицы пользователей по рейсу, или имени, или фамилии
     filterData = df.query(f"(company == '{filter}' or flyNum == '{filter}') and status == 'Отменен'", inplace=False)
 
@@ -214,7 +215,10 @@ def selectHotel(hotelList, labels):
     dist["text"] = dist["text"].split()[0] + " " + str(getTableItemData(hotelList, 3))
     cost["text"] = cost["text"].split()[0] + " " + str(getTableItemData(hotelList, 5))
     meals["text"] = meals["text"].split()[0] + " " + getTableItemData(hotelList, 6)
-    link["text"] = link["text"].split()[0] + " " + getTableItemData(hotelList, 1)
+    tlink = getTableItemData(hotelList, 1)
+    if (len(tlink) > 25):
+        tlink = tlink[:25] + "..."
+    link["text"] = link["text"].split()[0] + " " + tlink
     addit["text"] = addit["text"].split()[0] + " " + str(getTableItemData(hotelList, 4)) + " класс гостинницы"
 
 # загружает список рейсов из БД
@@ -308,9 +312,12 @@ def insertDataToTable(db, tableFlight, tablePass, insertType, cbx=""):
         # очищаем таблицу
         for item in tableFlight.get_children():
             tableFlight.delete(item)
-    # очищаем таблицу
-    for item in tablePass.get_children():
-        tablePass.delete(item)
+
+    # если не выбирали пассажира через поиск
+    if (insertType != "choosePass"):
+        # очищаем таблицу пассажиров
+        for item in tablePass.get_children():
+            tablePass.delete(item)
 
     # если не был прочитан фрейм, не делаем разбор его строк
     if (not dfFlight.empty):
@@ -327,11 +334,10 @@ def insertDataToTable(db, tableFlight, tablePass, insertType, cbx=""):
                 i += 1
 
         # если мы НЕ выбирали рейс через поиск
-        if (insertType != "chooseFlight"):
+        if ((insertType != "chooseFlight") and (insertType != "choosePass")):
             # получаем номер рейса по таблице
             flyNum = getTableItemData(tableFlight, 1)
-
-        else:
+        elif (insertType == "chooseFlight"):
             # получаем номер рейса по комбо-боксу, формат данных: "авиакомпания - рейс"
             flyNum = cbx.get()
             # если рейсов не нашли, выводим предупреждение и загружаем пассажиров по выделенной строке
@@ -345,16 +351,50 @@ def insertDataToTable(db, tableFlight, tablePass, insertType, cbx=""):
                     tableFlight.selection_remove(select_item)
                 # получаем именно номер рейса
                 flyNum = flyNum.split(" - ")[1]
+                # ищем в таблице рейс и выделяем его
+                for k in tableFlight.get_children(""):
+                    ind = tableFlight.item(k)
+                    # если в этой строке нужный нам рейс
+                    if (ind["values"][1].upper() == flyNum.upper()):
+                        # выделяем его
+                        tableFlight.selection_add(k)
+                        showinfo(title="Поиск рейса", message=f"Выбран рейс {flyNum}")
+        elif (insertType == "choosePass"):
+            # получаем пассажира по комбо-боксу, формат данных: имя или фамилия
+            passData = cbx.get()
+            # если пассажиров не нашли, выводим предупреждение
+            if (passData == "Пассажиров не найдено"):
+                showerror(title="Ошибка!", message="Не найдено пассажиров по указанным параметрам!")
+            else:
+                # снимаем выделение с таблицы, чтобы не путать пользователя
+                for select_item in tablePass.selection():
+                    tablePass.selection_remove(select_item)
 
-        # отфильтрованный список данных - фильтруем по заданному номеру рейса
-        fDataPass = filterData(dfPass, ["flyNum"], [flyNum], [])
+                # получаем именно фамилию
+                passData = passData.split(" ")[1]
+                # ищем в таблице пассажира и выделяем его
+                for k in tablePass.get_children(""):
+                    ind = tablePass.item(k)
+                    # если в этой строке нужный нам человек (совпадает имя или фамилия)
+                    if ((ind["values"][2] == passData) or (ind["values"][3] == passData)):
+                        # выделяем его
+                        tablePass.selection_add(k)
+                        showinfo(title="Поиск пассжира", message=f"Выбран пассажир {passData}")
 
-        i = 0
-        # добавляем данные по пассажирам в таблицу
-        for row in fDataPass:
-            # разбираем дату и время на отдельные составляющие
-            tablePass.insert("", END, i, values=tuple([*row]))
-            i += 1
+        # если не выбирали пассажира через поиск
+        if (insertType != "choosePass"):
+            # отфильтрованный список данных - фильтруем по заданному номеру рейса
+            fDataPass = filterData(dfPass, ["flyNum"], [flyNum], [])
+
+            i = 0
+            # добавляем данные по пассажирам в таблицу
+            for row in fDataPass:
+                # разбираем дату и время на отдельные составляющие
+                tablePass.insert("", END, i, values=tuple([*row]))
+                i += 1
+
+            # выделяем первую строку в таблице пассажиров
+            tablePass.selection_add(0)
 
 
 
@@ -433,26 +473,30 @@ def insertDataHotelToTable(db, table, components, role):
         components[1]["text"] = calcPass(fData)
 
 # закрепить гостиницу за человеком и отметить это в бд
-def chooseHotel(db, hotelList, passList, guestCnt, usrName):
+def chooseHotel(db, hotelList, passList, flyList, guestCnt, usrName):
     # если не выбран номер
     if (len(hotelList.selection()) == 0):
         showerror(title="Ошибка!", message="Сначала выберите номер в таблице подобранных номеров!")
         return
 
     # текущие дата и время
-    currDate = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
+    currDate = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     # следующий день
     depDate = datetime.now() + timedelta(days=1)
-    depDate = depDate.strftime("%Y.%m.%d %H:%M:%S")
+    depDate = depDate.strftime("%Y-%m-%d %H:%M:%S")
 
     # получаем данные из таблиц для передачи в БД
     num = getTableItemData(hotelList, 0)
-    pas = getTableItemData(passList, 2) + " " + getTableItemData(passList, 3)
+    pasN = getTableItemData(passList, 2)
+    pasS = getTableItemData(passList, 3)
+    pas = pasN + " " + pasS
     # guestCnt - параметр функции
     # usrName - параметр функции
     flyName = getTableItemData(passList, 1)
     hotel = getTableItemData(hotelList, 2)
     room = getTableItemData(hotelList, 7)
+    passLink = getTableItemData(passList, 4)
+    link = getTableItemData(hotelList, 1)
     tcost = str(getTableItemData(hotelList, 5)).split()
     cost = ""
     # превращаем сумму именно в число
@@ -461,35 +505,55 @@ def chooseHotel(db, hotelList, passList, guestCnt, usrName):
             cost += el
     nutr = getTableItemData(hotelList, 6)
     # формируем запрос к бд
+
     qr = f"""INSERT INTO db.hotels_order 
-                (NUM_ORDER, DATE_CREATE, PASSENGER, GUEST_COUNT, EXECUTANT, PROBLEM_FLIGHT_NAME, HOTEL, ROOM, ROOM_COST, CHECK_IN_DATE, CHECK_OUT_DATE, NUTRITION, PRIM) 
-                VALUES ({int(num)}, {currDate}, "{pas}", {int(guestCnt)}, "{usrName}", "{flyName}", "{hotel}", "{room}", {int(cost)}, {currDate}, {depDate}, "{nutr}", "Нет");
-                """
-    qr = f"""INSERT INTO db.hotels_order 
-                    (NUM_ORDER, DATE_CREATE, PASSENGER, GUEST_COUNT, EXECUTANT, PROBLEM_FLIGHT_NAME, HOTEL, ROOM, ROOM_COST, CHECK_IN_DATE, CHECK_OUT_DATE, NUTRITION, PRIM) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                    (NUM_ORDER, DATE_CREATE, PASSENGER, GUEST_COUNT, EXECUTANT, PROBLEM_FLIGHT_NAME, HOTEL, ROOM, ROOM_COST, CHECK_IN_DATE, CHECK_OUT_DATE, NUTRITION, PRIM, LINK) 
+                    VALUES ({int(num)}, "{currDate}", "{pas}", {int(guestCnt)}, "{usrName}", "{flyName}", "{hotel}", "{room}", {int(cost)}, "{currDate}", "{depDate}", "{nutr}", "Нет", "{link}");
                     """
-    data = (int(num), str(currDate), pas, int(guestCnt), usrName, flyName, hotel, room, int(cost), str(currDate), str(depDate), nutr, "Нет")
-
-    # сообщение с подтверждением
-    ans = askyesno(title="Подтвердите закрепление номера", message=f"Закрепить за пассажиром '{pas}' номер '{room}' в отеле '{hotel}'?")
+    ans = "None"
+    # если ссылка уже закреплена
+    if (passLink.startswith("https://")):
+        # сообщение с подтверждением
+        ans = askyesno(title="Подтвердите закрепление номера",
+                       message=f"У этого пассажира уже есть закрепление, хотите его изменить?")
     if (ans):
-        try:
-            # создаем объект курсора для выбора нужной строки
-            cur = db.cursor()
-            # выполняем query-запрос
-            cur.execute(qr, data)
-            # сохраняем изменения в БД
-            db.commit()
+        # сообщение с подтверждением
+        ans = askyesno(title="Подтвердите закрепление номера", message=f"Закрепить за пассажиром '{pas}' номер '{room}' в отеле '{hotel}'?")
+        if (ans):
+            try:
+                # создаем объект курсора для выбора нужной строки
+                cur = db.cursor()
+                # выполняем query-запрос
+                cur.execute(qr)
+                # сохраняем изменения в БД
+                db.commit()
 
-            showinfo(title="Закрепление номера", message="Номер успешно закреплен за пассажиром!")
-            # удаляем строку с закрепленным номером
-            hotelList.delete(hotelList.selection()[0])
+                # закрепляем ссылку за пассажиром
+                try:
+                    qr = f"""UPDATE db.passengers
+                            SET BOOKING_REF = '{link}'
+                            WHERE FIRST_NAME = '{pasN}' AND LAST_NAME = '{pasS}' AND FLIGHT_NUMBER = '{flyName}';
+                            """
+                    # создаем объект курсора для выбора нужной строки
+                    cur = db.cursor()
+                    # выполняем query-запрос
+                    cur.execute(qr)
+                    # сохраняем изменения в БД
+                    db.commit()
 
-        except Exception as e:
-            showerror(title="Закрепление номера", message="Произошла непредвиденная ошибка при закреплении, попробуйте еще раз")
-    else:
-        showinfo(title="Закрепление номера", message="Закрепление отменено")
+                    showinfo(title="Закрепление номера", message="Номер успешно закреплен за пассажиром!")
+                    # удаляем строку с закрепленным номером
+                    hotelList.delete(hotelList.selection()[0])
+                    # обновляем инфу по пассажиру
+                    insertDataToTable(db, flyList, passList, "second")
+                except Exception as e:
+                    showerror(title="Обновление ссылки",
+                              message="Произошла непредвиденная ошибка при закреплении, попробуйте еще раз")
+
+            except Exception as e:
+                showerror(title="Закрепление номера", message="Произошла непредвиденная ошибка при закреплении, попробуйте еще раз")
+        else:
+            showinfo(title="Закрепление номера", message="Закрепление отменено")
 
 # функция наполнения таблицы по данным, найденным нейронкой
 def fillHotelList(hotelList, content):
@@ -511,6 +575,11 @@ def fillHotelList(hotelList, content):
         # выравнивание по центру для данных в ячейках
         hotelList.column(f"#{i}", width=len(col) * 9, minwidth=40, anchor=CENTER, stretch=True)
         i += 1
+
+    # убираю лишние символы (8239 - пробелы nnbsp)
+    arrDelSymb = [chr(8239), chr(8209), "—", "₽", "★", "  "]
+    for el in arrDelSymb:
+        content = content.replace(el, " ")
 
     # временный массив
     arr = content.split("\n")
@@ -550,7 +619,7 @@ def fillHotelList(hotelList, content):
         i += 1
 
 # получить список гостиниц от нейронки
-def getHotelList(table, familyMember, message, tbOutput, hotelList):
+def getHotelList(table, familyMember, tbOutput, hotelList, message=""):
     # получаем список выделенных строк, берем первую
     selected_item = table.selection()[0]
     # получаем элементы выделенной строки в виде списка
@@ -573,37 +642,57 @@ def getHotelList(table, familyMember, message, tbOutput, hotelList):
             api_key=os.getenv("OPENROUTER_API_KEY"),
         )
 
+        # массив сообщений для нейронки
+        messageData = [
+            {   # промпт
+                "role": "system",
+                "content": """Ты специалист по подбору гостиничных номеров на одну ночь для людей с отмененного авиарейса.
+                                            Ты должен прислать ответ в виде списка из 3-5 ссылок на конкретные номера в разных отелях или гостиницах 
+                                            с краткой его характеристикой по трем параметрам, каждый параметр выводи обоязательно на отдельной строке без лишних символов и названия самого параметра:
+                                            1) ссылка
+                                            2) название гостиницы
+                                            3) удаленность от аэропорта
+                                            4) количество звезд гостиницы
+                                            5) стоимость найденного номера в рублях
+                                            6) входит ли в стоимость питание и какое
+                                            7) какой это номер (класс номера и количество комнат)
+                                            8) пустая строка-разделитель
+                                             При выборе гостиницы и номера ты должен опираться на параметры, которые будут переданы в 
+                                             последующих запросах - это аэропорт (гостиница должна быть недалеко от него), класс рейса
+                                             (пассажиры из бизнес класса должны заселяться в элитные гостиницы), количество человек на номер: 
+                                             больше 5 человек - номер должен быть трехкомнатный"""
+            },
+        ]
         # сам наш запрос
         request = f"Подбери номер для { passCnt } человек с отмененного рейса класса { type }, рядом с аэропортом { airport }."
+        # добавляем запрос пользователя
+        messageData.append(
+            {
+                "role": "user",
+                "content": request
+            }
+        )
+        # если было передано доп сообщение
+        if (len(message) > 15):
+            messageData.append(
+                {
+                    "role": "user",
+                    "content": message
+                }
+            )
 
         # создаем чат и настраиваем модель, потом задаем ей вопрос
         completion = client.chat.completions.create(
             model=os.getenv("MODEL"),
-            messages=[
-                {
-                    "role": "system",
-                    "content": """Ты специалист по подбору гостиничных номеров на одну ночь для людей с отмененного авиарейса.
-                                    Ты должен прислать ответ в виде списка из 3-5 ссылок на конкретные номера в разных отелях или гостиницах 
-                                    с краткой его характеристикой по трем параметрам, каждый параметр выводи обоязательно на отдельной строке без лишних символов и названия самого параметра:
-                                    1) ссылка
-                                    2) название гостиницы
-                                    3) удаленность от аэропорта
-                                    4) количество звезд гостиницы
-                                    5) стоимость найденного номера в рублях
-                                    6) входит ли в стоимость питание и какое
-                                    7) какой это номер (класс номера и количество комнат)
-                                    8) пустая строка-разделитель
-                                     При выборе гостиницы и номера ты должен опираться на параметры, которые будут переданы в 
-                                     последующих запросах - это аэропорт (гостиница должна быть недалеко от него), класс рейса
-                                     (пассажиры из бизнес класса должны заселяться в элитные гостиницы), количество человек на номер: 
-                                     больше 5 человек - номер должен быть трехкомнатный"""
-                },
-                {
-                    "role": "user",
-                    "content": request
-                },
-            ]
+            messages=messageData
         )
+        # выводим промпт
+        tbOutput.insert(END, "role: system\n" + messageData[0]["content"] + "\n\n")
+        # выводим запрос
+        tbOutput.insert(END, "role: user\n" + request + "\n\n")
+        if (len(message) > 15):
+            # выводим сообщение
+            tbOutput.insert(END, "role: user\n" + message + "\n\n")
         # выводим ответ нейронки в текстбокс
         tbOutput.insert(END, completion.choices[0].message.content + "\n----------------------\n")
         # обновляю вид текстбокса
@@ -632,15 +721,16 @@ def getHotelList(table, familyMember, message, tbOutput, hotelList):
 
 
 # отправить сообщение
-def addMessage():
-    pass
+def addMessage(table, familyMember, tbOutput, hotelList, message=""):
+    if (len(message) < 15):
+        showwarning(title="Сообщение для модели", message="Введите сообщение не менее 15 символов!")
+        return
+
+    getHotelList(table, familyMember, tbOutput, hotelList, message)
 
 # копирует в буфер обмена ссылку на отель
-def copyHotelLink(link):
-    # "Ссылка: https://..."
-    link = link.lower()
-    # получаем именно ссылку
-    link = link.split()[1]
+def copyHotelLink(hotelList):
+    link = getTableItemData(hotelList, 1)
     # проверяем, что это действительно ссылка
     if (link.startswith("http")):
         pyperclip.copy(link)
@@ -715,17 +805,17 @@ def createReport(db, components, role):
     # фильтруем данные
     fData = filterData(df, ["hotel", "operator"], [componentsVal[4], role], componentsVal)
 
-    if (not os.path.exists("reports/hotelsReport")):
+    if (not os.path.exists("code/reports/hotelsReport")):
         # создаем папку для отчетов
-        os.mkdir("reports/hotelsReport")
+        os.mkdir("code/reports/hotelsReport")
 
     # создаем папку с указанием текущей даты и времени
     folderName = datetime.now()
     folderName = folderName.strftime("%d") + "." + folderName.strftime("%m") + "." + folderName.strftime("%Y") + "_" + folderName.strftime("%H") + "-" + folderName.strftime("%M")
     # в названии папки указываем дату
-    os.mkdir(f"reports/hotelsReport/report_{folderName}")
+    os.mkdir(f"code/reports/hotelsReport/report_{folderName}")
     # загружаем шаблон отчета
-    doc = DocxTemplate("reports/hotelsReport.docx")
+    doc = DocxTemplate("code/reports/hotelsReport.docx")
 
     dateFrom = dateFrom.split("-")
     dateUntil = dateUntil.split("-")
@@ -751,31 +841,39 @@ def createReport(db, components, role):
         "operator": role,
     }
 
+    # создаем таблицу
+    table = doc.add_table(rows=len(fData) + 1, cols=10)
+    header = table.rows[0].cells
+    # задаем столбцы
+    header[0].text = '№'
+    header[1].text = 'Дата создания заявки'
+    header[2].text = 'Рейс'
+    header[3].text = 'Пассажир'
+    header[4].text = 'Кол-во гостей'
+    header[5].text = 'Гостиница'
+    header[6].text = 'Номер'
+    header[7].text = 'Дата заезда'
+    header[8].text = 'Дата выезда'
+    header[9].text = 'Расходы на размещение(руб)'
+
     # заполняем словарь данными из БД
     # здесь row - строка вида [(column_caption, value), (..), ..]
     for row in fData:
-        context["idRecord"] += str(row[0]) + "\n\n"
-        context["dateCreate"] += str(row[1]) + "\n"
+        context["idRecord"] += str(row.iloc[0]) + "\n"
+        context["dateCreate"] += str(row.iloc[1]) + "\n"
         # row[2] - operator
-        context["flight"] += row[3] + "\n\n"
-        context["passenger"] += str(row[4]) + "\n"
-        context["guestCount"] += str(row[5]) + "\n"
-        context["hotel"] += str(row[6]) + "\n"
-        context["room"] += row[7] + "\n"
-        context["dateIn"] += str(row[8]) + "\n"
-        context["dateOut"] += str(row[9]) + "\n"
-        context["cost"] += str(row[10]) + "\n\n"
+        context["flight"] += row.iloc[3] + "\n"
+        context["passenger"] += str(row.iloc[4]) + "\n"
+        context["guestCount"] += str(int(row.iloc[5]) + 1) + "\n"
+        context["hotel"] += str(row.iloc[6]) + "\n"
+        context["room"] += row.iloc[7] + "\n"
+        context["dateIn"] += str(row.iloc[8]) + "\n"
+        context["dateOut"] += str(row.iloc[9]) + "\n"
+        context["cost"] += str(row.iloc[10]) + "\n"
 
     # загружаем данные из контекста в шаблон
     doc.render(context)
     # сохраняем отчет в конкретную папку
-    doc.save(f"reports/hotelsReport/report_{folderName}/отчет_по_размещенным_гостям.docx")
+    doc.save(f"code/reports/hotelsReport/report_{folderName}/отчет_по_размещенным_гостям.docx")
     showinfo(title="Создание отчета", message="Отчет успешно сформирован!")
-
-
-
-
-
-
-
 

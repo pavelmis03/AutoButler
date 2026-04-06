@@ -235,12 +235,12 @@ def createOperatorChooseHotelForm(db, root, usrData):
     hotelList = 0
     tbMess = 0
     # подобрать номер
-    clickFunc = lambda: getHotelList(flyList, sbFamilyMember.get(), tbComm.get("1.0", "end"), tbMess, hotelList)
+    clickFunc = lambda: getHotelList(flyList, sbFamilyMember.get(), tbMess, hotelList, tbComm.get("1.0", "end"))
     btnFindHotels = Button(lfHotelSettings, font=consts.FNTBTNMINI, text="Подобрать номера", command=clickFunc, padx=48, pady=2)
     btnFindHotels.grid(row=4, column=4, columnspan=2, rowspan=1, padx=10, pady=[5, 0], sticky=W)
 
     # закрепить номер за пассажиром
-    clickFunc = lambda: chooseHotel(db, hotelList, passList, sbFamilyMember.get(), usrData["name"]) # , etrFindPass.get(), cbxPassResult
+    clickFunc = lambda: chooseHotel(db, hotelList, passList, flyList, sbFamilyMember.get(), usrData["name"]) # , etrFindPass.get(), cbxPassResult
     btnChooseHotel = Button(lfHotelSettings, font=consts.FNTBTNMINI, text="Закрепить номер за пассажиром", command=clickFunc, padx=5, pady=2)
     btnChooseHotel.grid(row=5, column=4, columnspan=2, rowspan=1, padx=10, pady=[5, 0], sticky=W)
 
@@ -276,7 +276,7 @@ def createOperatorChooseHotelForm(db, root, usrData):
     componentsH.append(lblHotelAddit)
 
     # скопировать ссылку
-    clickFunc = lambda: copyHotelLink(lblHotelLink["text"])
+    clickFunc = lambda: copyHotelLink(hotelList)
     btnCopyLink = Button(lfHotelSettings, font=consts.FNTBTNMINI, text="Скопировать ссылку", command=clickFunc, padx=35, pady=2)
     btnCopyLink.grid(row=7, column=6, columnspan=2, rowspan=1, padx=10, pady=[0, 10], sticky=NW)
 
@@ -289,14 +289,14 @@ def createOperatorChooseHotelForm(db, root, usrData):
     tbComm = ScrolledText(lfHotelSettings, width=25, height=6, wrap="word", pady=0)
     tbComm.grid(row=1, column=8, rowspan=4, padx=10, pady=[5, 0], sticky=NW)
     # отправить сообщение
-    clickFunc = lambda: addMessage()
+    clickFunc = lambda: addMessage(flyList, sbFamilyMember.get(), tbMess, hotelList, tbComm.get("1.0", "end"))
     btnChooseHotel = Button(lfHotelSettings, font=consts.FNTBTNMINI, text="Отправить сообщение", command=clickFunc, padx=35, pady=2)
     btnChooseHotel.grid(row=5, column=8, columnspan=2, rowspan=1, padx=10, pady=[5, 0], sticky=NW)
 
     # -------------БЛОК переписки с моделью-------------
 
     # сообщения от нейронки
-    lblMess = Label(lfHotelSettings, font=consts.FNTLBLH2, text="Вывод модели:")
+    lblMess = Label(lfHotelSettings, font=consts.FNTLBLH2, text="Лог сообщений:")
     lblMess.grid(row=0, column=10, columnspan=2, rowspan=1, padx=10, pady=[5, 0], sticky=NW)
     # текстовое поле сообщений от нейронки
     # tbMess = ScrolledText(lfHotelSettings, width=35, height=14, wrap="word", pady=0)
@@ -317,6 +317,12 @@ def createOperatorChooseHotelForm(db, root, usrData):
     clickFunc = lambda: insertDataToTable(db, flyList, passList, "chooseFlight", cbxFlightResult)
     btnChooseFlight = Button(lfHotelSettings, font=consts.FNTBTNMINI, text="Выбрать рейс", command=clickFunc, padx=51, pady=2)
     btnChooseFlight.grid(row=6, column=0, columnspan=2, rowspan=1, padx=10, pady=[5, 0], sticky=W)
+
+    # выбрать пассажира
+    clickFunc = lambda: insertDataToTable(db, flyList, passList, "choosePass", cbxPassResult)
+    btnChoosePass = Button(lfHotelSettings, font=consts.FNTBTNMINI, text="Выбрать пассажира", command=clickFunc, padx=33,
+                             pady=2)
+    btnChoosePass.grid(row=7, column=0, columnspan=2, rowspan=1, padx=10, pady=[5, 0], sticky=W)
 
     # получаем список найденных пассажиров
     clickFunc = lambda: getPass(db, flyList, passList, etrFindPass.get(), cbxPassResult, components)
@@ -358,7 +364,7 @@ def createOperatorChooseHotelForm(db, root, usrData):
     hotelList.delete(*hotelList.get_children())
 
     # список колонок будущей таблицы
-    cols = ["№", "Ссылка", "Название", "Удаленность", "Класс гостиницы", "Стоимость", "Питание", "  Номер  "]
+    cols = ["№", "Ссылка", "Название", "Удаленность", "Класс гостиницы", "Стоимость", "Питание", "        Номер        "]
     # строим таблицу по полученным данным
     hotelList["columns"] = cols
     # определяем заголовки для столбцов

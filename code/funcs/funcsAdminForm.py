@@ -531,15 +531,15 @@ def createReport(db, dateFrom, dateUntil, timeFrom, timeUntil):
                 if (str(row["time"]).split()[-1] >= timeFrom) and (str(row["time"]).split()[-1] <= timeUntil):
                     filterData.append(row)
 
-        if (not os.path.exists("reports/logReports")):
+        if (not os.path.exists("code/reports/logReports")):
             # создаем папку для отчетов
-            os.mkdir("reports/logReports")
+            os.mkdir("code/reports/logReports")
 
         # создаем папку с указанием текущей даты и времени
         folderName = datetime.now()
         folderName = folderName.strftime("%d") + "." + folderName.strftime("%m") + "." + folderName.strftime("%Y") + "_" + folderName.strftime("%H") + "-" + folderName.strftime("%M")
         # в названии папки указываем фамилию и дату
-        os.mkdir(f"reports/logReports/report_{folderName}")
+        os.mkdir(f"code/reports/logcode/reports/report_{folderName}")
         # загружаем шаблон отчета
         doc = DocxTemplate("reports/logReport.docx")
 
@@ -575,7 +575,7 @@ def createReport(db, dateFrom, dateUntil, timeFrom, timeUntil):
         # загружаем данные из контекста в шаблон
         doc.render(context)
         # сохраняем отчет в конкретную папку
-        doc.save(f"reports/logReports/report_{folderName}/отчет_по_логам.docx")
+        doc.save(f"code/reports/logReports/report_{folderName}/отчет_по_логам.docx")
         showinfo(title="Создание отчета", message="Отчет успешно сформирован!")
 
     except Exception as e:
