@@ -7,13 +7,15 @@ Image
 ImageTk
 os-sys
 pytest-shutil
-configparser
-python-docx
-docxtpl
 pylab-sdk
 matplotlib
 DateTime
 pyperclip
+# docs and templates
+configparser
+python-docx
+docxtpl
+docx
 # AI
 requests
 openai

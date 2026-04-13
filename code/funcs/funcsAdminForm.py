@@ -43,6 +43,49 @@ from openai import OpenAI
 # для работы с файлами окружения
 from dotenv import load_dotenv
 
+# проверка и изменение данных даты и времени, если у них остались значения по умолчанию
+def processComponents(components):
+    componentsVal = components[:]
+    # получаем данные по компонентам
+    for i in range(len(componentsVal)):
+        componentsVal[i] = componentsVal[i].get()
+
+    # дату и время выставляем по умолчанию
+    if ((componentsVal[0] == "YYYY-MM-DD") or (componentsVal[0] == "")):
+        componentsVal[0] = "2025-01-01"
+    if ((componentsVal[1] == "YYYY-MM-DD") or (componentsVal[1] == "")):
+        componentsVal[1] = "2026-12-31"
+    if (componentsVal[2] == ""):
+        componentsVal[2] = "00:00"
+    if (componentsVal[3] == ""):
+        componentsVal[3] = "23:59"
+    # прибавляю секунды ко времени
+    componentsVal[2] += ":00"
+    componentsVal[3] += ":00"
+    return componentsVal
+
+# функция для фильтрации данных по параметрам
+def filterData(df, componentsVal):
+
+    fData = []
+    # разбираю по переменным ссылки на объекты
+    dateFrom, dateUntil, timeFrom, timeUntil, actType, status = componentsVal
+
+    for index, row in df.iterrows():
+        # 2026-2-30 10:20:00
+        dt = str(row["date"])
+        tm = str(row["time"]).split()[2]
+        # обходим DF, берем только подходящие по дате и времени строки
+        if (dt >= dateFrom) and (dt <= dateUntil):
+            if ((tm + ":00") >= timeFrom) and ((tm + ":00") <= timeUntil):
+                # проверяем тип действия
+                if ((actType == "Не указан") or (actType == row["type"])):
+                    # проверяем статус
+                    if ((status == "Не указан") or (status == row["status"])):
+                        fData.append(row)
+
+    return fData
+
 # сортировка по нажатию на столбец
 def columnSort(tree, col, reverse):
     # получаем все значения столбцов в виде отдельного списка
@@ -147,7 +190,6 @@ def findUser(db, findData, cbxFindUserRes):
         cbxFindUserRes["values"] = arr[:]
         cbxFindUserRes.current(0)
 
-
 # функция изменения режима работы с пользователями: добавление, удаление, редактирование
 def changeWorkMode(workMode, btnAddUser, btnChangeUser, btnDelUser, btnFindUser):
     if (workMode.get() == "addUser"):
@@ -167,7 +209,6 @@ def changeWorkMode(workMode, btnAddUser, btnChangeUser, btnDelUser, btnFindUser)
         btnChangeUser["state"] = "disabled"
         btnDelUser["state"] = "normal"
         btnFindUser["state"] = "normal"
-
 
 # добавление нового пользователя
 def addNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, etrEmail, tbComm, etrLogin, etrPass, message=True):
@@ -329,7 +370,6 @@ def checkNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, 
         # сообщаем, что операция успешна
         return True
 
-
 # загружает список логов из БД
 def loadLogList(db):
     # запрос на получение данных о системе
@@ -364,9 +404,11 @@ def loadLogList(db):
         return False
 
 # заполнение таблицы данными на форме управления системой из БД
-def insertDataToTable(db, table):
+def insertDataToTable(db, table, components, componentsCnt=6):
     # загружаем список логов для построения таблицы
     df = loadLogList(db)
+    # отфильтрованный список данных
+    fData = []
 
     # очищаем таблицу
     for item in table.get_children():
@@ -374,15 +416,22 @@ def insertDataToTable(db, table):
 
     # если не был прочитан фрейм, не делаем разбор его строк
     if (not df.empty):
-        # добавляем данные в таблицу из dataFrame
-        for index, row in df.iterrows():
+
+        # если это не первый запрос, когда нам нужны все данные,
+        # а запрос при изменении какого-либо параметра,
+        # фильтруем данные, которые попадут в таблицу
+        if (len(components) == componentsCnt):
+            # получаем значения по ссылкам на компоненты и меняем дату и время, если они имеют значения по умолчанию
+            componentsVal = processComponents(components)
+            fData = filterData(df, componentsVal)
+        else:
+            for index, row in df.iterrows():
+                fData.append(row)
+
+        # добавляем данные в таблицу из fData
+        for row in fData:
             # разбираем дату и время на отдельные составляющие
-            # tstr = row[-1].strftime("%Y-%m-%d %H:%M:%S")
-            # date = tstr.split()[0]
-            # time = tstr.split()[1][:-3]
-            # table.insert("", END, values=tuple([*row[:-1], date, time]))
-            # берем все строку, но время немного дообрабатываем
-            table.insert("", END, values=tuple([*row[:-1], str(row[-1]).split()[-1]]))
+            table.insert("", END, values=tuple([*row[:-1], str(row[-1]).split()[2]]))
 
 # очистка всех логов в БД
 def clearLogList(db, table):
@@ -400,7 +449,7 @@ def clearLogList(db, table):
             showinfo(title="Очистка логов", message="Очистка логов прошла успешно!")
 
             # обновляем данные в таблице
-            insertDataToTable(db, table)
+            insertDataToTable(db, table, [])
 
             return True
         except Exception as e:
@@ -408,11 +457,15 @@ def clearLogList(db, table):
                           message="Произошла непредвиденная ошибка при очистке логов, попробуйте еще раз")
 
 # удаление записи лога
-def delRecord(db, table):
+def delRecord(db, table, components):
     # получаем список выделенных строк - берем первую из них
-    selectRow = table.selection()[0]
+    selectRow = table.selection()
+    # если ничего не выделено
+    if (len(selectRow) == 0):
+        showinfo(title="Удаление записи лога", message="Выберите запись для удаления!")
+        return
     # получаем список элементов выделенной строки
-    item = table.item(selectRow)
+    item = table.item(selectRow[0])
     # значения полей строки в виде массива
     vals = item["values"]
     # id записи лога
@@ -432,7 +485,7 @@ def delRecord(db, table):
         showinfo(title="Удаление записи лога", message="Удаление записи лога прошло успешно!")
 
         # обновляем данные в таблице
-        insertDataToTable(db, table)
+        insertDataToTable(db, table, components)
 
         return True
     except Exception as e:
@@ -538,11 +591,12 @@ def createReport(db, dateFrom, dateUntil, timeFrom, timeUntil):
 
         # создаем папку с указанием текущей даты и времени
         folderName = datetime.now()
-        folderName = folderName.strftime("%d") + "." + folderName.strftime("%m") + "." + folderName.strftime("%Y") + "_" + folderName.strftime("%H") + "-" + folderName.strftime("%M")
+        folderName = (folderName.strftime("%d") + "." + folderName.strftime("%m") + "." + folderName.strftime("%Y") + "_" +
+                      folderName.strftime("%H") + "-" + folderName.strftime("%M"))
         # в названии папки указываем фамилию и дату
-        os.mkdir(f"code/reports/logcode/reports/report_{folderName}")
-        # загружаем шаблон отчета
-        doc = DocxTemplate("reports/logReport.docx")
+        os.mkdir(f"code/reports/logReports/report_{folderName}")
+        # создаем документ
+        doc = Document("code/reports/logReport.docx")
 
         dateFrom = dateFrom.split("-")
         dateUntil = dateUntil.split("-")
@@ -553,30 +607,43 @@ def createReport(db, dateFrom, dateUntil, timeFrom, timeUntil):
             "timeFrom": timeFrom,
             "dateUntil": dateUntil[-1] + "." + dateUntil[-2] + "." + dateUntil[-3],
             "timeUntil": timeUntil,
-            "idLog": "",
-            "logCaption": "",
-            "logType": "",
-            "logStatus": "",
-            "logDescr": "",
-            "logDate": "",
-            "logTime": "",
         }
 
+        # создаем таблицу
+        table = doc.add_table(1, cols=7)
+        header = table.rows[0].cells
+        # задаем заголовки столбцов
+        header[0].text = '№'
+        header[1].text = 'Название'
+        header[2].text = 'Тип'
+        header[3].text = 'Статус'
+        header[4].text = 'Описание'
+        header[5].text = 'Дата'
+        header[6].text = 'Время'
+
+        # добавляем строки
         # заполняем словарь данными из БД
         # здесь row - строка вида [(column_caption, value), (..), ..]
         for row in filterData:
-            context["idLog"] += str(row[0]) + "\n"
-            context["logCaption"] += row[1] + "\n"
-            context["logType"] += row[2] + "\n"
-            context["logStatus"] += str(row[3]) + "\n"
-            context["logDescr"] += row[4] + "\n"
-            context["logDate"] += row[5].strftime("%d") + "." + row[5].strftime("%m") + "." + row[5].strftime("%Y") + "\n"
-            context["logTime"] += str(row[6]).split()[-1] + "\n"
+            rowTable = table.add_row().cells
+            rowTable[0].text = str(row.iloc[0])
+            rowTable[1].text = str(row.iloc[1])
+            rowTable[2].text = str(row.iloc[2])
+            rowTable[3].text = str(row.iloc[3])
+            rowTable[4].text = str(row.iloc[4])
+            rowTable[5].text = row.iloc[5].strftime("%d") + "." + row.iloc[5].strftime("%m") + "." + row.iloc[5].strftime("%Y")
+            rowTable[6].text = str(row.iloc[6]).split()[-1]
 
+        # сохраняем отчет в конкретную папку
+        doc.save(f"code/reports/logReports/report_{folderName}/отчет_по_логам.docx")
+
+        # загружаем шаблон отчета, в котором только что сделали таблицу, чтобы закинуть туда переменные
+        doc = DocxTemplate(f"code/reports/logReports/report_{folderName}/отчет_по_логам.docx")
         # загружаем данные из контекста в шаблон
         doc.render(context)
         # сохраняем отчет в конкретную папку
         doc.save(f"code/reports/logReports/report_{folderName}/отчет_по_логам.docx")
+
         showinfo(title="Создание отчета", message="Отчет успешно сформирован!")
 
     except Exception as e:

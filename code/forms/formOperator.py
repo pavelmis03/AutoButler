@@ -21,6 +21,9 @@ import shutil
 # библиотека для работы с изображениями
 from PIL import ImageTk, Image  # pip install pillow
 
+# дата и время
+from datetime import datetime, timedelta
+
 # подключаем файл с функциями обработки данных, получаемых от форм
 import funcs.funcsAuth as fAuth
 # подключаем файл с функциями обработки данных, получаемых от форм админа
@@ -29,6 +32,9 @@ from funcs.funcsOperatorForm import *
 from funcs.funcsForm import createGrid, createWindow
 # константы
 import consts
+
+# дата и время
+from datetime import datetime, timedelta
 
 # создаем форму для работы оператора - подбор гостиницы
 # userData = {"login", "pwd", "role", "email", "phone", "name", "surname", "patr", "descr"}
@@ -499,7 +505,7 @@ def createOperatorReportsForm(db, root, usrData):
     # текстовое поле дата ОТ
     etrDateFrom = Entry(lfManageField, font=consts.FNTLBLS, textvariable=etrDateFromVar)
     # значение по умолчанию для поля ввода
-    etrDateFrom.insert(0, "YYYY-MM-DD")
+    etrDateFrom.insert(0, "2000-01-01")
     etrDateFrom.grid(row=4, column=0, columnspan=1, padx=20, pady=[0, 10], sticky=E)
     # добавляем в массив компонентов текущий элемент
     components.append(etrDateFrom)
@@ -514,7 +520,7 @@ def createOperatorReportsForm(db, root, usrData):
     # текстовое поле дата ДО
     etrDateUntil = Entry(lfManageField, font=consts.FNTLBLS, textvariable=etrDateUntilVar)
     # значение по умолчанию для поля ввода
-    etrDateUntil.insert(0, "YYYY-MM-DD")
+    etrDateUntil.insert(0, str(datetime.now().date()))
     etrDateUntil.grid(row=6, column=0, columnspan=1, padx=20, pady=[0, 10], sticky=E)
     # добавляем в массив компонентов текущий элемент
     components.append(etrDateUntil)
@@ -529,7 +535,7 @@ def createOperatorReportsForm(db, root, usrData):
     # текстовое поле время ОТ
     etrTimeFrom = Entry(lfManageField, font=consts.FNTLBLS, textvariable=etrTimeFromVar)
     # значение по умолчанию для поля ввода
-    etrTimeFrom.insert(0, "00:01")
+    etrTimeFrom.insert(0, "00:00")
     etrTimeFrom.grid(row=4, column=2, columnspan=1, padx=10, pady=[0, 10], sticky=W)
     # добавляем в массив компонентов текущий элемент
     components.append(etrTimeFrom)

@@ -103,7 +103,7 @@ def filterData(df, key, filter, componentsVal):
             tm = str(row["dateArrival"]).split()[1][:-3]
         # обходим DF, берем только подходящие по дате и времени строки
         if (len(componentsVal) == 0) or (dt >= dateFrom) and (dt <= dateUntil):
-            if (len(componentsVal) == 0) or (tm >= timeFrom) and (tm <= timeUntil):
+            if (len(componentsVal) == 0) or ((tm + ":00") >= timeFrom) and ((tm + ":00") <= timeUntil):
                 flag = True
                 # пробегаемся по всем фильтрам
                 for j in range(len(filter)):
@@ -695,7 +695,9 @@ def getHotelList(table, familyMember, tbOutput, hotelList, message=""):
                                              При выборе гостиницы и номера ты должен опираться на параметры, которые будут переданы в 
                                              последующих запросах - это аэропорт (гостиница должна быть недалеко от него), класс рейса
                                              (пассажиры из бизнес класса должны заселяться в элитные гостиницы), количество человек на номер: 
-                                             больше 5 человек - номер должен быть трехкомнатный"""
+                                             больше 5 человек - номер должен быть трехкомнатный;
+                                             Пиши на русском языке все, кроме оригинальных названий отелей;
+                                             """
             },
         ]
         # сам наш запрос

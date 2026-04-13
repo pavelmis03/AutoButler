@@ -195,7 +195,7 @@ def resetSettings(dateFrom, dateUntil, timeFrom, timeUntil, workModeDep, workMod
     dateUntil.delete(0, END)
     dateUntil.insert(0, "YYYY-MM-DD")
     timeFrom.delete(0, END)
-    timeFrom.insert(0, "00:01")
+    timeFrom.insert(0, "00:00")
     timeUntil.delete(0, END)
     timeUntil.insert(0, "23:59")
 
@@ -306,7 +306,7 @@ def filterData(df, componentsVal):
         tm = str(row["schDep"]).split()[1][:-3]
         # обходим DF, берем только подходящие по дате и времени строки
         if (dt >= dateFrom) and (dt <= dateUntil):
-            if (tm >= timeFrom) and (tm <= timeUntil):
+            if ((tm + ":00") >= timeFrom) and ((tm + ":00") <= timeUntil):
                 # проверяем компанию, статус, аэропорты
                 if (((company == "Все компании") or (row["company"] == company)) and
                     ((status == "Все варианты") or (row["status"] == status)) and

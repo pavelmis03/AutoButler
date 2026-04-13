@@ -43,6 +43,23 @@ from openai import OpenAI
 # для работы с файлами окружения
 from dotenv import load_dotenv
 
+# функция получения рейсов в виде строки для нейронки
+def getFlightAsStr(flyList):
+    # строка с информацией из БД
+    dataStr = ""
+    # cols = ["№", "Номер рейса", "Авиакомпания", "Аэропорт вылета", "Аэропорт прибытия", "Плановое время вылета",
+    #         "Плановое время прибытия", "Фактическое время вылета", "Фактическое время прибытия", "      Статус      ",
+    #         "Минуты задержки", "Причина отмены"]
+    i = 0
+    # проходим по таблице, получаем данные
+    for el in flyList.get_children(""):
+        # получаем список значений по строке
+        row = flyList.item(el)["values"]
+        # собираем строку для нейронки
+        dataStr += f"{i + 1}) рейс {row[1]} авиакомпании {row[2]}, вылет {row[5]} из {row[3]}, посадка в {row[4]}\n"
+        i += 1
+    return dataStr
+
 # сортировка по нажатию на столбец
 def columnSort(tree, col, reverse):
     # получаем все значения столбцов в виде отдельного списка
@@ -57,43 +74,72 @@ def columnSort(tree, col, reverse):
 
 # создаем подключение к модели
 def getClient():
+    # получаем ключи и создаем чат с нейронкой
     try:
         api_key = os.getenv("OPENROUTER_API_KEY")
+        # если не нашли ключ в переменных окружения, выбрасываем исключение
         if not api_key:
+            showerror(title="Подключение к модели", message=f"API-ключ не найден в переменных окружения")
             raise ValueError("OPENROUTER_API_KEY не найден в переменных окружения")
+        # возвращаем объект модели
         return OpenAI(
             base_url="https://openrouter.ai/api/v1",
             api_key=api_key,
         )
     except Exception as e:
-        print(f"Ошибка при создании клиента OpenAI: {e}")
-        raise
+        showerror(title="Ошибка модели", message=f"Ошибка при создании клиента OpenAI: {e}")
 
 # функция, в которой определяются настройки для нейронки
-def updateSystemMessage(messages):
+def updateSystemMessage(messages, tbOutput):
     messages[0] = {
         "role": "system",
-        "content": (
-            "Ты Мастер Ролевой Игры (GM) для сольного приключения в стиле DnD для одного игрока; "
-            "Возраст игрока: 12-14 лет, поэтому следи за цензурой и возрастными ограничениями; "
-            "Современный мир; "
-            "Жанр игры: не хоррор, не мистика, не ужасы; "
-            "Веди историю кинематографично, кратко и ярко; предлагай игроку 2–4 выбора с нумерацией; "
-            "Запоминай факты и последствия; соблюдай логику мира; всегда отвечай по-русски; "
-            "Мастер игры должен быть коротким и кратким, не более 3-4 предложений; "
-            f"Следи за количеством сообщений. До конца игры осталось сообщений; "
-            f"Используй местоположение игрока для описания окружающей среды: ; "
-            f"Используй погоду для описания окружающей среды: . "
-        ),
+        "content":
+            "Ты специалист по прогнозированию отмены авиарейсов, помогающий менеджерам аэропорта определить количество"
+            "пассажиров, которым потребуется номер в гостинице;\n"
+            "Проводи анализ только тех данных, которые будут тебе предоставлены;\n"
+            "Для расчета вероятности отмены используй данные из интернета;\n"
+            "Запоминай свои выводы и сообщения менеджера аэропорта; всегда отвечай по-русски;\n"
+            f"Используй данные по погоде в районе аэропортов для оценки вероятности отмены рейса;\n"
+            f"Не бывает так, чтобы с большой вероятностью отменялось больше 30% рейсов.\n"
     }
+    # выводим промпт
+    tbOutput.insert(END, "role: system\n" + messages[0]["content"] + "\n\n")
 
 # первый запрос для нейронки
-def addStartPrompt(messages):
-    first_message = {
-        "role": "user",
-        "content": "Начни игру: короткое вступление и 2–4 варианта действий для игрока.",
+def addStartPrompt(messages, analysisType, addMessage, tbOutput, flyList):
+    # словарь соответствия кодов radioBtn и текста на них
+    arr = {
+        "FlightCansel": "Отмена рейса",
+        "allFlightCansel": "Количество отменных рейсов за период",
+        "passengerCount": "Количество пассажиров с рейса, которым потребуется гостиница",
+        "allPassengerCount": "Количество пассажиров, которым потребуется гостиница за период",
     }
-    messages.append(first_message)
+    analysisType = arr[analysisType]
+    # получаем данные по рейсам в виде строки
+    dataStr = getFlightAsStr(flyList)
+    firstPrompt = {  # промпт
+        "role": "system",
+        "content": f"Начни анализ по { analysisType }.\n"
+                   f"Вот данные, которые нужно проанализировать: \n" + dataStr
+    }
+
+    # если было передано доп сообщение
+    if (len(addMessage) > 15):
+        # добавляем дополнительную информацию для нейронки
+        firstPrompt = {  # промпт
+            "role": "system",
+            "content": f"Начни анализ по { analysisType } с учетом следующих данных:\n"
+                       f"{addMessage}\n"
+                       f"Вот данные, которые нужно проанализировать: \n" + dataStr
+        }
+    # если сообщение есть, но слишком короткое
+    elif (len(addMessage) > 5):
+        showinfo(title="Дополнительное сообщение",
+                 message=f"Дополнительное сообщение слишком короткое, оно не будет передано на анализ. (В дополнительном сообщении должно быть больше 15 символов)")
+
+    messages.append(firstPrompt)
+    # выводим запрос
+    tbOutput.insert(END, "role: system\n" + firstPrompt["content"] + "\n\n")
 
 # отправляем нейронке вопрос, получаем ответ
 def chat(messages, model, client):
@@ -104,8 +150,7 @@ def chat(messages, model, client):
             messages=messages,
         )
     except Exception as e:
-        showerror(title="Анализ чего-то", message=f"Ошибка при запросе к API: {e}")
-        raise
+        showerror(title="Анализ данных", message=f"Ошибка при запросе к API: {e}")
 
 # получаем ответ от пользователя
 def addUserMessage(messages):
@@ -119,19 +164,20 @@ def addAssistantResponse(response, messages):
     try:
         # проверяем, чтоб был ответ от сервера, что в ответе были варианты ответа модели
         if ((not response) or (not response.choices) or (len(response.choices) == 0)):
+            showerror(title="Анализ данных", message=f"Пустой ответ от API")
             raise ValueError("Пустой ответ от API")
         # получаем первый ответ
         assistant_text = response.choices[0].message.content
         # если ответ пустой
         if (not assistant_text):
+            showerror(title="Анализ данных", message=f"Пустое содержимое сообщения")
             raise ValueError("Пустое содержимое сообщения")
         # добавляем в переписку ответ модели
         assistant_msg = {"role": "assistant", "content": assistant_text}
         messages.append(assistant_msg)
         return assistant_text
     except Exception as e:
-        showerror(title="Анализ чего-то", message=f"Ошибка при обработке ответа ассистента: {e}")
-        raise
+        showerror(title="Анализ данных", message=f"Ошибка при обработке ответа ассистента: {e}")
 
 # функция общения с нейронкой
 def communication():
@@ -142,38 +188,48 @@ def communication():
         response = chat(messages, model, client)
         # получаем текст ответа модели
         assistant_text = addAssistantResponse(response, messages)
-        print(f"\nМастер игры: {assistant_text}\n")
+        print(f"\nМастер прогнозирования: {assistant_text}\n")
         # вывод в текст бокс
         # обновляем настройки для нейронки
         updateSystemMessage(messages)
     except Exception as e:
-        showerror(title="Анализ чего-то", message=f"Ошибка во анализа: {e}")
+        showerror(title="Анализ данных", message=f"Ошибка во анализа: {e}")
         # print("Попробуйте еще раз или завершите анализ (Ctrl+C).")
 
 # первичные настройки для подготовки общения с нейронкой
-def startCommunication():
+def startCommunication(tbOutput, addMessage, flyList, components, analysisType):
+    # получаем данные из полей ввода
+    dateFrom, dateUntil, timeFrom, timeUntil = processComponents(components)
+    # если есть ошибка в заполнении полей даты и времени
+    if (checkDateTime(dateFrom, False, "Дата от") or
+        checkDateTime(dateUntil, False, "Дата до") or
+        checkDateTime(timeFrom, True, "Время от") or
+        checkDateTime(timeUntil, True, "Время до")):
+        showerror(title="Передача данных для анализа", message=f"Ошибка в заполнении полей даты и времени.\nИсправьте, чтобы начать анализ")
+        return
     try:
         # загружаем переменные среды из .env
         load_dotenv()
         # устанавливаем соединение с нейронкой
         client = getClient()
         # получаем объект модели
-        model = os.getenv("model")
+        model = os.getenv("MODEL")
         # сообщения для нейронки
         messages = []
         messages.append({"role": "system"})
         # обновляем настройки для нейронки
-        updateSystemMessage(messages)
+        updateSystemMessage(messages, tbOutput)
         # первый запрос для нейронки
-        addStartPrompt(messages)
+        addStartPrompt(messages, analysisType, addMessage, tbOutput, flyList)
         # получаем ответ от сервера модели по отправленным сообщениям
         response = chat(messages, model, client)
         # получаем текст ответа модели
         assistant_text = addAssistantResponse(response, messages)
-        print(assistant_text)
+        # выводим запрос
+        tbOutput.insert(END, f"\n\nОтвет модели: {assistant_text} \n\n")
 
     except Exception as e:
-        showerror(title="Анализ чего-то", message=f"Ошибка во анализа: {e}")
+        showerror(title="Установка соединения", message=f"Ошибка при установке соединения с моделью или при ее настройке: {e}")
 
 # получает список авиакомпаний из БД
 def getCompany(db):
@@ -301,9 +357,11 @@ def createGraph(db, components, needSave):
     # настраиваем заголовки осей
     plt.xlabel("Дата вылета")
     plt.ylabel("Количество рейсов")
-    plt.plot(names, valuesOnTime, color="green")
-    plt.plot(names, valuesDelay, color="yellow")
-    plt.plot(names, valuesCansel, color="red")
+    plt.plot(names, valuesOnTime, color="green", label="Без опозданий")
+    plt.plot(names, valuesDelay, color="yellow", label="С задержкой")
+    plt.plot(names, valuesCansel, color="red", label="Отмененные")
+    # устанавливаем легенду
+    plt.legend(loc='best')
     # Поворачиваем подписи осей
     plt.xticks(rotation=89)
     plt.tight_layout()  # Автоматически регулирует размеры для избегания перекрытий
@@ -334,7 +392,7 @@ def resetSettings(dateFrom, dateUntil, timeFrom, timeUntil, workModeDep, workMod
     dateUntil.delete(0, END)
     dateUntil.insert(0, "YYYY-MM-DD")
     timeFrom.delete(0, END)
-    timeFrom.insert(0, "00:01")
+    timeFrom.insert(0, "00:00")
     timeUntil.delete(0, END)
     timeUntil.insert(0, "23:59")
 
@@ -378,14 +436,14 @@ def loadFlyList(db):
         return False
 
 # заполнение таблицы данными на форме анализа рейсов из БД
-def insertDataToTable(db, table, components):
+def insertDataToTable(db, table, components, componentsCnt=10):
     # загружаем список полетов для построения таблицы
     df = loadFlyList(db)
     # отфильтрованный список данных
     fData = []
 
     # очищаем таблицу
-    for item in table.get_children():
+    for item in table.get_children(""):
         table.delete(item)
 
     # если не был прочитан фрейм, не делаем разбор его строк
@@ -393,7 +451,7 @@ def insertDataToTable(db, table, components):
         # если это не первый запрос, когда нам нужны все данные,
         # а запрос при изменении какого-либо параметра,
         # фильтруем данные, которые попадут в таблицу
-        if (len(components) == 10):
+        if (len(components) == componentsCnt):
             # получаем значения по ссылкам на компоненты и меняем дату и время, если они имеют значения по умолчанию
             componentsVal = processComponents(components)
             fData = filterData(df, componentsVal)
@@ -405,6 +463,9 @@ def insertDataToTable(db, table, components):
         for row in fData:
             # разбираем дату и время на отдельные составляющие
             table.insert("", END, values=tuple([*row]))
+        # если ни одна строка не выбрана, назначаем выбранной первую строку
+        if (len(table.selection()) == 0):
+            table.selection_add(table.get_children("")[0])
 
 # функция проверки рейса на опоздание по вылету и приземлению и на соответствие этого настройкам фильтрации
 # параметры: настройка (все, опаздывает, по расписанию); плановое время; фактическое время
@@ -436,23 +497,34 @@ def checkDel(param, schTime, actTime):
 def filterData(df, componentsVal):
 
     fData = []
-    # разбираю по переменным ссылки на объекты
-    dateFrom, dateUntil, timeFrom, timeUntil, depDel, arrDel, company, status, airportDep, airportArr = componentsVal
+    # на разные случаи
+    if (len(componentsVal) == 10):
+        # разбираю по переменным ссылки на объекты
+        dateFrom, dateUntil, timeFrom, timeUntil, depDel, arrDel, company, status, airportDep, airportArr = componentsVal
+    else:
+        dateFrom, dateUntil, timeFrom, timeUntil = componentsVal
 
     for index, row in df.iterrows():
         # 2026-2-30 10:20:00
         dt = str(row["schDep"]).split()[0]
         tm = str(row["schDep"]).split()[1][:-3]
+        # заменяем буквы ё, если есть на е
+        row["status"] = row["status"].replace("ё", "е")
+
         # обходим DF, берем только подходящие по дате и времени строки
         if (dt >= dateFrom) and (dt <= dateUntil):
-            if (tm >= timeFrom) and (tm <= timeUntil):
-                # проверяем компанию, статус, аэропорты
-                if (((company == "Все компании") or (row["company"] == company)) and
-                    ((status == "Все варианты") or (row["status"] == status)) and
-                    ((airportDep == "Все аэропорты") or (row["airportDep"] == airportDep)) and
-                    ((airportArr == "Все аэропорты") or (row["airportArr"] == airportArr))):
+            if ((tm + ":00") >= timeFrom) and ((tm + ":00") <= timeUntil):
+                # если у нас окно для прогноза, то интересно только это
+                if ((len(componentsVal) != 10) or
+                    (# если акно анализа, проверяем компанию, статус, аэропорты
+                        ((company == "Все компании") or (row["company"].lower() == company.lower())) and
+                        ((status == "Все варианты") or (row["status"].lower() == status.lower())) and
+                        ((airportDep == "Все аэропорты") or (row["airportDep"].lower() == airportDep.lower())) and
+                        ((airportArr == "Все аэропорты") or (row["airportArr"].lower() == airportArr.lower()))
+                    )
+                ):
                         # проверяем, задерживается или по расписанию и соответствует ли это настройкам
-                        if (checkDel(depDel, row["schDep"], row["actDep"]) and checkDel(arrDel, row["schArr"], row["actArr"])):
+                        if ((len(componentsVal) != 10) or (checkDel(depDel, row["schDep"], row["actDep"]) and checkDel(arrDel, row["schArr"], row["actArr"]))):
                             fData.append(row)
 
     return fData
@@ -488,7 +560,7 @@ def checkDateTime(data, isTime, str):
         try:
             datetime.strptime(data, "%H:%M:%S")
             return ""
-        except Exception:
+        except Exception as e:
             return f"Неправильный формат времени в поле \"{str}\". Запишите в виде: HH:MM, например 09:12"
         # else:
         #     return "Неправильный формат времени. Запишите в виде: HH:MM, например 09:12"
@@ -497,7 +569,7 @@ def checkDateTime(data, isTime, str):
         try:
             datetime.strptime(data, "%Y-%m-%d")
             return ""
-        except Exception:
+        except Exception as e:
             return f"Неправильный формат даты в поле \"{str}\". Запишите в виде: YYYY-MM-DD, например 2026-06-29"
         # else:
         #     return 2
