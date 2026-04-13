@@ -56,9 +56,40 @@ def getFlightAsStr(flyList):
         # получаем список значений по строке
         row = flyList.item(el)["values"]
         # собираем строку для нейронки
-        dataStr += f"{i + 1}) рейс {row[1]} авиакомпании {row[2]}, вылет {row[5]} из {row[3]}, посадка в {row[4]}\n"
+        dataStr += f"{i + 1}) рейс {row[1]} авиакомпании {row[2]}, вылет {row[5]} из {row[3]}, посадка в {row[4]}, статус рейса: {row[9]}\n"
         i += 1
     return dataStr
+
+# получаем историю сообщений из tbOutput
+def getMessagesHistory(tbOutput):
+    # будущий массив сообщений
+    messages = []
+    # временный словарь
+    tmp = {
+        "role": "",
+        "content": ""
+    }
+    # получаем весь текст
+    text = tbOutput.get("1.0", "end")
+    # разбиваем текст на массив по ключевым точкам, в которых были добавлены +++
+    textarr = text.split("+++")
+    # проходим текст по элементам
+    for str in textarr:
+        # короткие строки - мусор
+        if (len(str) >= 9):
+            # если нашли строку, где написана роль, добавляем ее
+            if ("role" in str):
+                # строка вида role: system
+                tmp["role"] = str.split(": ")[1]
+            else:
+                # добавляем сщтеуте
+                tmp["content"] = str
+            # если все добавили во временный словарь, закидываем в массив сообщений
+            if (tmp["content"] != ""):
+                messages.append(tmp)
+                tmp = { "role": "", "content": "" }
+
+    return messages
 
 # сортировка по нажатию на столбец
 def columnSort(tree, col, reverse):
@@ -103,7 +134,7 @@ def updateSystemMessage(messages, tbOutput):
             f"Не бывает так, чтобы с большой вероятностью отменялось больше 30% рейсов.\n"
     }
     # выводим промпт
-    tbOutput.insert(END, "role: system\n" + messages[0]["content"] + "\n\n")
+    tbOutput.insert(END, "+++role: system+++\n+++" + messages[0]["content"] + "+++\n\n")
 
 # первый запрос для нейронки
 def addStartPrompt(messages, analysisType, addMessage, tbOutput, flyList):
@@ -139,7 +170,7 @@ def addStartPrompt(messages, analysisType, addMessage, tbOutput, flyList):
 
     messages.append(firstPrompt)
     # выводим запрос
-    tbOutput.insert(END, "role: system\n" + firstPrompt["content"] + "\n\n")
+    tbOutput.insert(END, "+++role: system+++\n+++" + firstPrompt["content"] + "+++\n\n")
 
 # отправляем нейронке вопрос, получаем ответ
 def chat(messages, model, client):
@@ -151,13 +182,6 @@ def chat(messages, model, client):
         )
     except Exception as e:
         showerror(title="Анализ данных", message=f"Ошибка при запросе к API: {e}")
-
-# получаем ответ от пользователя
-def addUserMessage(messages):
-    user_input = input("Вы: ")
-    user_msg = {"role": "user", "content": user_input}
-    # добавляем ответ пользователя в переписку
-    messages.append(user_msg)
 
 # получаем текст ответа модели
 def addAssistantResponse(response, messages):
@@ -180,21 +204,33 @@ def addAssistantResponse(response, messages):
         showerror(title="Анализ данных", message=f"Ошибка при обработке ответа ассистента: {e}")
 
 # функция общения с нейронкой
-def communication():
+def communication(tbOutput, message):
+    # получаем историю сообщений из tbOutput
+    messages = getMessagesHistory(tbOutput)
     try:
+        # загружаем переменные среды из .env
+        load_dotenv()
+        # устанавливаем соединение с нейронкой
+        client = getClient()
+        # получаем объект модели
+        model = os.getenv("MODEL")
         # получаем ответ пользователя
-        addUserMessage(messages)
+        user_msg = {"role": "user", "content": message}
+        # выводим запрос
+        tbOutput.insert(END, f"\n\n+++role: user+++: +++{message}+++ \n\n")
+        # добавляем ответ пользователя в переписку
+        messages.append(user_msg)
         # получаем ответ от сервера модели по отправленным сообщениям теперь уже по ответу пользователя
         response = chat(messages, model, client)
         # получаем текст ответа модели
         assistant_text = addAssistantResponse(response, messages)
-        print(f"\nМастер прогнозирования: {assistant_text}\n")
+        # выводим запрос
+        tbOutput.insert(END, f"\n\n+++role: assistant+++: +++{assistant_text}+++ \n\n")
         # вывод в текст бокс
         # обновляем настройки для нейронки
-        updateSystemMessage(messages)
+        # updateSystemMessage(messages)
     except Exception as e:
         showerror(title="Анализ данных", message=f"Ошибка во анализа: {e}")
-        # print("Попробуйте еще раз или завершите анализ (Ctrl+C).")
 
 # первичные настройки для подготовки общения с нейронкой
 def startCommunication(tbOutput, addMessage, flyList, components, analysisType):
@@ -226,7 +262,7 @@ def startCommunication(tbOutput, addMessage, flyList, components, analysisType):
         # получаем текст ответа модели
         assistant_text = addAssistantResponse(response, messages)
         # выводим запрос
-        tbOutput.insert(END, f"\n\nОтвет модели: {assistant_text} \n\n")
+        tbOutput.insert(END, f"\n\n+++role: assistant+++: +++{assistant_text}+++ \n\n")
 
     except Exception as e:
         showerror(title="Установка соединения", message=f"Ошибка при установке соединения с моделью или при ее настройке: {e}")

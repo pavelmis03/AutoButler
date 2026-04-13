@@ -538,11 +538,10 @@ def createAnalystForecastForm(db, root, usrData):
 
     # текстовое поле для отображения переписки с нейронкой
     tbCommunication = ScrolledText(lfCommunicationField, width=170, height=10, wrap="none")
-    tbCommunication.grid(row=0, column=0, columnspan=5, rowspan=4, padx=10, pady=[10, 10])
-
+    tbCommunication.grid(row=0, column=0, columnspan=5, rowspan=4, padx=10, pady=[10, 10], sticky=NSEW)
     # добавляем скроллбар
-    xs = Scrollbar(orient="horizontal", command=tbCommunication.xview)
-    xs.grid(column=0, row=4, sticky=EW)
+    xs = Scrollbar(lfCommunicationField, orient="horizontal", command=tbCommunication.xview)
+    xs.grid(column=0, row=4, columnspan=5, sticky=EW)
     tbCommunication["xscrollcommand"] = xs.set
 
     # начать прогнозирование
@@ -556,7 +555,7 @@ def createAnalystForecastForm(db, root, usrData):
     tbMessage.grid(row=1, column=5, columnspan=2, rowspan=1, padx=10, pady=[0, 0])
 
     # отправить сообщение
-    clickFunc = lambda: startCommunication()
+    clickFunc = lambda: communication(tbCommunication, tbMessage.get("1.0", "end"))
     btnSendMessage = Button(lfCommunicationField, font=consts.FNTBTNMINI, text="Отправить сообщение",
                                    command=clickFunc, padx=40, pady=5)
     btnSendMessage.grid(row=2, column=5, columnspan=2, rowspan=1, padx=10, pady=[0, 10])
