@@ -12,6 +12,7 @@ import configparser
 # библиотека для sql-запросов
 import pymysql as sql
 import pandas as pd
+import numpy as np
 # модули для работы с операционной системой
 import os
 import shutil
@@ -325,7 +326,8 @@ def getAirport(db, dest):
 
     return airport
 
-def createGraph(db, components, needSave):
+# создаем граф по опоздавшим, отмененным и вылетевшим рейсам
+def createGraph(db, components, needSave, isHist=False):
     # загружаем список полетов для построения таблицы
     df = loadFlyList(db)
 
@@ -354,7 +356,7 @@ def createGraph(db, components, needSave):
     daysStep = abs(round(delta.days / 30))
 
     while (dtStart < dtEnd):
-        # добавляем дату - метка на оси X
+        # добавляем дату - подпись метки на оси X
         names.append(str(dtStart).split()[0])
 
         # конец очередного временного промежутка
@@ -393,13 +395,25 @@ def createGraph(db, components, needSave):
     # настраиваем заголовки осей
     plt.xlabel("Дата вылета")
     plt.ylabel("Количество рейсов")
-    plt.plot(names, valuesOnTime, color="green", label="Без опозданий")
-    plt.plot(names, valuesDelay, color="yellow", label="С задержкой")
-    plt.plot(names, valuesCansel, color="red", label="Отмененные")
+
+    # метки на оси Х, которые будут подписаны, как даты
+    x = np.arange(len(names))
+
+    # если нужно сделать гистограмму
+    if (isHist):
+        plt.bar(x - 0.2, valuesDelay, width=0.2, label="С задержкой")
+        plt.bar(x, valuesOnTime, width=0.2, label="Без опозданий")
+        plt.bar(x + 0.2, valuesCansel, width=0.2, label="Отмененные")
+    else:
+        # если нужно сделать график
+        plt.plot(x, valuesOnTime, color="green", label="Без опозданий")
+        plt.plot(x, valuesDelay, color="yellow", label="С задержкой")
+        plt.plot(x, valuesCansel, color="red", label="Отмененные")
+
+    # Поворачиваем подписи осей
+    plt.xticks(x, names, rotation=89)
     # устанавливаем легенду
     plt.legend(loc='best')
-    # Поворачиваем подписи осей
-    plt.xticks(rotation=89)
     plt.tight_layout()  # Автоматически регулирует размеры для избегания перекрытий
 
     # если надо сохранить
@@ -413,8 +427,11 @@ def createGraph(db, components, needSave):
             "%Y") + "_" + folderName.strftime("%H") + "-" + folderName.strftime("%M")
         # в названии папки указываем дату
         os.mkdir(f"code/reports/flightsGraphReport/report_{folderName}")
-        # сохранение графика в виде изображения
-        plt.savefig(f"code/reports/flightsGraphReport/report_{folderName}/graph.jpg")
+        if (isHist):
+            # сохранение графика в виде изображения
+            plt.savefig(f"code/reports/flightsGraphReport/report_{folderName}/hist.jpg")
+        else:
+            plt.savefig(f"code/reports/flightsGraphReport/report_{folderName}/graph.jpg")
         showinfo(title="Соханение графика", message="График успешно сохранен!")
 
     # показываем график

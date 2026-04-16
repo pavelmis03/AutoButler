@@ -334,6 +334,11 @@ def createAndminSystemManageForm(db, root, usrData):
     btnDelRecord = Button(frManageBtns, font=consts.FNTBTN, text="Удалить запись", command=clickFunc, padx=10, pady=10)
     btnDelRecord.grid(row=2, column=0, columnspan=2, padx=15, pady=[10, 10], ipadx=20)
 
+    # сформировать гистограмму
+    clickFunc = lambda: createHist(db, components, True)
+    btnCreateHist = Button(frManageBtns, font=consts.FNTBTN, text="Гистограмма", command=clickFunc, padx=10, pady=10)
+    btnCreateHist.grid(row=2, column=0, columnspan=2, padx=15, pady=[10, 10], ipadx=20)
+
     # сформировать отчет
     clickFunc = lambda: createReport(db, etrDateFrom.get(), etrDateUntil.get(), etrTimeFrom.get(), etrTimeUntil.get())
     btnCreateReport = Button(frManageBtns, font=consts.FNTBTN, text="Сформировать отчет", command=clickFunc, padx=10, pady=10)

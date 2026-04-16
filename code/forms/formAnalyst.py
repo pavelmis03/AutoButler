@@ -298,6 +298,11 @@ def createAnalystFlightsForm(db, root, usrData):
     # добавляем в массив компонентов текущий элемент
     components.append(cbxAirportArr)
 
+    # сформировать отчет
+    clickFunc = lambda: createGraph(db, components, cbtnSaveGraphVar, True)
+    btnCreateHist = Button(frManageBtns, font=consts.FNTBTN, text="Частотная гистограмма", command=clickFunc, padx=15, pady=10)
+    btnCreateHist.grid(row=4, column=5, columnspan=2, rowspan=2, padx=0, pady=[10, 0])
+
 
         # -------------КНОПКИ управления-------------
 
@@ -307,7 +312,7 @@ def createAnalystFlightsForm(db, root, usrData):
     btnCreateReport.grid(row=0, column=7, columnspan=2, rowspan=2, padx=0, pady=[10, 0])
 
     # сформировать график
-    clickFunc = lambda: createGraph(db, components, cbtnSaveGraphVar)
+    clickFunc = lambda: createGraph(db, components, cbtnSaveGraphVar, False)
     btnCreateGraph = Button(frManageBtns, font=consts.FNTBTN, text="Сформировать график", command=clickFunc, padx=9, pady=10)
     btnCreateGraph.grid(row=2, column=7, columnspan=2, rowspan=2, padx=0, pady=[0, 0])
 

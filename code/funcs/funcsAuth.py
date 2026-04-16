@@ -1,6 +1,7 @@
 # библиотека для sql-запросов
 import pymysql as sql
 import pandas as pd
+import numpy as np
 # библиотека для построения графика
 import matplotlib.pyplot as plt
 

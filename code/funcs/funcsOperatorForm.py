@@ -12,6 +12,7 @@ import configparser
 # библиотека для sql-запросов
 import pymysql as sql
 import pandas as pd
+import numpy as np
 # модули для работы с операционной системой
 import os
 import shutil
