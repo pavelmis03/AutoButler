@@ -320,29 +320,29 @@ def createAndminSystemManageForm(db, root, usrData):
     frManageBtns = LabelFrame(frMain, font=consts.FNTLBLH2, text="Рабочие окна", borderwidth=1, relief=SOLID)
 
     # сетка компонентов 6x5
-    createGrid(frManageBtns, 15, 6, 1, 1)
+    createGrid(frManageBtns, 15, 8, 1, 1)
     # массив компонентов управления данными
     components = []
 
-    # очистить журнал
-    clickFunc = lambda: clearLogList(db, logList)
-    btnCleareLogList = Button(frManageBtns, font=consts.FNTBTN, text="Очистить журнал", command=clickFunc, padx=20, pady=10)
-    btnCleareLogList.grid(row=0, column=0, columnspan=2, rowspan=2, padx=10, pady=[10, 10], ipadx=10)
-
     # удалить запись
     clickFunc = lambda: delRecord(db, logList, components)
-    btnDelRecord = Button(frManageBtns, font=consts.FNTBTN, text="Удалить запись", command=clickFunc, padx=10, pady=10)
-    btnDelRecord.grid(row=2, column=0, columnspan=2, padx=15, pady=[10, 10], ipadx=20)
+    btnDelRecord = Button(frManageBtns, font=consts.FNTBTN, text="Удалить запись", command=clickFunc, padx=12, pady=10)
+    btnDelRecord.grid(row=0, column=0, columnspan=2, rowspan=2, padx=15, pady=[10, 0], ipadx=20, sticky=W)
 
-    # сформировать гистограмму
-    clickFunc = lambda: createHist(db, components, True)
-    btnCreateHist = Button(frManageBtns, font=consts.FNTBTN, text="Гистограмма", command=clickFunc, padx=10, pady=10)
-    btnCreateHist.grid(row=2, column=0, columnspan=2, padx=15, pady=[10, 10], ipadx=20)
+    # очистить журнал
+    clickFunc = lambda: clearLogList(db, logList)
+    btnCleareLogList = Button(frManageBtns, font=consts.FNTBTN, text="Очистить журнал", command=clickFunc, padx=18, pady=10)
+    btnCleareLogList.grid(row=2, column=0, columnspan=2, rowspan=2, padx=15, pady=[10, 0], ipadx=9, sticky=W)
+
+    # сформировать график
+    clickFunc = lambda: createGraph(db, components, True)
+    btnCreateHist = Button(frManageBtns, font=consts.FNTBTN, text="Сформировать график", command=clickFunc, padx=0, pady=10)
+    btnCreateHist.grid(row=4, column=0, columnspan=2, rowspan=2, padx=15, pady=[10, 0], ipadx=3, sticky=W)
 
     # сформировать отчет
     clickFunc = lambda: createReport(db, etrDateFrom.get(), etrDateUntil.get(), etrTimeFrom.get(), etrTimeUntil.get())
     btnCreateReport = Button(frManageBtns, font=consts.FNTBTN, text="Сформировать отчет", command=clickFunc, padx=10, pady=10)
-    btnCreateReport.grid(row=4, column=0, columnspan=2, rowspan=2, padx=15, pady=[10, 20])
+    btnCreateReport.grid(row=6, column=0, columnspan=2, rowspan=2, pady=[10, 10], padx=15, sticky=W)
 
     # дата от
     lblDateFrom = Label(frManageBtns, font=consts.FNTLBLS, text="Дата от:")
@@ -370,7 +370,7 @@ def createAndminSystemManageForm(db, root, usrData):
     etrDateUntil = Entry(frManageBtns, font=consts.FNTLBLS, textvariable=etrDateUntilVar)
     # значение по умолчанию для поля ввода
     etrDateUntil.insert(0, str(datetime.now().date()))
-    etrDateUntil.grid(row=3, column=2, columnspan=1, padx=10, pady=[0, 10], sticky=W)
+    etrDateUntil.grid(row=3, column=2, columnspan=1, padx=10, pady=[0, 0], sticky=W)
     # добавляем в массив компонентов текущий элемент
     components.append(etrDateUntil)
 
@@ -404,6 +404,10 @@ def createAndminSystemManageForm(db, root, usrData):
     # добавляем в массив компонентов текущий элемент
     components.append(etrTimeUntil)
 
+    # типы действия
+    lblActType = Label(frManageBtns, font=consts.FNTLBLS, text="Тип лога: ", padx=0, pady=0)
+    lblActType.grid(row=4, column=3, columnspan=2, padx=10, pady=[0, 0], sticky=W)
+
     # переменная для отслеживания изменения поля ввода
     cbxActTypeVar = StringVar()
     cbxActTypeVar.trace("w", lambda a, b, c: insertDataToTable(db, logList, components, 6))
@@ -413,19 +417,23 @@ def createAndminSystemManageForm(db, root, usrData):
     # устанавливаем значение по умолчанию
     cbxActType.current(0)
     # устанавливаем позицию компонента в сетке
-    cbxActType.grid(row=4, column=3, padx=10, pady=[0, 20], sticky=W)
+    cbxActType.grid(row=5, column=3, padx=10, pady=[0, 0], sticky=W)
     # добавляем в массив компонентов текущий элемент
     components.append(cbxActType)
 
+    # статус лога
+    lblStatus = Label(frManageBtns, font=consts.FNTLBLS, text="Статус лога:", padx=0, pady=0)
+    lblStatus.grid(row=4, column=2, columnspan=2, padx=10, pady=[0, 0], sticky=W)
     # переменная для отслеживания изменения поля ввода
     cbxStatusVar = StringVar()
     cbxStatusVar.trace("w", lambda a, b, c: insertDataToTable(db, logList, components, 6))
     # выпадающий список статусов
-    cbxStatus = ttk.Combobox(frManageBtns, values=["Не указан", "relevant", "irrelevant", "timeout"], state="readonly", textvar=cbxStatusVar)
+    cbxStatus = ttk.Combobox(frManageBtns, values=["Не указан", "relevant", "irrelevant", "timeout"], state="readonly",
+                             textvar=cbxStatusVar)
     # устанавливаем значение по умолчанию
     cbxStatus.current(0)
     # устанавливаем позицию компонента в сетке
-    cbxStatus.grid(row=4, column=2, padx=10, pady=[0, 20], sticky=W)
+    cbxStatus.grid(row=5, column=2, padx=10, pady=[0, 0], sticky=W)
     # добавляем в массив компонентов текущий элемент
     components.append(cbxStatus)
 

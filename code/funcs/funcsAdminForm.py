@@ -651,4 +651,115 @@ def createReport(db, dateFrom, dateUntil, timeFrom, timeUntil):
         showinfo(title="Создание отчета",
                  message="При создании отчета произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
 
-btnCreateHist
+# создаем граф по ошибкам
+def createGraph(db, components, needSave, isHist=False):
+    # загружаем список полетов для построения таблицы
+    df = loadLogList(db)
+
+    # получаем значения по ссылкам на компоненты и меняем дату и время, если они имеют значения по умолчанию
+    componentsVal = processComponents(components)
+    # отфильтрованные значения
+    # fData = filterData(df, componentsVal)
+    # разбираю по переменным ссылки на объекты
+    dateFrom, dateUntil, timeFrom, timeUntil, logType, logStatus = componentsVal
+
+    # деления
+    names = []
+    # значения в этих делениях
+    # логи с ошибкой
+    errorLog = []
+    # варнинги
+    warningLog = []
+
+    # начало и конец рассматриваемого промежутка
+    dtStart = datetime.strptime(dateFrom, "%Y-%m-%d")
+    dtEnd = datetime.strptime(dateUntil, "%Y-%m-%d")
+    # считаем, сколько дней в промежутке
+    delta = dtEnd - dtStart
+    daysStep = abs(round(delta.days / 30))
+
+    while (dtStart < dtEnd):
+        # добавляем дату - подпись метки на оси X
+        names.append(str(dtStart).split()[0])
+
+        # конец очередного временного промежутка
+        dtTmpEnd = dtStart + timedelta(days=daysStep)
+
+        # настраиваем дату от
+        componentsVal[0] = str(dtStart).split()[0]
+        # настраиваем дату до
+        componentsVal[1] = str(dtTmpEnd).split()[0]
+        # настраиваем тип логов
+        componentsVal[4] = "error"
+        # настраиваем status логов
+        componentsVal[5] = "relevant"
+        tData = filterData(df, componentsVal)
+        # количество логов с ошибкой
+        errorLog.append(len(tData))
+
+        # настраиваем тип логов
+        componentsVal[4] = "warning"
+        tData = filterData(df, componentsVal)
+        # количество варнингов
+        warningLog.append(len(tData))
+
+        # прибавляем по n дней за раз
+        dtStart += timedelta(days=daysStep)
+
+    try:
+        # настройка шрифта
+        plt.rcParams.update({"font.size": 10})
+        # настраиваем размеры окна
+        plt.figure(figsize=(10, 5))
+        # настраиваем заголовок графика
+        plt.title("Список логов с ошибками и предупреждениями")
+        # настраиваем заголовки осей
+        plt.xlabel("Дата лога")
+        plt.ylabel("Количество записей")
+
+        # метки на оси Х, которые будут подписаны, как даты
+        x = np.arange(len(names))
+
+        # если нужно сделать гистограмму
+        if (isHist):
+            plt.bar(x - 0.2, valuesDelay, width=0.2, label="С ошибкой")
+            # plt.bar(x, valuesOnTime, width=0.2, label="Без опозданий")
+            plt.bar(x + 0.2, valuesCansel, width=0.2, label="С предупреждением")
+        else:
+            # если нужно сделать график
+            plt.plot(x, errorLog, color="red", label="С ошибкой")
+            # plt.plot(x, valuesDelay, color="yellow", label="С задержкой")
+            plt.plot(x, warningLog, color="yellow", label="С предупреждением")
+
+        # Поворачиваем подписи осей
+        plt.xticks(x, names, rotation=89)
+        # устанавливаем легенду
+        plt.legend(loc='best')
+        plt.tight_layout()  # Автоматически регулирует размеры для избегания перекрытий
+
+        # если надо сохранить
+        if (needSave):
+            # создаем папку с указанием текущей даты и времени
+            folderName = datetime.now()
+            folderName = folderName.strftime("%d") + "." + folderName.strftime("%m") + "." + folderName.strftime(
+                "%Y") + "_" + folderName.strftime("%H") + "-" + folderName.strftime("%M")
+            if (isHist):
+                if (not os.path.exists("code/reports/logHistReport")):
+                    # создаем папку для графиков
+                    os.mkdir("code/reports/logHistReport")
+                # в названии папки указываем дату
+                os.mkdir(f"code/reports/logHistReport/report_{folderName}")
+                # сохранение графика в виде изображения
+                plt.savefig(f"code/reports/logHistReport/report_{folderName}/hist.jpg")
+            else:
+                if (not os.path.exists("code/reports/logGraphReport")):
+                    # создаем папку для графиков
+                    os.mkdir("code/reports/logGraphReport")
+                # в названии папки указываем дату
+                os.mkdir(f"code/reports/logGraphReport/report_{folderName}")
+                plt.savefig(f"code/reports/logGraphReport/report_{folderName}/graph.jpg")
+            showinfo(title="Соханение графика", message="График успешно сохранен!")
+        # показываем график
+        plt.show()
+    except Exception as e:
+        showinfo(title="Соханение графика", message="Возникла неожиданная ошибка при создании графика!")

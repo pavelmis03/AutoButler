@@ -580,7 +580,19 @@ def createOperatorReportsForm(db, root, usrData):
     # сформировать отчет
     clickFunc = lambda: createReport(db, components, usrData["name"])
     btnCreateReport = Button(lfManageField, font=consts.FNTBTN, text="Сформировать отчет", command=clickFunc, padx=15, pady=10)
-    btnCreateReport.grid(row=4, column=3, columnspan=2, rowspan=2, padx=0, pady=[10, 0], sticky=W)
+    btnCreateReport.grid(row=0, column=5, columnspan=2, rowspan=2, padx=0, pady=[10, 0], sticky=W)
+
+    # переменная для отслеживания изменения чекбокса ,,сохранить график,,
+    cbtnSaveGraphVar = IntVar()
+
+    # сохранить график
+    cbtnSaveGraph = Checkbutton(lfManageField, font=consts.FNTBTN, text="Сохранить график", variable=cbtnSaveGraphVar, padx=15, pady=10)
+    cbtnSaveGraph.grid(row=4, column=5, columnspan=2, rowspan=2, padx=0, pady=[0, 0], sticky=W)
+
+    # сформировать гистограмму
+    clickFunc = lambda: createGraph(db, components, cbtnSaveGraphVar.get(), True)
+    btnCreateHist = Button(lfManageField, font=consts.FNTBTN, text="Ценовая гистограмма", command=clickFunc, padx=15, pady=10)
+    btnCreateHist.grid(row=2, column=5, columnspan=2, rowspan=2, padx=0, pady=[10, 0], sticky=W)
 
     lfManageField.pack(fill=BOTH, padx=10, pady=5, ipadx=10, ipady=10)
 

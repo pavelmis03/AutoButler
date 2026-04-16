@@ -386,56 +386,63 @@ def createGraph(db, components, needSave, isHist=False):
         # прибавляем по n дней за раз
         dtStart += timedelta(days=daysStep)
 
-    # настройка шрифта
-    plt.rcParams.update({"font.size": 10})
-    # настраиваем размеры окна
-    plt.figure(figsize=(10, 5))
-    # настраиваем заголовок графика
-    plt.title("Список полетов")
-    # настраиваем заголовки осей
-    plt.xlabel("Дата вылета")
-    plt.ylabel("Количество рейсов")
+    try:
+        # настройка шрифта
+        plt.rcParams.update({"font.size": 10})
+        # настраиваем размеры окна
+        plt.figure(figsize=(10, 5))
+        # настраиваем заголовок графика
+        plt.title("Список полетов")
+        # настраиваем заголовки осей
+        plt.xlabel("Дата вылета")
+        plt.ylabel("Количество рейсов")
 
-    # метки на оси Х, которые будут подписаны, как даты
-    x = np.arange(len(names))
+        # метки на оси Х, которые будут подписаны, как даты
+        x = np.arange(len(names))
 
-    # если нужно сделать гистограмму
-    if (isHist):
-        plt.bar(x - 0.2, valuesDelay, width=0.2, label="С задержкой")
-        plt.bar(x, valuesOnTime, width=0.2, label="Без опозданий")
-        plt.bar(x + 0.2, valuesCansel, width=0.2, label="Отмененные")
-    else:
-        # если нужно сделать график
-        plt.plot(x, valuesOnTime, color="green", label="Без опозданий")
-        plt.plot(x, valuesDelay, color="yellow", label="С задержкой")
-        plt.plot(x, valuesCansel, color="red", label="Отмененные")
-
-    # Поворачиваем подписи осей
-    plt.xticks(x, names, rotation=89)
-    # устанавливаем легенду
-    plt.legend(loc='best')
-    plt.tight_layout()  # Автоматически регулирует размеры для избегания перекрытий
-
-    # если надо сохранить
-    if (needSave.get()):
-        if (not os.path.exists("code/reports/flightsGraphReport")):
-            # создаем папку для графиков
-            os.mkdir("code/reports/flightsGraphReport")
-        # создаем папку с указанием текущей даты и времени
-        folderName = datetime.now()
-        folderName = folderName.strftime("%d") + "." + folderName.strftime("%m") + "." + folderName.strftime(
-            "%Y") + "_" + folderName.strftime("%H") + "-" + folderName.strftime("%M")
-        # в названии папки указываем дату
-        os.mkdir(f"code/reports/flightsGraphReport/report_{folderName}")
+        # если нужно сделать гистограмму
         if (isHist):
-            # сохранение графика в виде изображения
-            plt.savefig(f"code/reports/flightsGraphReport/report_{folderName}/hist.jpg")
+            plt.bar(x - 0.2, valuesDelay, width=0.2, label="С задержкой")
+            plt.bar(x, valuesOnTime, width=0.2, label="Без опозданий")
+            plt.bar(x + 0.2, valuesCansel, width=0.2, label="Отмененные")
         else:
-            plt.savefig(f"code/reports/flightsGraphReport/report_{folderName}/graph.jpg")
-        showinfo(title="Соханение графика", message="График успешно сохранен!")
+            # если нужно сделать график
+            plt.plot(x, valuesOnTime, color="green", label="Без опозданий")
+            plt.plot(x, valuesDelay, color="yellow", label="С задержкой")
+            plt.plot(x, valuesCansel, color="red", label="Отмененные")
 
-    # показываем график
-    plt.show()
+        # Поворачиваем подписи осей
+        plt.xticks(x, names, rotation=89)
+        # устанавливаем легенду
+        plt.legend(loc='best')
+        plt.tight_layout()  # Автоматически регулирует размеры для избегания перекрытий
+
+        # если надо сохранить
+        if (needSave):
+            # создаем папку с указанием текущей даты и времени
+            folderName = datetime.now()
+            folderName = folderName.strftime("%d") + "." + folderName.strftime("%m") + "." + folderName.strftime(
+                "%Y") + "_" + folderName.strftime("%H") + "-" + folderName.strftime("%M")
+            if (isHist):
+                if (not os.path.exists("code/reports/flightsHistReport")):
+                    # создаем папку для графиков
+                    os.mkdir("code/reports/flightsHistReport")
+                # в названии папки указываем дату
+                os.mkdir(f"code/reports/flightsHistReport/report_{folderName}")
+                # сохранение графика в виде изображения
+                plt.savefig(f"code/reports/flightsHistReport/report_{folderName}/hist.jpg")
+            else:
+                if (not os.path.exists("code/reports/flightsGraphReport")):
+                    # создаем папку для графиков
+                    os.mkdir("code/reports/flightsGraphReport")
+                # в названии папки указываем дату
+                os.mkdir(f"code/reports/flightsGraphReport/report_{folderName}")
+                plt.savefig(f"code/reports/flightsGraphReport/report_{folderName}/graph.jpg")
+            showinfo(title="Соханение графика", message="График успешно сохранен!")
+        # показываем график
+        plt.show()
+    except Exception as e:
+        showinfo(title="Соханение графика", message="Возникла неожиданная ошибка при создании графика!")
 
 # функция сброса настроек формирования графика и отчета
 def resetSettings(dateFrom, dateUntil, timeFrom, timeUntil, workModeDep, workModeArr, cbxArr):
@@ -776,5 +783,4 @@ def findFlight(flyList, flyNum):
             # выделяем нужную строку
             flyList.selection_add(k)
             return
-    showwarning(title="Поиск рейса",
-                message="Указанный рейс не найден!")
+    showwarning(title="Поиск рейса", message="Указанный рейс не найден!")

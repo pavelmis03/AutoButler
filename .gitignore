@@ -15,6 +15,10 @@ code/reports/flightsMainReport/
 code/reports/flightsMainReport/*
 code/reports/flightsGraphReport/*
 code/reports/flightsGraphReport/
+code/reports/flightsHistReport/*
+code/reports/flightsHistReport/
+code/reports/reservesHistReport/*
+code/reports/reservesHistReport/
 
 # Distribution / packaging
 .Python

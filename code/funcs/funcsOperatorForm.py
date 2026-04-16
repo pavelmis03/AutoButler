@@ -109,7 +109,7 @@ def filterData(df, key, filter, componentsVal):
                 # пробегаемся по всем фильтрам
                 for j in range(len(filter)):
                     # проверяем что пассажир с выбранного рейса и гостиницы соответствуют выбранной
-                    if not ((row[key[j]] == filter[j]) or (filter[j] == "Все гостиницы")):
+                    if ((len(key) != 0) and not ((row[key[j]] == filter[j]) or (filter[j] == "Все гостиницы"))):
                         flag = False
                 if (flag):
                     fData.append(row)
@@ -912,3 +912,125 @@ def createReport(db, components, role):
 
     showinfo(title="Создание отчета", message="Отчет успешно сформирован!")
 
+# создаем граф по опоздавшим, отмененным и вылетевшим рейсам
+def createGraph(db, components, needSave, isHist=False):
+    # загружаем список заявок для построения таблицы
+    df = loadOrdersList(db)
+
+    # получаем значения по ссылкам на компоненты и меняем дату и время, если они имеют значения по умолчанию
+    componentsVal = processComponents(components, 2)
+    # отфильтрованные значения
+    # fData = filterData(df, componentsVal)
+    # разбираю по переменным ссылки на объекты
+    dateFrom, dateUntil, timeFrom, timeUntil, hotel = componentsVal
+
+    # деления
+    names = []
+    # значения в этих делениях
+    # заявки
+    reserves = []
+    # с опозданием
+    # valuesDelay = []
+
+    # начало и конец рассматриваемого промежутка
+    # dtStart = datetime.strptime(dateFrom, "%Y-%m-%d")
+    # dtEnd = datetime.strptime(dateUntil, "%Y-%m-%d")
+    # считаем, сколько дней в промежутке
+    # delta = dtEnd - dtStart
+    # daysStep = abs(round(delta.days / 30))
+
+    """
+    while (dtStart < dtEnd):
+        # добавляем дату - подпись метки на оси X
+        names.append(str(dtStart).split()[0])
+
+        # конец очередного временного промежутка
+        dtTmpEnd = dtStart + timedelta(days=daysStep)
+
+        # настраиваем дату от
+        componentsVal[0] = str(dtStart).split()[0]
+        # настраиваем дату до
+        componentsVal[1] = str(dtTmpEnd).split()[0]
+        # настраиваем status рейсов
+        # componentsVal[7] = "Прибыл по расписанию"
+        tData = filterData(df, [], [0], componentsVal)
+        # количество рейсов, прибывших вовремя
+        reserves.append(len(tData))
+
+        # настраиваем status рейсов
+        # componentsVal[7] = "Прибыл с задержкой"
+        # tData = filterData(df, componentsVal)
+        # количество рейсов с задержкой
+        # valuesDelay.append(len(tData))
+
+        # прибавляем по n дней за раз
+        dtStart += timedelta(days=daysStep)
+    """
+    # получаем отфильтрованные данные
+    tData = filterData(df, [], [0], componentsVal)
+    for row in tData:
+        s = row["hotel"]
+        # если название слишком длинное, сокращаем его
+        if (len(s) > 15):
+            s = s[:16] + "..."
+        # добавляем номер заявки - подпись метки на оси X
+        names.append(s)
+        reserves.append(row["roomCost"])
+
+    try:
+        # настройка шрифта
+        plt.rcParams.update({"font.size": 10})
+        # настраиваем размеры окна
+        plt.figure(figsize=(10, 6))
+        # настраиваем заголовок графика
+        plt.title("Распределение цен по заявкам")
+        # настраиваем заголовки осей
+        plt.xlabel("ID заявки")
+        plt.ylabel("Стоимость номера")
+
+        # метки на оси Х, которые будут подписаны, как даты
+        x = np.arange(len(names))
+
+        # если нужно сделать гистограмму
+        if (isHist):
+            # plt.bar(x - 0.2, valuesDelay, width=0.2, label="С задержкой")
+            plt.bar(x, reserves, width=0.4, label="Стоимость номера")
+        else:
+            # если нужно сделать график
+            # plt.plot(x, valuesOnTime, color="green", label="Без опозданий")
+            # plt.plot(x, valuesDelay, color="yellow", label="С задержкой")
+            # plt.plot(x, valuesCansel, color="red", label="Отмененные")
+            pass
+
+        # Поворачиваем подписи осей
+        plt.xticks(x, names, rotation=89)
+        # устанавливаем легенду
+        plt.legend(loc='best')
+        plt.tight_layout()  # Автоматически регулирует размеры для избегания перекрытий
+
+        # если надо сохранить
+        if (needSave):
+            # создаем папку с указанием текущей даты и времени
+            folderName = datetime.now()
+            folderName = folderName.strftime("%d") + "." + folderName.strftime("%m") + "." + folderName.strftime(
+                "%Y") + "_" + folderName.strftime("%H") + "-" + folderName.strftime("%M")
+            if (isHist):
+                if (not os.path.exists("code/reports/reservesHistReport")):
+                    # создаем папку для графиков
+                    os.mkdir("code/reports/reservesHistReport")
+                # в названии папки указываем дату
+                os.mkdir(f"code/reports/reservesHistReport/report_{folderName}")
+                # сохранение графика в виде изображения
+                plt.savefig(f"code/reports/reservesHistReport/report_{folderName}/hist.jpg")
+            else:
+                if (not os.path.exists("code/reports/reservesGraphReport")):
+                    # создаем папку для графиков
+                    os.mkdir("code/reports/reservesGraphReport")
+                # в названии папки указываем дату
+                os.mkdir(f"code/reports/reservesGraphReport/report_{folderName}")
+                plt.savefig(f"code/reports/reservesGraphReport/report_{folderName}/graph.jpg")
+            showinfo(title="Соханение графика", message="График успешно сохранен!")
+        # показываем график
+        plt.show()
+    except Exception as e:
+        showinfo(title="Соханение графика", message="Возникла неожиданная ошибка при создании графика!")
