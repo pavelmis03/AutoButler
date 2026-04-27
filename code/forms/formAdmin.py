@@ -4,6 +4,8 @@ from tkinter import *
 from tkinter import ttk
 # шрифты
 from tkinter import font
+# прокручиваемый текст
+from tkinter.scrolledtext import ScrolledText
 # сообщения
 from tkinter.messagebox import showerror, showwarning, showinfo
 # бибиблиотека для работы с ini файлами
@@ -18,6 +20,9 @@ import shutil
 
 # библиотека для работы с изображениями
 from PIL import ImageTk, Image  # pip install pillow
+
+# дата и время
+from datetime import datetime, timedelta
 
 # подключаем файл с функциями обработки данных, получаемых от форм
 import funcs.funcsAuth as fAuth
@@ -123,7 +128,7 @@ def createAndminUserManageForm(db, root, usrData):
     # устанавливаем позицию компонента в сетке
     lblComm.grid(row=4, column=1, padx=15, pady=10, sticky=W)
     # текстовое поле для комментария
-    tbComm = Text(frAddUser, width=25, height=5, wrap="word")
+    tbComm = ScrolledText(frAddUser, width=25, height=5, wrap="word")
     tbComm.grid(row=5, column=1, rowspan=3, padx=15, pady=[0, 10], sticky=W)
     # скроллбары для текстбокса, привязываем их к виду в текстбоксе
     # ys = ttk.Scrollbar(orient="vertical", command=tbComm.yview)
@@ -272,13 +277,20 @@ def createAndminSystemManageForm(db, root, usrData):
     scrlV.pack(side=RIGHT, fill=Y)
     scrlH = ttk.Scrollbar(lFRegList, orient="horizontal", command=logList.xview)
     scrlH.pack(side=BOTTOM, fill=X)
+
     # привязка полос прокрутки к таблице
     logList["yscrollcommand"] = scrlV.set
     logList["xscrollcommand"] = scrlH.set
 
+    # добавляем, растягивая по ширине элементы и заполняя контэйнер
+    logList.pack(fill=BOTH, expand=1, padx=5, pady=[5, 10])
+
+    # определяем заголовки для столбцов
+    i = 1
     # очищаем таблицу перед наполнением
-    for col in logList['columns']:
-        logList.heading(col, text='')
+    for col in logList["columns"]:
+        logList.heading(col, text="")
+        i += 1
     logList.delete(*logList.get_children())
 
     # список колонок будущей таблицы
@@ -288,16 +300,17 @@ def createAndminSystemManageForm(db, root, usrData):
     # определяем заголовки для столбцов
     i = 1
     for col in cols:
-        logList.heading(col, text=col, anchor=CENTER)
+        logList.heading(col, text=col, anchor=CENTER,
+                        # здесь создаю замыкание, чтобы i передавалась, как значение, а не как ссылка
+                        # настройка сортировки по столбцам
+                        command=(lambda tree, i, f: (lambda: columnSort(tree, i, f)))(logList, i - 1, False))
         # выравнивание по центру для данных в ячейках
         logList.column(f"#{i}", width=len(col) * 7, minwidth=40, anchor=CENTER, stretch=True)
         i += 1
 
     # наполняем таблицу данными
-    insertDataToTable(db, logList)
+    insertDataToTable(db, logList, [], 6)
 
-    # добавляем, растягивая по ширине элементы и заполняя контэйнер
-    logList.pack(fill=BOTH, expand=1, padx=5, pady=[5, 10])
     # добавляем таблицу на форму
     lFRegList.pack(anchor=NW, fill=BOTH, expand=True, padx=10, pady=10)
 
@@ -307,62 +320,122 @@ def createAndminSystemManageForm(db, root, usrData):
     frManageBtns = LabelFrame(frMain, font=consts.FNTLBLH2, text="Рабочие окна", borderwidth=1, relief=SOLID)
 
     # сетка компонентов 6x5
-    createGrid(frManageBtns, 15, 5, 1, 1)
+    createGrid(frManageBtns, 15, 8, 1, 1)
+    # массив компонентов управления данными
+    components = []
+
+    # удалить запись
+    clickFunc = lambda: delRecord(db, logList, components)
+    btnDelRecord = Button(frManageBtns, font=consts.FNTBTN, text="Удалить запись", command=clickFunc, padx=12, pady=10)
+    btnDelRecord.grid(row=0, column=0, columnspan=2, rowspan=2, padx=15, pady=[10, 0], ipadx=20, sticky=W)
 
     # очистить журнал
     clickFunc = lambda: clearLogList(db, logList)
-    btnCleareLogList = Button(frManageBtns, font=consts.FNTBTN, text="Очистить журнал", command=clickFunc, padx=20, pady=10)
-    btnCleareLogList.grid(row=0, column=0, columnspan=2, padx=10, pady=[10, 10], ipadx=10)
+    btnCleareLogList = Button(frManageBtns, font=consts.FNTBTN, text="Очистить журнал", command=clickFunc, padx=18, pady=10)
+    btnCleareLogList.grid(row=2, column=0, columnspan=2, rowspan=2, padx=15, pady=[10, 0], ipadx=9, sticky=W)
 
-    # удалить запись
-    clickFunc = lambda: delRecord(db, logList)
-    btnDelRecord = Button(frManageBtns, font=consts.FNTBTN, text="Удалить запись", command=clickFunc, padx=10, pady=10)
-    btnDelRecord.grid(row=0, column=2, columnspan=2, padx=10, pady=[10, 10], ipadx=20)
-
-    # дата от
-    lblDateFrom = Label(frManageBtns, font=consts.FNTLBLS, text="Дата от:")
-    lblDateFrom.grid(row=1, column=2, columnspan=2, padx=10, pady=[0, 0], sticky=W)
-
-    # текстовое поле дата ОТ
-    etrDateFrom = Entry(frManageBtns, font=consts.FNTLBLS)
-    # значение по умолчанию для поля ввода
-    etrDateFrom.insert(0, "YYYY-MM-DD")
-    etrDateFrom.grid(row=2, column=2, columnspan=1, padx=20, pady=[0, 10], sticky=W)
-
-    # дата до
-    lblDateUntil = Label(frManageBtns, font=consts.FNTLBLS, text="Дата до:")
-    lblDateUntil.grid(row=3, column=2, columnspan=2, padx=10, pady=[0, 10], sticky=W)
-
-    # текстовое поле дата ДО
-    etrDateUntil = Entry(frManageBtns, font=consts.FNTLBLS)
-    # значение по умолчанию для поля ввода
-    etrDateUntil.insert(0, "YYYY-MM-DD")
-    etrDateUntil.grid(row=4, column=2, columnspan=1, padx=20, pady=[0, 10], sticky=W)
-
-    # время от
-    lblTimeFrom = Label(frManageBtns, font=consts.FNTLBLS, text="Время от:")
-    lblTimeFrom.grid(row=1, column=3, columnspan=2, padx=10, pady=[0, 0], sticky=W)
-
-    # текстовое поле время ОТ
-    etrTimeFrom = Entry(frManageBtns, font=consts.FNTLBLS)
-    # значение по умолчанию для поля ввода
-    etrTimeFrom.insert(0, "00:01")
-    etrTimeFrom.grid(row=2, column=3, columnspan=2, padx=10, pady=[0, 10], sticky=W)
-
-    # время до
-    lblTimeUntil = Label(frManageBtns, font=consts.FNTLBLS, text="Время до:")
-    lblTimeUntil.grid(row=3, column=3, columnspan=2, padx=10, pady=[0, 10], sticky=W)
-
-    # текстовое поле время ДО
-    etrTimeUntil = Entry(frManageBtns, font=consts.FNTLBLS)
-    # значение по умолчанию для поля ввода
-    etrTimeUntil.insert(0, "23:59")
-    etrTimeUntil.grid(row=4, column=3, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+    # сформировать график
+    clickFunc = lambda: createGraph(db, components, True)
+    btnCreateHist = Button(frManageBtns, font=consts.FNTBTN, text="Сформировать график", command=clickFunc, padx=0, pady=10)
+    btnCreateHist.grid(row=4, column=0, columnspan=2, rowspan=2, padx=15, pady=[10, 0], ipadx=3, sticky=W)
 
     # сформировать отчет
     clickFunc = lambda: createReport(db, etrDateFrom.get(), etrDateUntil.get(), etrTimeFrom.get(), etrTimeUntil.get())
     btnCreateReport = Button(frManageBtns, font=consts.FNTBTN, text="Сформировать отчет", command=clickFunc, padx=10, pady=10)
-    btnCreateReport.grid(row=1, column=0, columnspan=2, rowspan=2, padx=15, pady=[35, 10])
+    btnCreateReport.grid(row=6, column=0, columnspan=2, rowspan=2, pady=[10, 10], padx=15, sticky=W)
+
+    # дата от
+    lblDateFrom = Label(frManageBtns, font=consts.FNTLBLS, text="Дата от:")
+    lblDateFrom.grid(row=0, column=2, columnspan=2, padx=10, pady=[0, 0], sticky=W)
+
+    # переменная для отслеживания изменения поля ввода
+    etrDateFromVar = StringVar()
+    etrDateFromVar.trace("w", lambda a, b, c: insertDataToTable(db, logList, components, 6))
+    # текстовое поле дата ОТ
+    etrDateFrom = Entry(frManageBtns, font=consts.FNTLBLS, textvariable=etrDateFromVar)
+    # значение по умолчанию для поля ввода
+    etrDateFrom.insert(0, "2000-01-01")
+    etrDateFrom.grid(row=1, column=2, columnspan=1, padx=10, pady=[0, 10], sticky=W)
+    # добавляем в массив компонентов текущий элемент
+    components.append(etrDateFrom)
+
+    # дата до
+    lblDateUntil = Label(frManageBtns, font=consts.FNTLBLS, text="Дата до:")
+    lblDateUntil.grid(row=2, column=2, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+
+    # переменная для отслеживания изменения поля ввода
+    etrDateUntilVar = StringVar()
+    etrDateUntilVar.trace("w", lambda a, b, c: insertDataToTable(db, logList, components, 6))
+    # текстовое поле дата ДО
+    etrDateUntil = Entry(frManageBtns, font=consts.FNTLBLS, textvariable=etrDateUntilVar)
+    # значение по умолчанию для поля ввода
+    etrDateUntil.insert(0, str(datetime.now().date()))
+    etrDateUntil.grid(row=3, column=2, columnspan=1, padx=10, pady=[0, 0], sticky=W)
+    # добавляем в массив компонентов текущий элемент
+    components.append(etrDateUntil)
+
+    # время от
+    lblTimeFrom = Label(frManageBtns, font=consts.FNTLBLS, text="Время от:")
+    lblTimeFrom.grid(row=0, column=3, columnspan=2, padx=10, pady=[0, 0], sticky=W)
+
+    # переменная для отслеживания изменения поля ввода
+    etrTimeFromVar = StringVar()
+    etrTimeFromVar.trace("w", lambda a, b, c: insertDataToTable(db, logList, components, 6))
+    # текстовое поле время ОТ
+    etrTimeFrom = Entry(frManageBtns, font=consts.FNTLBLS, textvariable=etrTimeFromVar)
+    # значение по умолчанию для поля ввода
+    etrTimeFrom.insert(0, "00:00")
+    etrTimeFrom.grid(row=1, column=3, columnspan=1, padx=10, pady=[0, 0], sticky=W)
+    # добавляем в массив компонентов текущий элемент
+    components.append(etrTimeFrom)
+
+    # время до
+    lblTimeUntil = Label(frManageBtns, font=consts.FNTLBLS, text="Время до:", padx=0, pady=0)
+    lblTimeUntil.grid(row=2, column=3, columnspan=2, padx=10, pady=[0, 0], sticky=W)
+
+    # переменная для отслеживания изменения поля ввода
+    etrTimeUntilVar = StringVar()
+    etrTimeUntilVar.trace("w", lambda a, b, c: insertDataToTable(db, logList, components, 6))
+    # текстовое поле время ДО
+    etrTimeUntil = Entry(frManageBtns, font=consts.FNTLBLS, textvariable=etrTimeUntilVar)
+    # значение по умолчанию для поля ввода
+    etrTimeUntil.insert(0, "23:59")
+    etrTimeUntil.grid(row=3, column=3, columnspan=1, padx=10, pady=[0, 0], sticky=W)
+    # добавляем в массив компонентов текущий элемент
+    components.append(etrTimeUntil)
+
+    # типы действия
+    lblActType = Label(frManageBtns, font=consts.FNTLBLS, text="Тип лога: ", padx=0, pady=0)
+    lblActType.grid(row=4, column=3, columnspan=2, padx=10, pady=[0, 0], sticky=W)
+
+    # переменная для отслеживания изменения поля ввода
+    cbxActTypeVar = StringVar()
+    cbxActTypeVar.trace("w", lambda a, b, c: insertDataToTable(db, logList, components, 6))
+    # выпадающий список типов действий
+    cbxActType = ttk.Combobox(frManageBtns, values=["Не указан", "error", "warning", "trace", "alert", "debug", "info", "more"], state="readonly",
+                             textvar=cbxActTypeVar)
+    # устанавливаем значение по умолчанию
+    cbxActType.current(0)
+    # устанавливаем позицию компонента в сетке
+    cbxActType.grid(row=5, column=3, padx=10, pady=[0, 0], sticky=W)
+    # добавляем в массив компонентов текущий элемент
+    components.append(cbxActType)
+
+    # статус лога
+    lblStatus = Label(frManageBtns, font=consts.FNTLBLS, text="Статус лога:", padx=0, pady=0)
+    lblStatus.grid(row=4, column=2, columnspan=2, padx=10, pady=[0, 0], sticky=W)
+    # переменная для отслеживания изменения поля ввода
+    cbxStatusVar = StringVar()
+    cbxStatusVar.trace("w", lambda a, b, c: insertDataToTable(db, logList, components, 6))
+    # выпадающий список статусов
+    cbxStatus = ttk.Combobox(frManageBtns, values=["Не указан", "relevant", "irrelevant", "timeout"], state="readonly",
+                             textvar=cbxStatusVar)
+    # устанавливаем значение по умолчанию
+    cbxStatus.current(0)
+    # устанавливаем позицию компонента в сетке
+    cbxStatus.grid(row=5, column=2, padx=10, pady=[0, 0], sticky=W)
+    # добавляем в массив компонентов текущий элемент
+    components.append(cbxStatus)
 
     frManageBtns.pack(fill=BOTH, padx=10, pady=5, ipadx=3)
 
@@ -397,7 +470,7 @@ def createAdminMainForm(db, root, usrData):
     lblMain.pack(pady=30)
 
     # создаем рамку для кнопок
-    frBtns = LabelFrame(frMain, font=consts.FNTLBLH2, text="Управление", borderwidth=1, relief=SOLID)
+    frBtns = LabelFrame(frMain, font=consts.FNTLBLH2, text="Рабочие окна", borderwidth=1, relief=SOLID)
 
     # сетка компонентов 3x3
     createGrid(frBtns, 3, 9, 1, 1)

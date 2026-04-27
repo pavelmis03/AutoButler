@@ -21,6 +21,9 @@ import shutil
 # библиотека для работы с изображениями
 from PIL import ImageTk, Image  # pip install pillow
 
+# дата и время
+from datetime import datetime, timedelta
+
 # подключаем файл с функциями обработки данных, получаемых от форм
 import funcs.funcsAuth as fAuth
 # подключаем файл с функциями обработки данных, получаемых от форм админа
@@ -68,8 +71,8 @@ def createAnalystFlightsForm(db, root, usrData):
     flyList["xscrollcommand"] = scrlH.set
 
     # очищаем таблицу перед наполнением
-    for col in flyList['columns']:
-        flyList.heading(col, text='')
+    for col in flyList["columns"]:
+        flyList.heading(col, text="")
     flyList.delete(*flyList.get_children())
 
     # список колонок будущей таблицы
@@ -79,13 +82,15 @@ def createAnalystFlightsForm(db, root, usrData):
     # определяем заголовки для столбцов
     i = 1
     for col in cols:
-        flyList.heading(col, text=col, anchor=CENTER)
+        flyList.heading(col, text=col, anchor=CENTER,
+        # здесь создаю замыкание, чтобы i передавалась, как значение, а не как ссылка
+        command = (lambda tree, i, f: (lambda: columnSort(tree, i, f)))(flyList, i - 1, False))
         # выравнивание по центру для данных в ячейках
         flyList.column(f"#{i}", width=len(col) * 7, minwidth=40, anchor=CENTER, stretch=True)
         i += 1
 
     # наполняем таблицу данными
-    insertDataToTable(db, flyList, [])
+    insertDataToTable(db, flyList, [], 10)
 
     # добавляем, растягивая по ширине элементы и заполняя контейнер
     flyList.pack(fill=BOTH, expand=1, padx=5, pady=[10, 10])
@@ -111,11 +116,11 @@ def createAnalystFlightsForm(db, root, usrData):
 
     # переменная для отслеживания изменения поля ввода
     etrDateFromVar = StringVar()
-    etrDateFromVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components))
+    etrDateFromVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components, 10))
     # текстовое поле дата ОТ
     etrDateFrom = Entry(frManageBtns, font=consts.FNTLBLS, textvariable=etrDateFromVar)
     # значение по умолчанию для поля ввода
-    etrDateFrom.insert(0, "YYYY-MM-DD")
+    etrDateFrom.insert(0, "2000-01-01")
     etrDateFrom.grid(row=1, column=0, columnspan=1, padx=10, pady=[0, 0], sticky=W)
     # добавляем в массив компонентов текущий элемент
     components.append(etrDateFrom)
@@ -126,11 +131,11 @@ def createAnalystFlightsForm(db, root, usrData):
 
     # переменная для отслеживания изменения поля ввода
     etrDateUntilVar = StringVar()
-    etrDateUntilVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components))
+    etrDateUntilVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components, 10))
     # текстовое поле дата ДО
     etrDateUntil = Entry(frManageBtns, font=consts.FNTLBLS, textvariable=etrDateUntilVar)
     # значение по умолчанию для поля ввода
-    etrDateUntil.insert(0, "YYYY-MM-DD")
+    etrDateUntil.insert(0, str(datetime.now().date()))
     etrDateUntil.grid(row=3, column=0, columnspan=1, padx=10, pady=[0, 0], sticky=W)
     # добавляем в массив компонентов текущий элемент
     components.append(etrDateUntil)
@@ -141,11 +146,11 @@ def createAnalystFlightsForm(db, root, usrData):
 
     # переменная для отслеживания изменения поля ввода
     etrTimeFromVar = StringVar()
-    etrTimeFromVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components))
+    etrTimeFromVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components, 10))
     # текстовое поле время ОТ
     etrTimeFrom = Entry(frManageBtns, font=consts.FNTLBLS, textvariable=etrTimeFromVar)
     # значение по умолчанию для поля ввода
-    etrTimeFrom.insert(0, "00:01")
+    etrTimeFrom.insert(0, "00:00")
     etrTimeFrom.grid(row=1, column=2, columnspan=1, padx=0, pady=[0, 0], sticky=W)
     # добавляем в массив компонентов текущий элемент
     components.append(etrTimeFrom)
@@ -156,7 +161,7 @@ def createAnalystFlightsForm(db, root, usrData):
 
     # переменная для отслеживания изменения поля ввода
     etrTimeUntilVar = StringVar()
-    etrTimeUntilVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components))
+    etrTimeUntilVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components, 10))
     # текстовое поле время ДО
     etrTimeUntil = Entry(frManageBtns, font=consts.FNTLBLS, textvariable=etrTimeUntilVar)
     # значение по умолчанию для поля ввода
@@ -176,7 +181,7 @@ def createAnalystFlightsForm(db, root, usrData):
     # добавляем в массив компонентов текущий элемент
     components.append(workModeDep)
     # изменение поиска все, опоздавшие, вылетевшие по расписанию
-    clickFunc = lambda: insertDataToTable(db, flyList, components)
+    clickFunc = lambda: insertDataToTable(db, flyList, components, 10)
     # кнопка для выбора всех вариантов вылетов
     radioAllDep = Radiobutton(frManageBtns, font=consts.FNTBTNMINI, text="Все варианты", command=clickFunc, padx=5,
                               pady=0, value="allDep", variable=workModeDep)
@@ -199,7 +204,7 @@ def createAnalystFlightsForm(db, root, usrData):
     # добавляем в массив компонентов текущий элемент
     components.append(workModeArr)
     # изменение поиска все, опоздавшие, вылетевшие по расписанию
-    clickFunc = lambda: insertDataToTable(db, flyList, components)
+    clickFunc = lambda: insertDataToTable(db, flyList, components, 10)
     # кнопка для выбора всех вариантов вылетов
     radioAllArr = Radiobutton(frManageBtns, font=consts.FNTBTNMINI, text="Все варианты", command=clickFunc, padx=5,
                               pady=0, value="allArr", variable=workModeArr)
@@ -222,7 +227,7 @@ def createAnalystFlightsForm(db, root, usrData):
 
     # переменная для отслеживания изменения поля ввода
     cbxCompanyVar = StringVar()
-    cbxCompanyVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components))
+    cbxCompanyVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components, 10))
     # получаем список авиакомпаний
     companyList = getCompany(db)
     # выпадающий список компаний
@@ -240,9 +245,10 @@ def createAnalystFlightsForm(db, root, usrData):
 
     # переменная для отслеживания изменения поля ввода
     cbxStatusVar = StringVar()
-    cbxStatusVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components))
+    cbxStatusVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components, 10))
     # выпадающий список статусов
     cbxStatus = ttk.Combobox(frManageBtns, values=["Все варианты", "Отменен", "Открыта регистрация", "Открыта посадка",
+                                                   "Ожидает вылета", "В полете",
                                                  "Вылет задерживается", "Регистрация завершена", "Посадка закончена",
                                                  "Вылет состоялся", "Посадка задерживается", "Прибыл по расписанию",
                                                  "Прибыл с задержкой"], state="readonly", textvar=cbxStatusVar)
@@ -262,7 +268,7 @@ def createAnalystFlightsForm(db, root, usrData):
 
     # переменная для отслеживания изменения поля ввода
     cbxAirportDepVar = StringVar()
-    cbxAirportDepVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components))
+    cbxAirportDepVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components, 10))
     # получаем список аэропортов отправления
     airportList = getAirport(db, "dep")
     # выпадающий список аэропортов
@@ -280,7 +286,7 @@ def createAnalystFlightsForm(db, root, usrData):
 
     # переменная для отслеживания изменения поля ввода
     cbxAirportArrVar = StringVar()
-    cbxAirportArrVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components))
+    cbxAirportArrVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components, 10))
     # получаем список аэропортов отправления
     airportList = getAirport(db, "arr")
     # выпадающий список аэропортов
@@ -292,6 +298,11 @@ def createAnalystFlightsForm(db, root, usrData):
     # добавляем в массив компонентов текущий элемент
     components.append(cbxAirportArr)
 
+    # сформировать гистограмму
+    clickFunc = lambda: createGraph(db, components, cbtnSaveGraphVar.get(), True)
+    btnCreateHist = Button(frManageBtns, font=consts.FNTBTN, text="Частотная гистограмма", command=clickFunc, padx=15, pady=10)
+    btnCreateHist.grid(row=4, column=5, columnspan=2, rowspan=2, padx=0, pady=[10, 0])
+
 
         # -------------КНОПКИ управления-------------
 
@@ -301,7 +312,7 @@ def createAnalystFlightsForm(db, root, usrData):
     btnCreateReport.grid(row=0, column=7, columnspan=2, rowspan=2, padx=0, pady=[10, 0])
 
     # сформировать график
-    clickFunc = lambda: createGraph(db, components, cbtnSaveGraphVar)
+    clickFunc = lambda: createGraph(db, components, cbtnSaveGraphVar.get(), False)
     btnCreateGraph = Button(frManageBtns, font=consts.FNTBTN, text="Сформировать график", command=clickFunc, padx=9, pady=10)
     btnCreateGraph.grid(row=2, column=7, columnspan=2, rowspan=2, padx=0, pady=[0, 0])
 
@@ -368,8 +379,8 @@ def createAnalystForecastForm(db, root, usrData):
     flyList["xscrollcommand"] = scrlH.set
 
     # очищаем таблицу перед наполнением
-    for col in flyList['columns']:
-        flyList.heading(col, text='')
+    for col in flyList["columns"]:
+        flyList.heading(col, text="")
     flyList.delete(*flyList.get_children())
 
     # список колонок будущей таблицы
@@ -381,13 +392,15 @@ def createAnalystForecastForm(db, root, usrData):
     # определяем заголовки для столбцов
     i = 1
     for col in cols:
-        flyList.heading(col, text=col, anchor=CENTER)
+        flyList.heading(col, text=col, anchor=CENTER,
+        # здесь создаю замыкание, чтобы i передавалась, как значение, а не как ссылка
+        command = (lambda tree, i, f: (lambda: columnSort(tree, i, f)))(flyList, i - 1, False))
         # выравнивание по центру для данных в ячейках
         flyList.column(f"#{i}", width=len(col) * 7, minwidth=40, anchor=CENTER, stretch=True)
         i += 1
 
     # наполняем таблицу данными
-    insertDataToTable(db, flyList, [])
+    insertDataToTable(db, flyList, [], 4)
 
     # добавляем, растягивая по ширине элементы и заполняя контейнер
     flyList.pack(fill=BOTH, expand=1, padx=5, pady=[10, 10])
@@ -401,23 +414,24 @@ def createAnalystForecastForm(db, root, usrData):
 
     # сетка компонентов 5x10
     createGrid(lfManageField, 5, 10, 1, 1)
+    components = []
 
     # поиск рейсов
-    lblFindFlyght = Label(lfManageField, font=consts.FNTLBLH2, text="Поиск рейсов:")
-    lblFindFlyght.grid(row=0, column=0, columnspan=1, rowspan=1, padx=10, pady=[0, 0], sticky=W)
+    lblFindFlight = Label(lfManageField, font=consts.FNTLBLH2, text="Поиск рейсов:")
+    lblFindFlight.grid(row=0, column=0, columnspan=1, rowspan=1, padx=10, pady=[0, 0], sticky=W)
     # номер рейса
-    lblFlyghtNum = Label(lfManageField, font=consts.FNTLBLH3, text="Введите номер рейса:")
-    lblFlyghtNum.grid(row=1, column=0, columnspan=1, rowspan=1, padx=10, pady=[10, 0], sticky=W)
+    lblFlightNum = Label(lfManageField, font=consts.FNTLBLH3, text="Введите номер рейса:")
+    lblFlightNum.grid(row=1, column=0, columnspan=1, rowspan=1, padx=10, pady=[10, 0], sticky=W)
     # текстовое поле номер рейса
-    etrFlyghtNum = Entry(lfManageField, font=consts.FNTLBLS)
+    etrFlightNum = Entry(lfManageField, font=consts.FNTLBLS)
     # значение по умолчанию для поля ввода
-    etrFlyghtNum.insert(0, "")
-    etrFlyghtNum.grid(row=2, column=0, columnspan=1, padx=10, pady=[0, 0], sticky=W)
+    etrFlightNum.insert(0, "")
+    etrFlightNum.grid(row=2, column=0, columnspan=1, padx=10, pady=[0, 0], sticky=W)
     # найти рейс
-    clickFunc = lambda: findFlyght()
-    btnfindFlyght = Button(lfManageField, font=consts.FNTBTNMINI, text="Найти рейс",
+    clickFunc = lambda: findFlight(flyList, etrFlightNum.get())
+    btnfindFlight = Button(lfManageField, font=consts.FNTBTNMINI, text="Найти рейс",
                                    command=clickFunc, padx=35, pady=5)
-    btnfindFlyght.grid(row=3, column=0, columnspan=1, rowspan=2, padx=10, pady=[10, 10], sticky=W)
+    btnfindFlight.grid(row=3, column=0, columnspan=1, rowspan=2, padx=10, pady=[10, 10], sticky=W)
 
         # -------------управление типом прогноза-------------
     # тип прогноза
@@ -425,15 +439,15 @@ def createAnalystForecastForm(db, root, usrData):
     lblForecastType.grid(row=0, column=1, columnspan=1, rowspan=1, padx=0, pady=[10, 0], sticky=W)
 
     # группа для radioBtns
-    forecastType = StringVar(value="flyghtCansel")
+    forecastType = StringVar(value="FlightCansel")
     # кнопка для выбора прогноза по одному рейсу
-    radioFlyghtCansel = Radiobutton(lfManageField, font=consts.FNTBTNMINI, text="Отмена рейса", padx=5,
-                              pady=0, value="flyghtCansel", variable=forecastType)
-    radioFlyghtCansel.grid(row=1, column=1, rowspan=1, padx=15, pady=[0, 0], sticky=W)
+    radioFlightCansel = Radiobutton(lfManageField, font=consts.FNTBTNMINI, text="Отмена рейса", padx=5,
+                              pady=0, value="FlightCansel", variable=forecastType)
+    radioFlightCansel.grid(row=1, column=1, rowspan=1, padx=15, pady=[0, 0], sticky=W)
     # кнопка для выбора прогноза по всем рейсам за период времени
-    radioAllFlyghtCansel = Radiobutton(lfManageField, font=consts.FNTBTNMINI, text="Количество отменных\nрейсов за период", padx=5,
-                                    pady=0, value="allFlyghtCansel", variable=forecastType)
-    radioAllFlyghtCansel.grid(row=2, column=1, rowspan=2, padx=15, pady=[0, 0], sticky=W)
+    radioAllFlightCansel = Radiobutton(lfManageField, font=consts.FNTBTNMINI, text="Количество отменных\nрейсов за период", padx=5,
+                                    pady=0, value="allFlightCansel", variable=forecastType)
+    radioAllFlightCansel.grid(row=2, column=1, rowspan=2, padx=15, pady=[0, 0], sticky=W)
     # кнопка для выбора прогноза по количеству пассажиров на рейсе
     radioPassengerCount = Radiobutton(lfManageField, font=consts.FNTBTNMINI, text="Количество пассажиров\nс рейса, которым\nпотребуется гостиница", padx=5,
                                     pady=0, value="passengerCount", variable=forecastType)
@@ -452,41 +466,61 @@ def createAnalystForecastForm(db, root, usrData):
     lblDateFrom = Label(lfManageField, font=consts.FNTLBLS, text="Дата от:")
     lblDateFrom.grid(row=1, column=2, columnspan=1, padx=10, pady=[0, 0], sticky=E)
 
+    # переменная для отслеживания изменения поля ввода
+    etrDateFromVar = StringVar()
+    etrDateFromVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components, 4))
     # текстовое поле дата ОТ
-    etrDateFrom = Entry(lfManageField, font=consts.FNTLBLS)
+    etrDateFrom = Entry(lfManageField, font=consts.FNTLBLS, textvariable=etrDateFromVar)
     # значение по умолчанию для поля ввода
-    etrDateFrom.insert(0, "YYYY-MM-DD")
-    etrDateFrom.grid(row=2, column=2, columnspan=1, padx=20, pady=[0, 10], sticky=E)
+    etrDateFrom.insert(0, "2000-01-01")
+    etrDateFrom.grid(row=2, column=2, columnspan=1, padx=10, pady=[0, 0], sticky=E)
+    # добавляем в массив компонентов текущий элемент
+    components.append(etrDateFrom)
 
     # дата до
-    lblDateUntil = Label(lfManageField, font=consts.FNTLBLS, text="Дата до:")
+    lblDateUntil = Label(lfManageField, font=consts.FNTLBLS, text="Дата до:", padx=0, pady=0)
     lblDateUntil.grid(row=3, column=2, columnspan=1, padx=10, pady=[0, 0], sticky=E)
 
+    # переменная для отслеживания изменения поля ввода
+    etrDateUntilVar = StringVar()
+    etrDateUntilVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components, 4))
     # текстовое поле дата ДО
-    etrDateUntil = Entry(lfManageField, font=consts.FNTLBLS)
+    etrDateUntil = Entry(lfManageField, font=consts.FNTLBLS, textvariable=etrDateUntilVar)
     # значение по умолчанию для поля ввода
-    etrDateUntil.insert(0, "YYYY-MM-DD")
-    etrDateUntil.grid(row=4, column=2, columnspan=1, padx=20, pady=[0, 10], sticky=E)
+    etrDateUntil.insert(0, str(datetime.now().date()))
+    etrDateUntil.grid(row=4, column=2, columnspan=1, padx=10, pady=[0, 0], sticky=E)
+    # добавляем в массив компонентов текущий элемент
+    components.append(etrDateUntil)
 
     # время от
-    lblTimeFrom = Label(lfManageField, font=consts.FNTLBLS, text="Время от:")
-    lblTimeFrom.grid(row=1, column=3, columnspan=1, padx=10, pady=[0, 0], sticky=W)
+    lblTimeFrom = Label(lfManageField, font=consts.FNTLBLS, text="Время от:", padx=0, pady=0)
+    lblTimeFrom.grid(row=1, column=3, columnspan=2, padx=0, pady=[10, 0], sticky=W)
 
+    # переменная для отслеживания изменения поля ввода
+    etrTimeFromVar = StringVar()
+    etrTimeFromVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components, 4))
     # текстовое поле время ОТ
-    etrTimeFrom = Entry(lfManageField, font=consts.FNTLBLS)
+    etrTimeFrom = Entry(lfManageField, font=consts.FNTLBLS, textvariable=etrTimeFromVar)
     # значение по умолчанию для поля ввода
-    etrTimeFrom.insert(0, "00:01")
-    etrTimeFrom.grid(row=2, column=3, columnspan=1, padx=10, pady=[0, 10], sticky=W)
+    etrTimeFrom.insert(0, "00:00")
+    etrTimeFrom.grid(row=2, column=3, columnspan=1, padx=0, pady=[0, 0], sticky=W)
+    # добавляем в массив компонентов текущий элемент
+    components.append(etrTimeFrom)
 
     # время до
-    lblTimeUntil = Label(lfManageField, font=consts.FNTLBLS, text="Время до:")
-    lblTimeUntil.grid(row=3, column=3, columnspan=1, padx=10, pady=[0, 0], sticky=W)
+    lblTimeUntil = Label(lfManageField, font=consts.FNTLBLS, text="Время до:", padx=0, pady=0)
+    lblTimeUntil.grid(row=3, column=3, columnspan=2, padx=0, pady=[0, 0], sticky=W)
 
+    # переменная для отслеживания изменения поля ввода
+    etrTimeUntilVar = StringVar()
+    etrTimeUntilVar.trace("w", lambda a, b, c: insertDataToTable(db, flyList, components, 4))
     # текстовое поле время ДО
-    etrTimeUntil = Entry(lfManageField, font=consts.FNTLBLS)
+    etrTimeUntil = Entry(lfManageField, font=consts.FNTLBLS, textvariable=etrTimeUntilVar)
     # значение по умолчанию для поля ввода
     etrTimeUntil.insert(0, "23:59")
-    etrTimeUntil.grid(row=4, column=3, columnspan=2, padx=10, pady=[0, 10], sticky=W)
+    etrTimeUntil.grid(row=4, column=3, columnspan=1, padx=0, pady=[0, 0], sticky=W)
+    # добавляем в массив компонентов текущий элемент
+    components.append(etrTimeUntil)
 
     # добавляем блок на форму
     lfManageField.pack(anchor=NW, fill=BOTH, expand=True, padx=10, pady=[0, 10])
@@ -504,15 +538,19 @@ def createAnalystForecastForm(db, root, usrData):
     # создаем рамку блока общения с нейронкой
     lfCommunicationField = LabelFrame(frMain, font=consts.FNTLBLH2, text="Результат прогнозирования", borderwidth=1, relief=SOLID)
 
-    # сетка компонентов 5x4
-    createGrid(lfCommunicationField, 7, 4, 1, 1)
+    # сетка компонентов 7x5
+    createGrid(lfCommunicationField, 7, 5, 1, 1)
 
     # текстовое поле для отображения переписки с нейронкой
-    tbCommunication = ScrolledText(lfCommunicationField, width=170, height=10, wrap="word", state="disabled")
-    tbCommunication.grid(row=0, column=0, columnspan=5, rowspan=4, padx=10, pady=[10, 10])
+    tbCommunication = ScrolledText(lfCommunicationField, width=170, height=10, wrap="none")
+    tbCommunication.grid(row=0, column=0, columnspan=5, rowspan=4, padx=10, pady=[10, 10], sticky=NSEW)
+    # добавляем скроллбар
+    xs = Scrollbar(lfCommunicationField, orient="horizontal", command=tbCommunication.xview)
+    xs.grid(column=0, row=4, columnspan=5, sticky=EW)
+    tbCommunication["xscrollcommand"] = xs.set
 
     # начать прогнозирование
-    clickFunc = lambda: startCommunication()
+    clickFunc = lambda: startCommunication(tbCommunication, tbAdditionsMessage.get("1.0", "end"), flyList, components, forecastType.get())
     btnStartCommunication = Button(lfCommunicationField, font=consts.FNTBTNMINI, text="Начать прогнозирование",
                                    command=clickFunc, padx=30, pady=5)
     btnStartCommunication.grid(row=0, column=5, columnspan=2, rowspan=1, padx=10, pady=[0, 0])
@@ -522,7 +560,7 @@ def createAnalystForecastForm(db, root, usrData):
     tbMessage.grid(row=1, column=5, columnspan=2, rowspan=1, padx=10, pady=[0, 0])
 
     # отправить сообщение
-    clickFunc = lambda: startCommunication()
+    clickFunc = lambda: communication(tbCommunication, tbMessage.get("1.0", "end"))
     btnSendMessage = Button(lfCommunicationField, font=consts.FNTBTNMINI, text="Отправить сообщение",
                                    command=clickFunc, padx=40, pady=5)
     btnSendMessage.grid(row=2, column=5, columnspan=2, rowspan=1, padx=10, pady=[0, 10])

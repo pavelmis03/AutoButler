@@ -4,8 +4,28 @@ __pycache__/
 # C extensions
 *.so
 
+# папки с отчетами
+code/reports/hotelsReport/
+code/reports/hotelsReport/*
+code/reports/hotelReserv/
+code/reports/hotelReserv/*
+code/reports/logReports/
+code/reports/logReports/*
+code/reports/flightsMainReport/
+code/reports/flightsMainReport/*
+code/reports/flightsGraphReport/*
+code/reports/flightsGraphReport/
+code/reports/flightsHistReport/*
+code/reports/flightsHistReport/
+code/reports/reservesHistReport/*
+code/reports/reservesHistReport/
+
 # Distribution / packaging
 .Python
+.idea
+.idea/
+.env
+*.env
 build/
 develop-eggs/
 dist/

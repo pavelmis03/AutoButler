@@ -8,11 +8,11 @@ from forms.formAuth import *
 def main():
     # подключение к базе данных
     db = sql.connect(
-        host='127.0.0.1', # ip-адрес локального компьютера
+        host="127.0.0.1", # ip-адрес локального компьютера
         port=3306,
-        user='root',
-        password='pOiLkJ03',
-        database='db',
+        user="root",
+        password="pOiLkJ03",
+        database="db",
     )
     # функция создания стартового окна
     createStartForm(db)

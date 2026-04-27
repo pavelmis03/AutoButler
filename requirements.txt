@@ -1,5 +1,6 @@
 python-dotenv~=1.1.1
 pandas
+numpy
 tk
 pymysql
 pillow
@@ -7,13 +8,17 @@ Image
 ImageTk
 os-sys
 pytest-shutil
-configparser
-python-docx
-docxtpl
 pylab-sdk
 matplotlib
 DateTime
+pyperclip
+# docs and templates
+configparser
+python-docx
+docxtpl
+docx
 # AI
 requests
 openai
 python-dotenv
+dotenv

@@ -29,7 +29,7 @@ import consts
 # создание стартовой формы
 def createStartForm(db):
     # создаем окно формы
-    root = createWindow("Добро пожаловать!", 500, 250, icon="../static/icons/main.ico")
+    root = createWindow("Добро пожаловать!", 500, 250, icon="static/icons/main.ico")
 
     # создаем рамку для текста и кнопок
     frMain = Frame(borderwidth=1, relief=SOLID, padx=8, pady=10)
@@ -37,7 +37,7 @@ def createStartForm(db):
     # создаем рамку для текста
     frHello = Frame(frMain, borderwidth=0, relief=SOLID, padx=8, pady=10)
     # приветственная подпись
-    lblHello = Label(frHello, font=consts.FNTLBLS, text="Добро пожаловать в систему оптимизации затрат и\nподдержки процесса размещения пассажиров\nв гостиницах при задержках и отмене авиарейсов")
+    lblHello = Label(frHello, font=consts.FNTLBLS, text="Интеллектуальная система оптимизации затрат\nпри размещении пассажиров в гостиницах\nпри сбоях в расписании авиарейсов")
     # добавление элемента на форму
     lblHello.pack()
     # добавляем frame на форму
@@ -79,7 +79,7 @@ def createSignInForm(db, root):
     root.destroy()
 
     # создаем окно формы
-    root = createWindow("Форма авторизации", 500, 350, icon="../static/icons/main.ico")
+    root = createWindow("Форма авторизации", 500, 350, icon="static/icons/main.ico")
 
     # создаем рамку для полей ввода
     frInput = Frame(borderwidth=1, relief=SOLID, padx=8, pady=10)

@@ -17,10 +17,12 @@ FNTLBLERR = 0
 FNTLBLH1 = 0
 FNTLBLH2 = 0
 FNTLBLH3 = 0
+FNTLBLH4 = 0
+FNTLBLH5 = 0
 
 def setFonts():
     # константы шрифтов
-    global FNTBTN, FNTBTNMINI, FNTLBLS, FNTLBLERR, FNTLBLH1, FNTLBLH2, FNTLBLH3
+    global FNTBTN, FNTBTNMINI, FNTLBLS, FNTLBLERR, FNTLBLH1, FNTLBLH2, FNTLBLH3, FNTLBLH4, FNTLBLH5
     # настраиваем шрифт для кнопок
     FNTBTN = font.Font(family="Arial", size=12, weight="normal", slant="roman")
     # настраиваем маленький шрифт для кнопок
@@ -35,3 +37,7 @@ def setFonts():
     FNTLBLH2 = font.Font(family="Arial", size=12, weight="normal", slant="roman")
     # шрифт для мелких заголовков
     FNTLBLH3 = font.Font(family="Arial", size=11, weight="normal", slant="roman")
+    # шрифт для мелких заголовков
+    FNTLBLH4 = font.Font(family="Arial", size=9, weight="normal", slant="roman")
+    # шрифт для мелких заголовков
+    FNTLBLH5 = font.Font(family="Arial", size=7, weight="normal", slant="roman")

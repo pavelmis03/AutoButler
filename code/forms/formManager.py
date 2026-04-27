@@ -4,6 +4,8 @@ from tkinter import *
 from tkinter import ttk
 # шрифты
 from tkinter import font
+# прокручиваемый текст
+from tkinter.scrolledtext import ScrolledText
 # сообщения
 from tkinter.messagebox import showerror, showwarning, showinfo
 # бибиблиотека для работы с ini файлами
@@ -103,8 +105,8 @@ def createManagerAnalyticsForm(db, root, usrData):
     flyList["xscrollcommand"] = scrlH.set
 
     # очищаем таблицу перед наполнением
-    for col in flyList['columns']:
-        flyList.heading(col, text='')
+    for col in flyList["columns"]:
+        flyList.heading(col, text="")
     flyList.delete(*flyList.get_children())
 
     # список колонок будущей таблицы
