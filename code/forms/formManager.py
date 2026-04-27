@@ -45,11 +45,14 @@ def createManagerFinanceForm(db, root, usrData):
     frMain = Frame(borderwidth=1, relief=SOLID)
 
     # основной заголовок
-    lblMain = Label(frMain, font=consts.FNTLBLH1, text="УПРАВЛЕНИЕ ФИНАНСАМИ")
+    lblMain = Label(frMain, font=consts.FNTLBLH1, text="УПРАВЛЕНИЕ БЮДЖЕТОМ")
     lblMain.pack(pady=[30, 10])
 
     # -------------БЛОК таблицы-------------
 
+    # -------------БЛОК ИНФОРМАЦИИ-------------
+
+    # -------------БЛОК ТАБЛИЦЫ ПРОДУКТИВНОСТИ-------------
 
     # выход в предыдущее меню
     clickFunc = lambda: createManagerMainForm(db, root, usrData)
