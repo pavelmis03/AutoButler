@@ -158,6 +158,8 @@ def getHotel(db):
         hotels = list(hotels)
 
     except Exception as e:
+        # отладочный
+        print(e)
         showinfo(title="Получение гостиниц",
                  message="При выгрузке данных из БД произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
 
@@ -246,8 +248,10 @@ def loadFlyList(db):
         return df
 
     except Exception as e:
+        # отладочный
+        print(e)
         showinfo(title="Загрузка рейсов", message="При выгрузке рейсов из БД произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
-        return False
+        return pd.DataFrame()
 
 # загружает список записей по отелям из БД
 def loadOrdersList(db):
@@ -274,8 +278,10 @@ def loadOrdersList(db):
         return df
 
     except Exception as e:
+        # отладочный
+        print(e)
         showinfo(title="Загрузка заявок", message="При выгрузке заявок из БД произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
-        return False
+        return pd.DataFrame()
 
 # загружает список пассажиров из БД
 def loadPassengerList(db):
@@ -298,8 +304,10 @@ def loadPassengerList(db):
         return df
 
     except Exception as e:
+        # отладочный
+        print(e)
         showinfo(title="Загрузка пассажиров", message="При выгрузке пассажиров из БД произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
-        return False
+        return pd.DataFrame()
 
 # заполнение таблицы данными на форме анализа рейсов из БД
 def insertDataToTable(db, tableFlight, tablePass, insertType, cbx=""):
@@ -583,10 +591,14 @@ def chooseHotel(db, hotelList, passList, flyList, guestCnt, usrName):
                     doc.save(f"code/reports/hotelReserv/report_{folderName}/Заявка_на_бронирование_номера.docx")
                     showinfo(title="Закрепление номера", message=f"Заявка на бронирование создана и лежит в папке\n\"reports/hotelReserv/report_{folderName}/Заявка_на_бронирование_номера.docx\"")
                 except Exception as e:
+                    # отладочный
+                    print(e)
                     showerror(title="Обновление ссылки",
                               message="Произошла непредвиденная ошибка при закреплении, попробуйте еще раз")
 
             except Exception as e:
+                # отладочный
+                print(e)
                 showerror(title="Закрепление номера", message="Произошла непредвиденная ошибка при закреплении, попробуйте еще раз")
         else:
             showinfo(title="Закрепление номера", message="Закрепление отменено")
@@ -753,9 +765,9 @@ def getHotelList(table, familyMember, tbOutput, hotelList, message=""):
     except openai.RateLimitError:
         showwarning(title="Внимание!", message="Превышено количество запросов к модели")
     except Exception as e:
-        showwarning(title="Внимание!", message="Неизвестная ошибка при обработке запроса к модели")
         # отладочный
         print(e)
+        showwarning(title="Внимание!", message="Неизвестная ошибка при обработке запроса к модели")
 
 
 # отправить сообщение
@@ -1033,4 +1045,6 @@ def createGraph(db, components, needSave, isHist=False):
         # показываем график
         plt.show()
     except Exception as e:
+        # отладочный
+        print(e)
         showinfo(title="Соханение графика", message="Возникла неожиданная ошибка при создании графика!")

@@ -145,6 +145,8 @@ def delUser(db, userData, findData, cbxFindUserRes, message=True):
 
             return True
         except Exception as e:
+            # отладочный
+            print(e)
             if (message):
                 showerror(title="Удаление пользователя",
                       message="Произошла непредвиденная ошибка при удалении пользователя, попробуйте еще раз")
@@ -229,6 +231,8 @@ def addNewUserData(db, root, etrName, etrSurname, etrPatr, cbxRole, etrPhone, et
 
         return True
     except Exception as e:
+        # отладочный
+        print(e)
         if (message):
             showerror(title="Добавление пользователя",
                   message="Произошла непредвиденная ошибка при добавлении пользователя, попробуйте еще раз")
@@ -399,10 +403,12 @@ def loadLogList(db):
         return df
 
     except Exception as e:
+        # отладочный
+        print(e)
         showinfo(title="Загрузка логов",
                  message="При выгрузке логов из БД произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
 
-        return False
+        return pd.DataFrame()
 
 # заполнение таблицы данными на форме управления системой из БД
 def insertDataToTable(db, table, components, componentsCnt=6):
@@ -454,6 +460,8 @@ def clearLogList(db, table):
 
             return True
         except Exception as e:
+            # отладочный
+            print(e)
             showerror(title="Удаление пользователя",
                           message="Произошла непредвиденная ошибка при очистке логов, попробуйте еще раз")
 
@@ -490,6 +498,8 @@ def delRecord(db, table, components):
 
         return True
     except Exception as e:
+        # отладочный
+        print(e)
         showerror(title="Удаление записи лога",
                       message="Произошла непредвиденная ошибка при удалении записи лога, попробуйте еще раз")
 
@@ -648,6 +658,8 @@ def createReport(db, dateFrom, dateUntil, timeFrom, timeUntil):
         showinfo(title="Создание отчета", message="Отчет успешно сформирован!")
 
     except Exception as e:
+        # отладочный
+        print(e)
         showinfo(title="Создание отчета",
                  message="При создании отчета произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
 
@@ -762,4 +774,6 @@ def createGraph(db, components, needSave, isHist=False):
         # показываем график
         plt.show()
     except Exception as e:
+        # отладочный
+        print(e)
         showinfo(title="Соханение графика", message="Возникла неожиданная ошибка при создании графика!")

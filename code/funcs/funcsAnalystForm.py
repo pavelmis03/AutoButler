@@ -119,6 +119,8 @@ def getClient():
             api_key=api_key,
         )
     except Exception as e:
+        # отладочный
+        print(e)
         showerror(title="Ошибка модели", message=f"Ошибка при создании клиента OpenAI: {e}")
 
 # функция, в которой определяются настройки для нейронки
@@ -182,6 +184,8 @@ def chat(messages, model, client):
             messages=messages,
         )
     except Exception as e:
+        # отладочный
+        print(e)
         showerror(title="Анализ данных", message=f"Ошибка при запросе к API: {e}")
 
 # получаем текст ответа модели
@@ -202,6 +206,8 @@ def addAssistantResponse(response, messages):
         messages.append(assistant_msg)
         return assistant_text
     except Exception as e:
+        # отладочный
+        print(e)
         showerror(title="Анализ данных", message=f"Ошибка при обработке ответа ассистента: {e}")
 
 # функция общения с нейронкой
@@ -231,6 +237,8 @@ def communication(tbOutput, message):
         # обновляем настройки для нейронки
         # updateSystemMessage(messages)
     except Exception as e:
+        # отладочный
+        print(e)
         showerror(title="Анализ данных", message=f"Ошибка во анализа: {e}")
 
 # первичные настройки для подготовки общения с нейронкой
@@ -266,6 +274,8 @@ def startCommunication(tbOutput, addMessage, flyList, components, analysisType):
         tbOutput.insert(END, f"\n\n+++role: assistant+++: +++{assistant_text}+++ \n\n")
 
     except Exception as e:
+        # отладочный
+        print(e)
         showerror(title="Установка соединения", message=f"Ошибка при установке соединения с моделью или при ее настройке: {e}")
 
 # получает список авиакомпаний из БД
@@ -289,6 +299,8 @@ def getCompany(db):
         company = list(company)
 
     except Exception as e:
+        # отладочный
+        print(e)
         showinfo(title="Получение авиакомпаний",
                  message="При выгрузке данных из БД произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
 
@@ -321,6 +333,8 @@ def getAirport(db, dest):
         airport = list(airport)
 
     except Exception as e:
+        # отладочный
+        print(e)
         showinfo(title="Получение авиакомпаний",
                  message="При выгрузке данных из БД произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
 
@@ -442,6 +456,8 @@ def createGraph(db, components, needSave, isHist=False):
         # показываем график
         plt.show()
     except Exception as e:
+        # отладочный
+        print(e)
         showinfo(title="Соханение графика", message="Возникла неожиданная ошибка при создании графика!")
 
 # функция сброса настроек формирования графика и отчета
@@ -492,8 +508,10 @@ def loadFlyList(db):
         return df
 
     except Exception as e:
+        # отладочный
+        print(e)
         showinfo(title="Загрузка рейсов", message="При выгрузке рейсов из БД произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
-        return False
+        return pd.DataFrame()
 
 # заполнение таблицы данными на форме анализа рейсов из БД
 def insertDataToTable(db, table, components, componentsCnt=10):
@@ -621,6 +639,8 @@ def checkDateTime(data, isTime, str):
             datetime.strptime(data, "%H:%M:%S")
             return ""
         except Exception as e:
+            # отладочный
+            print(e)
             return f"Неправильный формат времени в поле \"{str}\". Запишите в виде: HH:MM, например 09:12"
         # else:
         #     return "Неправильный формат времени. Запишите в виде: HH:MM, например 09:12"
@@ -630,6 +650,8 @@ def checkDateTime(data, isTime, str):
             datetime.strptime(data, "%Y-%m-%d")
             return ""
         except Exception as e:
+            # отладочный
+            print(e)
             return f"Неправильный формат даты в поле \"{str}\". Запишите в виде: YYYY-MM-DD, например 2026-06-29"
         # else:
         #     return 2
@@ -766,6 +788,8 @@ def createReport(db, components):
         showinfo(title="Создание отчета", message="Отчет успешно сформирован!")
 
     except Exception as e:
+        # отладочный
+        print(e)
         showwarning(title="Создание отчета", message="При создании отчета произошла непредвиденная ошибка! Проверьте БД и попробуйте снова.")
 
 # поиск нужного рейса по названию

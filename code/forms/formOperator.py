@@ -50,7 +50,7 @@ def createOperatorChooseHotelForm(db, root, usrData):
                         marginy=0)
 
     # создаем основную рамку
-    frMain = Frame(borderwidth=1, relief=SOLID)
+    frMain = Frame(borderwidth=2, relief=SOLID)
 
     # основной заголовок
     lblMain = Label(frMain, font=consts.FNTLBLH1, text="ПОДОБРАТЬ ГОСТИНИЦУ")
@@ -416,7 +416,7 @@ def createOperatorReportsForm(db, root, usrData):
                         marginy=10)
 
     # создаем основную рамку
-    frMain = Frame(borderwidth=1, relief=SOLID)
+    frMain = Frame(borderwidth=2, relief=SOLID)
 
     # основной заголовок
     lblMain = Label(frMain, font=consts.FNTLBLH1, text="ОТЧЕТЫ ПО РАЗМЕЩЕННЫМ ПАССАЖИРАМ")
@@ -620,7 +620,7 @@ def createOperatorMainForm(db, root, usrData):
                         marginy=10)
 
     # создаем основную рамку
-    frMain = Frame(borderwidth=1, relief=SOLID)
+    frMain = Frame(borderwidth=2, relief=SOLID)
 
     # основной заголовок
     lblMain = Label(frMain, font=consts.FNTLBLH1, text="РАЗМЕЩЕНИЕ ПАССАЖИРОВ")

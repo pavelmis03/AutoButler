@@ -47,7 +47,7 @@ def createAnalystFlightsForm(db, root, usrData):
                         marginy=10)
 
     # создаем основную рамку
-    frMain = Frame(borderwidth=1, relief=SOLID)
+    frMain = Frame(borderwidth=2, relief=SOLID)
 
     # основной заголовок
     lblMain = Label(frMain, font=consts.FNTLBLH1, text="ДАННЫЕ ПО РЕЙСАМ")
@@ -355,7 +355,7 @@ def createAnalystForecastForm(db, root, usrData):
                         marginy=0)
 
     # создаем основную рамку
-    frMain = Frame(borderwidth=1, relief=SOLID)
+    frMain = Frame(borderwidth=2, relief=SOLID)
 
     # основной заголовок
     lblMain = Label(frMain, font=consts.FNTLBLH1, text="ПРОГНОЗИРОВАНИЕ И АНАЛИТИКА")
@@ -591,7 +591,7 @@ def createAnalystMainForm(db, root, usrData):
                         marginy=10)
 
     # создаем основную рамку
-    frMain = Frame(borderwidth=1, relief=SOLID)
+    frMain = Frame(borderwidth=2, relief=SOLID)
 
     # основной заголовок
     lblMain = Label(frMain, font=consts.FNTLBLH1, text="АНАЛИТИЧЕСКИЕ ДАННЫЕ")

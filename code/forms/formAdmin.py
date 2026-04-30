@@ -46,7 +46,7 @@ def createAndminUserManageForm(db, root, usrData):
     root = createWindow(f"Добро пожаловать, { usrData['name'] }. Ваша роль: { usrData['role'] }", w=w, h=h, marginx=250, marginy=10)
 
     # создаем основную рамку
-    frMain = Frame(borderwidth=1, relief=SOLID)
+    frMain = Frame(borderwidth=2, relief=SOLID)
 
     # основной заголовок
     lblMain = Label(frMain, font=consts.FNTLBLH1, text="УЧЕТНЫЕ ЗАПИСИ")
@@ -258,7 +258,7 @@ def createAndminSystemManageForm(db, root, usrData):
                         marginy=10)
 
     # создаем основную рамку
-    frMain = Frame(borderwidth=1, relief=SOLID)
+    frMain = Frame(borderwidth=2, relief=SOLID)
 
     # основной заголовок
     lblMain = Label(frMain, font=consts.FNTLBLH1, text="УПРАВЛЕНИЕ СИСТЕМОЙ")
@@ -463,7 +463,7 @@ def createAdminMainForm(db, root, usrData):
                         marginy=10)
 
     # создаем основную рамку
-    frMain = Frame(borderwidth=1, relief=SOLID)
+    frMain = Frame(borderwidth=2, relief=SOLID)
 
     # основной заголовок
     lblMain = Label(frMain, font=consts.FNTLBLH1, text="АДМИНИСТРИРОВАНИЕ")
